@@ -8,6 +8,8 @@ interface ButtonProps {
   variant?: 'primary' | 'secondary' | 'outline';
   size?: 'sm' | 'md' | 'lg';
   className?: string;
+  disabled?: boolean;
+  type?: 'button' | 'submit' | 'reset';
 }
 
 export default function Button({
@@ -17,6 +19,8 @@ export default function Button({
   variant = 'primary',
   size = 'md',
   className = '',
+  disabled = false,
+  type = 'button',
 }: ButtonProps) {
   const baseStyles = 'inline-flex items-center justify-center font-semibold rounded-full transition-all duration-300 transform hover:scale-105 active:scale-95';
 
@@ -43,7 +47,12 @@ export default function Button({
   }
 
   return (
-    <button onClick={onClick} className={combinedClassName}>
+    <button
+      type={type}
+      onClick={onClick}
+      disabled={disabled}
+      className={`${combinedClassName} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+    >
       {children}
     </button>
   );
