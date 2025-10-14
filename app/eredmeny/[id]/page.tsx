@@ -6,7 +6,37 @@ import { motion } from 'framer-motion';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import ChakraSilhouette from '@/components/result/ChakraSilhouette';
 import ChakraCards from '@/components/result/ChakraCards';
-import type { QuizResultWithInterpretations } from '@/types';
+import { getChakraByName, CHAKRAS } from '@/lib/quiz/chakras';
+import type { QuizResultWithInterpretations, ChakraMetadata } from '@/types';
+
+/**
+ * Helper: Get chakra emoji symbol by position
+ */
+function getChakraSymbol(position: number): string {
+  const symbols: Record<number, string> = {
+    1: '🔴', // Root - Red
+    2: '🟠', // Sacral - Orange
+    3: '🟡', // Solar - Yellow
+    4: '💚', // Heart - Green
+    5: '🔵', // Throat - Blue
+    6: '🟣', // Third Eye - Purple
+    7: '⚪', // Crown - White/Violet
+  };
+  return symbols[position] || '✨';
+}
+
+/**
+ * Chakra-based background gradients
+ */
+const chakraBackgrounds: Record<number, string> = {
+  1: 'from-red-50/80 via-rose-50/60 to-white',        // Root
+  2: 'from-orange-50/80 via-amber-50/60 to-white',    // Sacral
+  3: 'from-yellow-50/80 via-amber-100/60 to-white',   // Solar Plexus
+  4: 'from-green-50/80 via-emerald-50/60 to-white',   // Heart
+  5: 'from-blue-50/80 via-sky-50/60 to-white',        // Throat
+  6: 'from-purple-50/80 via-indigo-50/60 to-white',   // Third Eye
+  7: 'from-violet-50/80 via-purple-50/60 to-white',   // Crown
+};
 
 /**
  * API Response type matching the route structure
@@ -76,6 +106,28 @@ export default function ResultPage() {
   }, [id]);
 
   /**
+   * Get dominant chakra (most blocked/imbalanced) for dynamic theming
+   */
+  const getDominantChakra = (): ChakraMetadata => {
+    if (!result?.interpretations) return CHAKRAS[3]; // Default: Heart chakra
+
+    // First find blocked chakra
+    const blockedChakra = result.interpretations.find((i) => i.level === 'blocked');
+    if (blockedChakra) {
+      return getChakraByName(blockedChakra.chakra) || CHAKRAS[3];
+    }
+
+    // If no blocked, find imbalanced
+    const imbalancedChakra = result.interpretations.find((i) => i.level === 'imbalanced');
+    if (imbalancedChakra) {
+      return getChakraByName(imbalancedChakra.chakra) || CHAKRAS[3];
+    }
+
+    // If all balanced, use beautiful purple/pink gradient (Heart chakra)
+    return CHAKRAS[3];
+  };
+
+  /**
    * Generate summary message based on overall chakra health
    */
   const getSummaryMessage = (): string => {
@@ -123,8 +175,40 @@ export default function ResultPage() {
    */
   if (loading) {
     return (
-      <main className="min-h-screen bg-gradient-to-br from-spiritual-purple-50 via-white to-spiritual-rose-50 flex items-center justify-center px-4">
-        <LoadingSpinner size="lg" message="Eredményed betöltése..." />
+      <main className="min-h-screen bg-gradient-to-br from-purple-50/80 via-rose-50/60 to-white flex items-center justify-center px-4 relative overflow-hidden">
+        {/* Ambient gradient orbs */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <motion.div
+            className="absolute top-1/4 right-1/4 w-96 h-96 rounded-full blur-3xl opacity-20"
+            style={{ backgroundColor: '#9370DB' }}
+            animate={{
+              scale: [1, 1.3, 1],
+              opacity: [0.1, 0.25, 0.1],
+            }}
+            transition={{
+              duration: 8,
+              repeat: Infinity,
+              ease: 'easeInOut',
+            }}
+          />
+          <motion.div
+            className="absolute bottom-1/4 left-1/4 w-64 h-64 rounded-full blur-3xl opacity-15"
+            style={{ backgroundColor: '#DB7093' }}
+            animate={{
+              scale: [1, 1.2, 1],
+              opacity: [0.08, 0.2, 0.08],
+            }}
+            transition={{
+              duration: 10,
+              repeat: Infinity,
+              ease: 'easeInOut',
+            }}
+          />
+        </div>
+
+        <div className="relative z-10">
+          <LoadingSpinner size="lg" message="Eredményed betöltése..." />
+        </div>
       </main>
     );
   }
@@ -134,9 +218,39 @@ export default function ResultPage() {
    */
   if (error?.code === 'NOT_FOUND') {
     return (
-      <main className="min-h-screen bg-gradient-to-br from-spiritual-purple-50 via-white to-spiritual-rose-50 flex items-center justify-center px-4">
+      <main className="min-h-screen bg-gradient-to-br from-purple-50/80 via-rose-50/60 to-white flex items-center justify-center px-4 relative overflow-hidden">
+        {/* Ambient gradient orbs */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <motion.div
+            className="absolute top-1/4 right-1/4 w-96 h-96 rounded-full blur-3xl opacity-20"
+            style={{ backgroundColor: '#9370DB' }}
+            animate={{
+              scale: [1, 1.3, 1],
+              opacity: [0.1, 0.25, 0.1],
+            }}
+            transition={{
+              duration: 8,
+              repeat: Infinity,
+              ease: 'easeInOut',
+            }}
+          />
+          <motion.div
+            className="absolute bottom-1/4 left-1/4 w-64 h-64 rounded-full blur-3xl opacity-15"
+            style={{ backgroundColor: '#DB7093' }}
+            animate={{
+              scale: [1, 1.2, 1],
+              opacity: [0.08, 0.2, 0.08],
+            }}
+            transition={{
+              duration: 10,
+              repeat: Infinity,
+              ease: 'easeInOut',
+            }}
+          />
+        </div>
+
         <motion.div
-          className="max-w-md w-full text-center"
+          className="max-w-md w-full text-center relative z-10"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
@@ -189,9 +303,39 @@ export default function ResultPage() {
    */
   if (error) {
     return (
-      <main className="min-h-screen bg-gradient-to-br from-spiritual-purple-50 via-white to-spiritual-rose-50 flex items-center justify-center px-4">
+      <main className="min-h-screen bg-gradient-to-br from-purple-50/80 via-rose-50/60 to-white flex items-center justify-center px-4 relative overflow-hidden">
+        {/* Ambient gradient orbs */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <motion.div
+            className="absolute top-1/4 right-1/4 w-96 h-96 rounded-full blur-3xl opacity-20"
+            style={{ backgroundColor: '#DC143C' }}
+            animate={{
+              scale: [1, 1.3, 1],
+              opacity: [0.1, 0.25, 0.1],
+            }}
+            transition={{
+              duration: 8,
+              repeat: Infinity,
+              ease: 'easeInOut',
+            }}
+          />
+          <motion.div
+            className="absolute bottom-1/4 left-1/4 w-64 h-64 rounded-full blur-3xl opacity-15"
+            style={{ backgroundColor: '#FF8C00' }}
+            animate={{
+              scale: [1, 1.2, 1],
+              opacity: [0.08, 0.2, 0.08],
+            }}
+            transition={{
+              duration: 10,
+              repeat: Infinity,
+              ease: 'easeInOut',
+            }}
+          />
+        </div>
+
         <motion.div
-          className="max-w-md w-full text-center"
+          className="max-w-md w-full text-center relative z-10"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
@@ -255,29 +399,89 @@ export default function ResultPage() {
     return null;
   }
 
+  // Calculate dominant chakra for theming
+  const dominantChakra = getDominantChakra();
+
   return (
-    <main className="min-h-screen bg-gradient-to-br from-spiritual-purple-50 via-white to-spiritual-rose-50">
+    <main className={`min-h-screen bg-gradient-to-br ${chakraBackgrounds[dominantChakra.position]} transition-colors duration-1000 relative overflow-hidden`}>
+      {/* Ambient gradient orbs - dominant chakra color */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {/* Large orb - top right */}
+        <motion.div
+          className="absolute top-20 right-10 w-96 h-96 rounded-full blur-3xl opacity-25"
+          style={{
+            backgroundColor: dominantChakra.color,
+          }}
+          animate={{
+            scale: [1, 1.3, 1],
+            opacity: [0.15, 0.3, 0.15],
+          }}
+          transition={{
+            duration: 8,
+            repeat: Infinity,
+            ease: 'easeInOut',
+          }}
+        />
+
+        {/* Smaller orb - bottom left */}
+        <motion.div
+          className="absolute bottom-20 left-10 w-64 h-64 rounded-full blur-3xl opacity-20"
+          style={{
+            backgroundColor: dominantChakra.color,
+          }}
+          animate={{
+            scale: [1, 1.2, 1],
+            opacity: [0.1, 0.25, 0.1],
+          }}
+          transition={{
+            duration: 10,
+            repeat: Infinity,
+            ease: 'easeInOut',
+          }}
+        />
+
+        {/* Extra small orb - center */}
+        <motion.div
+          className="absolute top-1/2 left-1/3 w-48 h-48 rounded-full blur-2xl opacity-15"
+          style={{
+            backgroundColor: dominantChakra.color,
+          }}
+          animate={{
+            scale: [1, 1.4, 1],
+            opacity: [0.08, 0.2, 0.08],
+          }}
+          transition={{
+            duration: 12,
+            repeat: Infinity,
+            ease: 'easeInOut',
+          }}
+        />
+      </div>
+
       {/* Hero Section */}
-      <section className="container mx-auto px-4 py-16 md:py-24">
+      <section className="container mx-auto px-4 py-16 md:py-24 relative z-10">
         <motion.div
           className="max-w-4xl mx-auto text-center"
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
         >
-          {/* Decorative Element */}
+          {/* Pulsating Chakra Symbol */}
           <motion.div
-            className="w-16 h-16 mx-auto mb-6 rounded-full bg-gradient-spiritual opacity-20"
+            className="text-8xl mb-6 mx-auto"
+            style={{ color: dominantChakra.color }}
             animate={{
-              scale: [1, 1.2, 1],
-              opacity: [0.2, 0.4, 0.2],
+              scale: [1, 1.15, 1],
+              opacity: [0.7, 1, 0.7],
             }}
             transition={{
               duration: 3,
               repeat: Infinity,
               ease: 'easeInOut',
             }}
-          />
+          >
+            {getChakraSymbol(dominantChakra.position)}
+          </motion.div>
 
           {/* Greeting */}
           <motion.h1
@@ -300,12 +504,22 @@ export default function ResultPage() {
 
           {/* Summary Message */}
           <motion.div
-            className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 md:p-8 shadow-lg border border-spiritual-purple-100 max-w-2xl mx-auto"
+            className="bg-white/70 backdrop-blur-md rounded-3xl p-6 md:p-8 shadow-2xl border border-white/40 max-w-2xl mx-auto relative overflow-hidden"
+            style={{
+              boxShadow: `0 0 60px ${dominantChakra.color}10, 0 20px 40px rgba(0,0,0,0.05)`,
+            }}
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.4, duration: 0.6 }}
           >
-            <p className="text-lg text-gray-700 leading-relaxed">{getSummaryMessage()}</p>
+            {/* Gradient overlay */}
+            <div
+              className="absolute top-0 left-0 right-0 h-24 opacity-5 pointer-events-none"
+              style={{
+                background: `linear-gradient(180deg, ${dominantChakra.color} 0%, transparent 100%)`,
+              }}
+            />
+            <p className="text-lg text-gray-700 leading-relaxed relative z-10">{getSummaryMessage()}</p>
           </motion.div>
 
           {/* Scroll Indicator */}
@@ -328,7 +542,7 @@ export default function ResultPage() {
       </section>
 
       {/* Chakra Silhouette Visualization */}
-      <section className="container mx-auto px-4 pb-16">
+      <section className="container mx-auto px-4 pb-16 relative z-10">
         <motion.div
           className="max-w-6xl mx-auto"
           initial={{ opacity: 0, y: 30 }}
@@ -343,7 +557,19 @@ export default function ResultPage() {
             Kattints a csakra pontokra a részletes értelmezésért
           </p>
 
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-lg border border-spiritual-purple-100">
+          <div
+            className="bg-white/70 backdrop-blur-md rounded-3xl p-8 shadow-2xl border border-white/40 relative overflow-hidden"
+            style={{
+              boxShadow: `0 0 60px ${dominantChakra.color}10, 0 20px 40px rgba(0,0,0,0.05)`,
+            }}
+          >
+            {/* Gradient overlay */}
+            <div
+              className="absolute top-0 left-0 right-0 h-24 opacity-5 pointer-events-none"
+              style={{
+                background: `linear-gradient(180deg, ${dominantChakra.color} 0%, transparent 100%)`,
+              }}
+            />
             <ChakraSilhouette
               chakraScores={result.interpretations}
               onChakraClick={handleChakraClick}
@@ -353,7 +579,7 @@ export default function ResultPage() {
       </section>
 
       {/* Chakra Interpretation Cards */}
-      <section className="container mx-auto px-4 pb-16" ref={chakraCardsRef}>
+      <section className="container mx-auto px-4 pb-16 relative z-10" ref={chakraCardsRef}>
         <motion.div
           className="max-w-6xl mx-auto"
           initial={{ opacity: 0, y: 30 }}
@@ -373,52 +599,73 @@ export default function ResultPage() {
       </section>
 
       {/* CTA Section */}
-      <section className="container mx-auto px-4 py-16 md:py-24">
+      <section className="container mx-auto px-4 py-16 md:py-24 relative z-10">
         <motion.div
-          className="max-w-4xl mx-auto bg-gradient-spiritual rounded-3xl p-8 md:p-12 shadow-2xl text-center"
+          className="max-w-4xl mx-auto rounded-3xl p-8 md:p-12 shadow-2xl text-center relative overflow-hidden"
+          style={{
+            background: `linear-gradient(135deg, ${dominantChakra.color}, ${dominantChakra.color}dd)`,
+          }}
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-100px' }}
           transition={{ duration: 0.8 }}
         >
-          <h2 className="text-3xl md:text-4xl font-serif font-bold text-white mb-4">
-            Mit szeretnél most?
-          </h2>
-          <p className="text-white/90 text-lg mb-8 max-w-2xl mx-auto">
-            Mented az eredményed, oszd meg másokkal, vagy fedezd fel a csakraharmonizáló programjainkat!
-          </p>
+          {/* Pulsating background overlay */}
+          <motion.div
+            className="absolute inset-0 opacity-30 pointer-events-none"
+            style={{
+              background: `radial-gradient(circle at 50% 50%, ${dominantChakra.color}80, transparent)`,
+            }}
+            animate={{
+              scale: [1, 1.2, 1],
+              opacity: [0.2, 0.4, 0.2],
+            }}
+            transition={{
+              duration: 4,
+              repeat: Infinity,
+            }}
+          />
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <motion.button
-              onClick={() => window.print()}
-              className="bg-white text-spiritual-purple-700 font-semibold py-3 px-8 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              Eredmény mentése
-            </motion.button>
+          <div className="relative z-10">
+            <h2 className="text-3xl md:text-4xl font-serif font-bold text-white mb-4">
+              Mit szeretnél most?
+            </h2>
+            <p className="text-white/90 text-lg mb-8 max-w-2xl mx-auto">
+              Mented az eredményed, oszd meg másokkal, vagy fedezd fel a csakraharmonizáló programjainkat!
+            </p>
 
-            <motion.button
-              onClick={() => {
-                const url = window.location.href;
-                navigator.clipboard.writeText(url);
-                alert('Link vágólapra másolva!');
-              }}
-              className="bg-white/10 backdrop-blur-sm text-white font-semibold py-3 px-8 rounded-lg border-2 border-white/30 hover:bg-white/20 transition-colors duration-300"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              Link másolása
-            </motion.button>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+              <motion.button
+                onClick={() => window.print()}
+                className="bg-white text-spiritual-purple-700 font-semibold py-3 px-8 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                Eredmény mentése
+              </motion.button>
 
-            <motion.button
-              onClick={() => router.push('/')}
-              className="bg-white/10 backdrop-blur-sm text-white font-semibold py-3 px-8 rounded-lg border-2 border-white/30 hover:bg-white/20 transition-colors duration-300"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              Programok felfedezése
-            </motion.button>
+              <motion.button
+                onClick={() => {
+                  const url = window.location.href;
+                  navigator.clipboard.writeText(url);
+                  alert('Link vágólapra másolva!');
+                }}
+                className="bg-white/10 backdrop-blur-sm text-white font-semibold py-3 px-8 rounded-lg border-2 border-white/30 hover:bg-white/20 transition-colors duration-300"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                Link másolása
+              </motion.button>
+
+              <motion.button
+                onClick={() => router.push('/')}
+                className="bg-white/10 backdrop-blur-sm text-white font-semibold py-3 px-8 rounded-lg border-2 border-white/30 hover:bg-white/20 transition-colors duration-300"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                Programok felfedezése
+              </motion.button>
+            </div>
           </div>
         </motion.div>
       </section>
