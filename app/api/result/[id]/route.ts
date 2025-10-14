@@ -85,7 +85,9 @@ export async function GET(
     // Generate interpretations for all chakras
     let interpretations;
     try {
-      interpretations = getInterpretationsSummary(result.chakra_scores as ChakraScores);
+      const interpretationsSummary = getInterpretationsSummary(result.chakra_scores as ChakraScores);
+      // Convert object to array for frontend compatibility
+      interpretations = Object.values(interpretationsSummary);
     } catch (error) {
       console.error('Interpretation error:', error);
       return NextResponse.json(

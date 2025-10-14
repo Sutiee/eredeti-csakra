@@ -73,6 +73,7 @@ function ChakraCard({ score, index }: ChakraCardProps) {
   return (
     <motion.article
       id={`chakra-${chakraMetadata.key}`}
+      data-chakra={chakraMetadata.key}
       initial={{ opacity: 0, y: 30 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-100px" }}
@@ -106,15 +107,8 @@ function ChakraCard({ score, index }: ChakraCardProps) {
             </p>
           </div>
 
-          {/* Score and Status */}
-          <div className="flex flex-col items-start sm:items-end gap-3">
-            <div className="text-right">
-              <div className="text-3xl sm:text-4xl font-bold text-gray-900">
-                {points}/16
-              </div>
-              <div className="text-sm text-gray-500">pont</div>
-            </div>
-
+          {/* Status Badge */}
+          <div className="flex flex-col items-start sm:items-end">
             <div
               className={`inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r ${currentStatus.gradient} text-white font-medium text-sm shadow-md`}
             >

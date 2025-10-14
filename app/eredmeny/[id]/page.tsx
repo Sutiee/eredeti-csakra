@@ -1,9 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import ChakraSilhouette from '@/components/result/ChakraSilhouette';
+import ChakraCards from '@/components/result/ChakraCards';
 import type { QuizResultWithInterpretations } from '@/types';
 
 /**
@@ -30,6 +32,9 @@ export default function ResultPage() {
   const [result, setResult] = useState<QuizResultWithInterpretations | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<{ message: string; code: string } | null>(null);
+
+  // Refs for scroll-to functionality
+  const chakraCardsRef = useRef<HTMLDivElement>(null);
 
   /**
    * Fetch result from API
@@ -74,7 +79,7 @@ export default function ResultPage() {
    * Generate summary message based on overall chakra health
    */
   const getSummaryMessage = (): string => {
-    if (!result) return '';
+    if (!result || !result.interpretations || !Array.isArray(result.interpretations)) return '';
 
     const interpretations = result.interpretations;
     const balancedCount = interpretations.filter((i) => i.level === 'balanced').length;
@@ -99,6 +104,18 @@ export default function ResultPage() {
     setLoading(true);
     // Trigger re-fetch by reloading the page
     router.refresh();
+  };
+
+  /**
+   * Scroll to specific chakra card
+   */
+  const handleChakraClick = (chakraKey: string) => {
+    if (chakraCardsRef.current) {
+      const cardElement = chakraCardsRef.current.querySelector(`[data-chakra="${chakraKey}"]`);
+      if (cardElement) {
+        cardElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
   };
 
   /**
@@ -310,47 +327,49 @@ export default function ResultPage() {
         </motion.div>
       </section>
 
-      {/* Result Components Section */}
+      {/* Chakra Silhouette Visualization */}
       <section className="container mx-auto px-4 pb-16">
-        <div className="max-w-6xl mx-auto space-y-16">
-          {/* Placeholder for ChakraSilhouette component */}
-          <motion.div
-            className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-lg border border-spiritual-purple-100"
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: '-100px' }}
-            transition={{ duration: 0.6 }}
-          >
-            <div className="text-center text-gray-500 py-12">
-              <p className="text-lg font-medium">ChakraSilhouette component</p>
-              <p className="text-sm mt-2">Body visualization will appear here</p>
-            </div>
-          </motion.div>
+        <motion.div
+          className="max-w-6xl mx-auto"
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-100px' }}
+          transition={{ duration: 0.6 }}
+        >
+          <h2 className="text-3xl md:text-4xl font-serif font-bold text-center mb-4 bg-gradient-spiritual bg-clip-text text-transparent">
+            Csakráid állapota
+          </h2>
+          <p className="text-center text-gray-600 mb-8 max-w-2xl mx-auto">
+            Kattints a csakra pontokra a részletes értelmezésért
+          </p>
 
-          {/* Placeholder for ChakraCards component */}
-          <motion.div
-            className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-lg border border-spiritual-purple-100"
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: '-100px' }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-          >
-            <div className="text-center text-gray-500 py-12">
-              <p className="text-lg font-medium">ChakraCards component</p>
-              <p className="text-sm mt-2">Detailed interpretation cards will appear here</p>
-              <div className="mt-4 text-xs text-left max-w-md mx-auto bg-gray-50 p-4 rounded-lg">
-                <p className="font-semibold mb-2">Result data available:</p>
-                <ul className="space-y-1">
-                  {result.interpretations.map((interp) => (
-                    <li key={interp.chakra}>
-                      {interp.chakra}: {interp.score} pont ({interp.level})
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          </motion.div>
-        </div>
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-lg border border-spiritual-purple-100">
+            <ChakraSilhouette
+              chakraScores={result.interpretations}
+              onChakraClick={handleChakraClick}
+            />
+          </div>
+        </motion.div>
+      </section>
+
+      {/* Chakra Interpretation Cards */}
+      <section className="container mx-auto px-4 pb-16" ref={chakraCardsRef}>
+        <motion.div
+          className="max-w-6xl mx-auto"
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-100px' }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+        >
+          <h2 className="text-3xl md:text-4xl font-serif font-bold text-center mb-4 bg-gradient-spiritual bg-clip-text text-transparent">
+            Részletes Értelmezés
+          </h2>
+          <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
+            Az alábbi kártyák részletesen bemutatják az egyes csakráid állapotát és javaslatokat adnak a harmonizálásukra
+          </p>
+
+          <ChakraCards chakraScores={result.interpretations} />
+        </motion.div>
       </section>
 
       {/* CTA Section */}

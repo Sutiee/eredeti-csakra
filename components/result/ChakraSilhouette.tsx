@@ -222,8 +222,50 @@ export default function ChakraSilhouette({
           const x = (point.x / 100) * svgWidth;
           const y = (point.y / 100) * svgHeight;
 
+          // Determine warning ring color based on level
+          const warningRingColor =
+            point.chakraScore.level === "blocked" ? "#DC2626" : // red-600
+            point.chakraScore.level === "imbalanced" ? "#F59E0B" : // amber-500
+            null;
+
           return (
             <g key={index}>
+              {/* Warning ring for problematic chakras */}
+              {warningRingColor && (
+                <motion.circle
+                  cx={x}
+                  cy={y}
+                  r={visuals.radius + 8}
+                  fill="none"
+                  stroke={warningRingColor}
+                  strokeWidth="3"
+                  opacity={0.8}
+                  variants={chakraVariants}
+                  initial="hidden"
+                  animate="visible"
+                  custom={index}
+                  style={{ pointerEvents: "none" }}
+                  transition={{
+                    opacity: {
+                      repeat: Infinity,
+                      repeatType: "reverse",
+                      duration: point.chakraScore.level === "blocked" ? 1.5 : 2.5,
+                      ease: "easeInOut",
+                    },
+                    scale: {
+                      repeat: Infinity,
+                      repeatType: "reverse",
+                      duration: point.chakraScore.level === "blocked" ? 1.5 : 2.5,
+                      ease: "easeInOut",
+                    },
+                  }}
+                  animate={{
+                    opacity: [0.3, 0.8, 0.3],
+                    scale: [0.95, 1.05, 0.95],
+                  }}
+                />
+              )}
+
               {/* Pulsing chakra circle */}
               <motion.circle
                 cx={x}
@@ -294,13 +336,8 @@ export default function ChakraSilhouette({
                 <p className="font-semibold text-sm text-gray-900 dark:text-white">
                   {metadata?.name}
                 </p>
-                <p className="text-xs text-gray-600 dark:text-gray-300">
-                  Pontszám: {chakraScore?.score}/16
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">
-                  {chakraScore?.level === "balanced" && "Kiegyensúlyozott"}
-                  {chakraScore?.level === "imbalanced" && "Kiegyensúlyozatlan"}
-                  {chakraScore?.level === "blocked" && "Blokkolt"}
+                <p className="text-xs text-gray-600 dark:text-gray-300 mt-1">
+                  {chakraScore?.interpretation.status}
                 </p>
               </div>
             );
