@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createClient } from '@supabase/supabase-js';
 import { getInterpretationsSummary } from '@/lib/quiz/interpretations';
+import { logger } from '@/lib/utils/logger';
 import type { ChakraScores } from '@/types';
 
 /**
@@ -68,7 +69,10 @@ export async function GET(
         );
       }
 
-      console.error('Database error:', dbError);
+      logger.error('Database error', dbError, {
+        context: 'GET /api/result/[id]',
+        data: { resultId: id },
+      });
       return NextResponse.json(
         {
           data: null,
@@ -89,7 +93,10 @@ export async function GET(
       // Convert object to array for frontend compatibility
       interpretations = Object.values(interpretationsSummary);
     } catch (error) {
-      console.error('Interpretation error:', error);
+      logger.error('Interpretation error', error, {
+        context: 'GET /api/result/[id]',
+        data: { resultId: id },
+      });
       return NextResponse.json(
         {
           data: null,
@@ -121,7 +128,9 @@ export async function GET(
       { status: 200 }
     );
   } catch (error) {
-    console.error('Unexpected error in GET /api/result/[id]:', error);
+    logger.error('Unexpected error in GET /api/result/[id]', error, {
+      context: 'GET /api/result/[id]',
+    });
 
     return NextResponse.json(
       {
@@ -139,14 +148,32 @@ export async function GET(
 
 /**
  * OPTIONS handler for CORS preflight
+ * Allows requests from same origin and configured domains
  */
-export async function OPTIONS() {
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || '';
+  const allowedOrigins = [
+    process.env.NEXT_PUBLIC_SITE_URL || 'https://eredeticsakra.hu',
+    'http://localhost:3000',
+    'http://localhost:3001',
+  ];
+
+  const corsHeaders: Record<string, string> = {
+    'Access-Control-Allow-Methods': 'GET, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Max-Age': '86400', // 24 hours
+  };
+
+  // In development, allow all origins; in production, only allow configured origins
+  if (process.env.NODE_ENV === 'development') {
+    corsHeaders['Access-Control-Allow-Origin'] = '*';
+  } else if (allowedOrigins.includes(origin)) {
+    corsHeaders['Access-Control-Allow-Origin'] = origin;
+    corsHeaders['Vary'] = 'Origin';
+  }
+
   return new NextResponse(null, {
     status: 204,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
-    },
+    headers: corsHeaders,
   });
 }

@@ -11,13 +11,6 @@ interface QuestionSliderProps {
   accentColor: string;
 }
 
-const OPTIONS = [
-  { value: 1, label: 'Egyáltalán nem jellemző' },
-  { value: 2, label: 'Ritkán jellemző' },
-  { value: 3, label: 'Gyakran jellemző' },
-  { value: 4, label: 'Teljes mértékben jellemző' },
-] as const;
-
 export default function QuestionSlider({
   question,
   questionNumber,
@@ -41,68 +34,94 @@ export default function QuestionSlider({
       </div>
 
       {/* Radio Options */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-        {OPTIONS.map((option) => {
-          const isSelected = value === option.value;
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3" role="radiogroup" aria-label={question.text}>
+        {question.options.map((option, index) => {
+          const isSelected = value === option.score;
           return (
             <motion.label
-              key={option.value}
-              className={`relative flex items-center justify-center p-4 rounded-xl border-2 cursor-pointer transition-all ${
+              key={option.score}
+              className={`relative flex items-center justify-center p-4 min-w-[44px] min-h-[44px] rounded-xl cursor-pointer transition-all ${
                 isSelected
-                  ? 'border-current shadow-lg scale-105'
-                  : 'border-gray-200 hover:border-gray-300 hover:shadow-md'
+                  ? 'scale-105 shadow-2xl'
+                  : 'hover:shadow-lg'
               }`}
               style={{
-                borderColor: isSelected ? accentColor : undefined,
-                backgroundColor: isSelected ? `${accentColor}10` : undefined,
+                background: isSelected
+                  ? `linear-gradient(135deg, ${accentColor}20, ${accentColor}30)`
+                  : 'white',
+                border: `2px solid ${isSelected ? accentColor : '#e5e7eb'}`,
+                boxShadow: isSelected
+                  ? `0 0 30px ${accentColor}40, 0 10px 20px rgba(0,0,0,0.1)`
+                  : '0 2px 8px rgba(0,0,0,0.05)',
               }}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+              whileHover={{
+                scale: 1.03,
+                boxShadow: `0 0 20px ${accentColor}30, 0 8px 16px rgba(0,0,0,0.08)`,
+              }}
+              whileTap={{ scale: 0.97 }}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.05 }}
             >
+              {/* Belső glow kiválasztásnál */}
+              {isSelected && (
+                <motion.div
+                  className="absolute inset-0 rounded-xl blur-md pointer-events-none"
+                  style={{
+                    background: `linear-gradient(135deg, ${accentColor}25, ${accentColor}35)`,
+                  }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.3 }}
+                />
+              )}
+
+              {/* Külső pulzáló gyűrű kiválasztásnál */}
+              {isSelected && (
+                <motion.div
+                  className="absolute -inset-1 rounded-xl pointer-events-none"
+                  style={{
+                    border: `3px solid ${accentColor}`,
+                  }}
+                  animate={{
+                    opacity: [0.3, 0.7, 0.3],
+                    scale: [0.98, 1.02, 0.98],
+                  }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                />
+              )}
+
               <input
                 type="radio"
                 name={`question-${question.id}`}
-                value={option.value}
+                value={option.score}
                 checked={isSelected}
-                onChange={() => onChange(option.value)}
+                onChange={() => onChange(option.score)}
                 className="sr-only"
                 aria-label={option.label}
+                tabIndex={0}
               />
 
-              <div className="text-center">
-                {/* Number Badge */}
-                <div
-                  className={`w-10 h-10 rounded-full mx-auto mb-2 flex items-center justify-center text-lg font-bold transition-colors ${
-                    isSelected ? 'text-white' : 'text-gray-400 bg-gray-100'
-                  }`}
-                  style={{
-                    backgroundColor: isSelected ? accentColor : undefined,
-                  }}
-                >
-                  {option.value}
-                </div>
-
-                {/* Label */}
-                <span
-                  className={`text-sm font-medium ${
-                    isSelected ? 'text-gray-900' : 'text-gray-600'
-                  }`}
-                >
-                  {option.label}
-                </span>
+              {/* Szám badge */}
+              <div
+                className={`absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                  isSelected ? 'text-white' : 'text-gray-400'
+                }`}
+                style={{
+                  backgroundColor: isSelected ? accentColor : '#f3f4f6',
+                }}
+              >
+                {option.score}
               </div>
 
-              {/* Selection Indicator */}
-              {isSelected && (
-                <motion.div
-                  layoutId={`selected-${question.id}`}
-                  className="absolute inset-0 rounded-xl border-2"
-                  style={{ borderColor: accentColor }}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.2 }}
-                />
-              )}
+              {/* Label szöveg */}
+              <span
+                className={`text-center font-medium relative z-10 ${
+                  isSelected ? 'text-gray-900' : 'text-gray-700'
+                }`}
+              >
+                {option.label}
+              </span>
             </motion.label>
           );
         })}

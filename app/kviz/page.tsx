@@ -17,18 +17,23 @@ export default function QuizPage() {
     setIsSubmitting(true);
 
     try {
+      // Prepare request body
+      const requestBody = {
+        name: userInfo.full_name, // API expects 'name', but UserInfo has 'full_name'
+        email: userInfo.email,
+        age: userInfo.age || undefined, // Convert null to undefined for optional field
+        answers,
+      };
+
+      console.log('Submitting quiz:', requestBody);
+
       // Submit quiz to API
       const response = await fetch('/api/submit-quiz', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          name: userInfo.full_name,
-          email: userInfo.email,
-          age: userInfo.age,
-          answers,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {

@@ -64,19 +64,71 @@ const config: Config = {
         'gradient-rose-gold': 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
         'gradient-purple-pink': 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)',
         'gradient-mystical': 'linear-gradient(135deg, #d299c2 0%, #fef9d7 100%)',
+        'chakra-radial': 'radial-gradient(circle at center, var(--chakra-color-alpha), transparent)',
+        'energy-pattern': 'repeating-radial-gradient(circle at center, transparent 0, rgba(147,112,219,0.05) 2px, transparent 4px)',
+      },
+      boxShadow: {
+        'chakra-glow': '0 0 30px rgba(147, 112, 219, 0.6)',
+        'chakra-glow-lg': '0 0 50px rgba(147, 112, 219, 0.8)',
+        'chakra-ring': '0 0 0 3px rgba(147, 112, 219, 0.3)',
+      },
+      blur: {
+        'xs': '2px',
+        'sm': '4px',
+        'md': '8px',
+        'lg': '12px',
+        'xl': '16px',
+        '2xl': '24px',
+        '3xl': '40px',
+        '4xl': '64px',
       },
       fontFamily: {
-        'serif': ['Playfair Display', 'Georgia', 'serif'],
-        'sans': ['Inter', 'Helvetica', 'Arial', 'sans-serif'],
+        'serif': ['var(--font-playfair)', 'Playfair Display', 'Georgia', 'serif'],
+        'sans': ['var(--font-inter)', 'Inter', 'Helvetica', 'Arial', 'sans-serif'],
       },
       animation: {
         'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
         'float': 'float 6s ease-in-out infinite',
+        'breathe': 'breathe 4s ease-in-out infinite',
+        'energy-flow': 'energy-flow 3s linear infinite',
+        'chakra-pulse': 'chakra-pulse 2s ease-in-out infinite',
+        'float-slow': 'float 8s ease-in-out infinite',
       },
       keyframes: {
         float: {
           '0%, 100%': { transform: 'translateY(0px)' },
           '50%': { transform: 'translateY(-20px)' },
+        },
+        breathe: {
+          '0%, 100%': {
+            transform: 'scale(1)',
+            opacity: '0.8'
+          },
+          '50%': {
+            transform: 'scale(1.05)',
+            opacity: '1'
+          },
+        },
+        'energy-flow': {
+          '0%': {
+            transform: 'translateY(0) translateX(0)',
+            opacity: '0'
+          },
+          '50%': {
+            opacity: '0.6'
+          },
+          '100%': {
+            transform: 'translateY(-100vh) translateX(20px)',
+            opacity: '0'
+          },
+        },
+        'chakra-pulse': {
+          '0%, 100%': {
+            boxShadow: '0 0 20px var(--chakra-color-60)'
+          },
+          '50%': {
+            boxShadow: '0 0 40px var(--chakra-color-80)'
+          },
         },
       },
     },

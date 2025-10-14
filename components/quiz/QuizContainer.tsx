@@ -1,79 +1,101 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChakraName, QuizAnswers, UserInfo } from '@/types';
 import { QUESTIONS } from '@/lib/quiz/questions';
 import { CHAKRAS } from '@/lib/quiz/chakras';
 import ProgressBar from './ProgressBar';
-import ChakraSection from './ChakraSection';
+import SingleQuestionView from './SingleQuestionView';
 import UserInfoForm from './UserInfoForm';
-import Button from '@/components/ui/Button';
 
 interface QuizContainerProps {
   onComplete: (answers: QuizAnswers, userInfo: UserInfo) => void;
 }
 
+// Csakra-specifikus háttér gradiens definíciók
+const chakraGradients: Record<number, string> = {
+  0: 'from-red-50 via-rose-50 to-white',        // Gyökércsakra
+  1: 'from-orange-50 via-amber-50 to-white',    // Szakrális
+  2: 'from-yellow-50 via-amber-100 to-white',   // Napfonat
+  3: 'from-green-50 via-emerald-50 to-white',   // Szív
+  4: 'from-blue-50 via-sky-50 to-white',        // Torok
+  5: 'from-purple-50 via-indigo-50 to-white',   // Harmadik szem
+  6: 'from-violet-50 via-purple-50 to-white'    // Korona
+};
+
 export default function QuizContainer({ onComplete }: QuizContainerProps) {
-  const [currentSection, setCurrentSection] = useState(0);
+  // State management
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0); // 0-27
   const [answers, setAnswers] = useState<number[]>(new Array(28).fill(0));
-  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
+  const [history, setHistory] = useState<number[]>([]); // Vissza gomb történet
+  const [autoAdvanceTimer, setAutoAdvanceTimer] = useState<NodeJS.Timeout | null>(null);
+  const [showUserInfoForm, setShowUserInfoForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const totalSections = 7; // 7 chakra sections
-  const isUserInfoStep = currentSection === totalSections;
-  const currentChakra = !isUserInfoStep ? CHAKRAS[currentSection] : null;
+  // Számított értékek
+  const currentChakraIndex = Math.floor(currentQuestionIndex / 4); // 0-6
+  const questionWithinChakra = (currentQuestionIndex % 4) + 1; // 1-4
+  const currentChakra = CHAKRAS[currentChakraIndex];
+  const currentQuestion = QUESTIONS[currentQuestionIndex];
+  const allQuestionsAnswered = answers.every(a => a > 0);
 
-  // Get questions for current chakra section
-  const getCurrentQuestions = () => {
-    if (isUserInfoStep) return [];
-    const startIdx = currentSection * 4;
-    return QUESTIONS.slice(startIdx, startIdx + 4);
-  };
-
-  // Get answers for current section
-  const getCurrentAnswers = () => {
-    if (isUserInfoStep) return [];
-    const startIdx = currentSection * 4;
-    return answers.slice(startIdx, startIdx + 4);
-  };
-
-  // Update answer for a specific question
-  const handleAnswerChange = (questionIndex: number, value: number) => {
-    const globalIndex = currentSection * 4 + questionIndex;
+  // Válasz megváltoztatása
+  const handleAnswerChange = (value: number) => {
+    // 1. Válasz mentése
     const newAnswers = [...answers];
-    newAnswers[globalIndex] = value;
+    newAnswers[currentQuestionIndex] = value;
     setAnswers(newAnswers);
-  };
 
-  // Check if current section is complete
-  const isSectionComplete = () => {
-    if (isUserInfoStep) {
-      return userInfo !== null;
+    // 2. Töröld az esetleges korábbi timert
+    if (autoAdvanceTimer) {
+      clearTimeout(autoAdvanceTimer);
     }
-    const currentAnswers = getCurrentAnswers();
-    return currentAnswers.every(answer => answer > 0);
+
+    // 3. Auto-advance 800ms után (csak ha választottál!)
+    const timer = setTimeout(() => {
+      if (currentQuestionIndex < 27) {
+        handleNext();
+      } else {
+        // Utolsó kérdés után → UserInfo form
+        setShowUserInfoForm(true);
+      }
+    }, 800);
+
+    setAutoAdvanceTimer(timer);
   };
 
-  // Navigate to next section
+  // Következő kérdésre lépés
   const handleNext = () => {
-    if (currentSection < totalSections) {
-      setCurrentSection(currentSection + 1);
+    if (currentQuestionIndex < 27) {
+      // Mentsd az előzményekbe
+      setHistory(prev => [...prev, currentQuestionIndex]);
+      setCurrentQuestionIndex(currentQuestionIndex + 1);
       window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (currentQuestionIndex === 27 && answers[27] > 0) {
+      // Utolsó kérdés után → UserInfo form (csak ha megválaszolva)
+      setShowUserInfoForm(true);
     }
   };
 
-  // Navigate to previous section
-  const handlePrevious = () => {
-    if (currentSection > 0) {
-      setCurrentSection(currentSection - 1);
+  // Vissza lépés
+  const handleBack = () => {
+    // Töröld az auto-advance timert
+    if (autoAdvanceTimer) {
+      clearTimeout(autoAdvanceTimer);
+      setAutoAdvanceTimer(null);
+    }
+
+    if (history.length > 0) {
+      const previousIndex = history[history.length - 1];
+      setHistory(prev => prev.slice(0, -1));
+      setCurrentQuestionIndex(previousIndex);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
   // Handle user info form submission
   const handleUserInfoSubmit = async (info: UserInfo) => {
-    setUserInfo(info);
     setIsSubmitting(true);
     try {
       await onComplete(answers as QuizAnswers, info);
@@ -83,34 +105,98 @@ export default function QuizContainer({ onComplete }: QuizContainerProps) {
     }
   };
 
+  // Timer cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (autoAdvanceTimer) {
+        clearTimeout(autoAdvanceTimer);
+      }
+    };
+  }, [autoAdvanceTimer]);
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-spiritual-purple-50 via-white to-spiritual-rose-50 py-8 px-4">
-      <div className="max-w-4xl mx-auto">
-        {/* Progress Bar */}
-        <ProgressBar
-          currentSection={currentSection}
-          totalSections={totalSections}
-          chakra={currentChakra}
+    <div className={`min-h-screen bg-gradient-to-br ${chakraGradients[currentChakraIndex]} transition-colors duration-1000 py-8 px-4 relative overflow-hidden`}>
+      {/* Ambient gradient orbs - csakra színekkel */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {/* Nagy gömb - jobb felső */}
+        <motion.div
+          className="absolute top-20 right-10 w-96 h-96 rounded-full blur-3xl opacity-30"
+          style={{
+            backgroundColor: currentChakra.color,
+          }}
+          animate={{
+            scale: [1, 1.3, 1],
+            opacity: [0.2, 0.4, 0.2],
+          }}
+          transition={{
+            duration: 8,
+            repeat: Infinity,
+            ease: 'easeInOut'
+          }}
         />
+
+        {/* Kisebb gömb - bal alsó */}
+        <motion.div
+          className="absolute bottom-20 left-10 w-64 h-64 rounded-full blur-3xl opacity-20"
+          style={{
+            backgroundColor: currentChakra.color,
+          }}
+          animate={{
+            scale: [1, 1.2, 1],
+            opacity: [0.15, 0.3, 0.15],
+          }}
+          transition={{
+            duration: 10,
+            repeat: Infinity,
+            ease: 'easeInOut'
+          }}
+        />
+
+        {/* Extra kis gömb - jobb alsó */}
+        <motion.div
+          className="absolute bottom-32 right-1/4 w-48 h-48 rounded-full blur-2xl opacity-15"
+          style={{
+            backgroundColor: currentChakra.color,
+          }}
+          animate={{
+            scale: [1, 1.4, 1],
+            opacity: [0.1, 0.25, 0.1],
+          }}
+          transition={{
+            duration: 12,
+            repeat: Infinity,
+            ease: 'easeInOut'
+          }}
+        />
+      </div>
+
+      <div className="max-w-4xl mx-auto relative z-10">
+        {/* Progress Bar */}
+        {!showUserInfoForm && (
+          <ProgressBar
+            currentQuestionIndex={currentQuestionIndex}
+            totalQuestions={28}
+            chakras={CHAKRAS}
+          />
+        )}
 
         {/* Content */}
         <div className="mt-8">
           <AnimatePresence mode="wait">
-            {!isUserInfoStep ? (
-              <motion.div
-                key={`section-${currentSection}`}
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.3 }}
-              >
-                <ChakraSection
-                  chakra={currentChakra!}
-                  questions={getCurrentQuestions()}
-                  answers={getCurrentAnswers()}
-                  onAnswerChange={handleAnswerChange}
-                />
-              </motion.div>
+            {!showUserInfoForm ? (
+              <SingleQuestionView
+                key={`question-${currentQuestionIndex}`}
+                question={currentQuestion}
+                questionNumber={currentQuestionIndex + 1}
+                totalQuestions={28}
+                questionWithinChakra={questionWithinChakra}
+                chakra={currentChakra}
+                value={answers[currentQuestionIndex]}
+                onAnswerChange={handleAnswerChange}
+                canGoBack={history.length > 0}
+                onBack={handleBack}
+                onNext={handleNext}
+              />
             ) : (
               <motion.div
                 key="user-info"
@@ -127,29 +213,6 @@ export default function QuizContainer({ onComplete }: QuizContainerProps) {
             )}
           </AnimatePresence>
         </div>
-
-        {/* Navigation */}
-        {!isUserInfoStep && (
-          <div className="mt-12 flex justify-between gap-4">
-            <Button
-              variant="outline"
-              onClick={handlePrevious}
-              disabled={currentSection === 0}
-              className="min-w-[120px]"
-            >
-              ← Előző
-            </Button>
-
-            <Button
-              variant="primary"
-              onClick={handleNext}
-              disabled={!isSectionComplete()}
-              className="min-w-[120px]"
-            >
-              {currentSection === totalSections - 1 ? 'Befejezés' : 'Következő'} →
-            </Button>
-          </div>
-        )}
       </div>
     </div>
   );

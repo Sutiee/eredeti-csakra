@@ -82,7 +82,7 @@ export default function Hero() {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.8, duration: 0.5 }}
           >
-            <Button href="/kviz" size="lg" variant="primary">
+            <Button href="/kviz" size="lg" variant="primary" aria-label="Kezdem az ingyenes csakra elemzést - 3 perc alatt">
               Kezdem az elemzést →
             </Button>
           </motion.div>

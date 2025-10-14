@@ -28,11 +28,13 @@ const CHAKRA_POSITIONS: Record<number, { x: number; y: number }> = {
 };
 
 // Visual characteristics based on score level
+// Minimum touch target size: 44x44px (22 radius at 200px viewBox width)
 const getChakraVisuals = (level: string) => {
   switch (level) {
     case "balanced":
       return {
-        radius: 24,
+        radius: 26, // Increased from 24 for better touch target
+        hitRadius: 28, // Extra hitbox for better accessibility
         opacity: 1,
         blur: 16,
         pulseScale: [1, 1.2, 1],
@@ -40,7 +42,8 @@ const getChakraVisuals = (level: string) => {
       };
     case "imbalanced":
       return {
-        radius: 18,
+        radius: 22, // Increased from 18 for better touch target
+        hitRadius: 28,
         opacity: 0.7,
         blur: 12,
         pulseScale: [1, 1.1, 1],
@@ -48,7 +51,8 @@ const getChakraVisuals = (level: string) => {
       };
     case "blocked":
       return {
-        radius: 12,
+        radius: 22, // Increased from 12 for better touch target
+        hitRadius: 28,
         opacity: 0.4,
         blur: 8,
         pulseScale: [1, 1.05, 1],
@@ -56,7 +60,8 @@ const getChakraVisuals = (level: string) => {
       };
     default:
       return {
-        radius: 18,
+        radius: 22,
+        hitRadius: 28,
         opacity: 0.7,
         blur: 12,
         pulseScale: [1, 1.1, 1],
@@ -230,6 +235,22 @@ export default function ChakraSilhouette({
 
           return (
             <g key={index}>
+              {/* Invisible hit area for better touch targets (44x44px minimum) */}
+              <circle
+                cx={x}
+                cy={y}
+                r={visuals.hitRadius}
+                fill="transparent"
+                style={{ cursor: "pointer" }}
+                onMouseEnter={() => setHoveredChakra(metadata?.key || null)}
+                onMouseLeave={() => setHoveredChakra(null)}
+                onClick={() => handleChakraClick(point.chakraScore)}
+                onKeyDown={(e: any) => handleChakraKeyPress(e, point.chakraScore)}
+                tabIndex={0}
+                role="button"
+                aria-label={`${metadata?.name} csakra - Állapot: ${point.chakraScore.interpretation.status}. Kattints a részletekért.`}
+              />
+
               {/* Warning ring for problematic chakras */}
               {warningRingColor && (
                 <motion.circle
@@ -242,9 +263,12 @@ export default function ChakraSilhouette({
                   opacity={0.8}
                   variants={chakraVariants}
                   initial="hidden"
-                  animate="visible"
                   custom={index}
                   style={{ pointerEvents: "none" }}
+                  animate={{
+                    opacity: [0.3, 0.8, 0.3],
+                    scale: [0.95, 1.05, 0.95],
+                  }}
                   transition={{
                     opacity: {
                       repeat: Infinity,
@@ -258,10 +282,6 @@ export default function ChakraSilhouette({
                       duration: point.chakraScore.level === "blocked" ? 1.5 : 2.5,
                       ease: "easeInOut",
                     },
-                  }}
-                  animate={{
-                    opacity: [0.3, 0.8, 0.3],
-                    scale: [0.95, 1.05, 0.95],
                   }}
                 />
               )}
@@ -278,18 +298,8 @@ export default function ChakraSilhouette({
                 initial="hidden"
                 animate="visible"
                 custom={index}
-                style={{ cursor: "pointer" }}
+                style={{ pointerEvents: "none" }}
                 className="chakra-point"
-                aria-label={`${metadata?.name} - Score: ${point.chakraScore.score}`}
-                tabIndex={0}
-                role="button"
-                onMouseEnter={() => setHoveredChakra(metadata?.key || null)}
-                onMouseLeave={() => setHoveredChakra(null)}
-                onClick={() => handleChakraClick(point.chakraScore)}
-                onKeyPress={(e: any) =>
-                  handleChakraKeyPress(e, point.chakraScore)
-                }
-                whileHover={{ scale: 1.2 }}
                 transition={{
                   scale: {
                     repeat: Infinity,

@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createClient } from '@supabase/supabase-js';
 import { calculateChakraScores, validateQuizAnswers } from '@/lib/quiz/scoring';
+import { logger } from '@/lib/utils/logger';
 import type { QuizAnswers, ChakraScores } from '@/types';
 
 /**
@@ -29,10 +30,19 @@ export async function POST(request: NextRequest) {
     // Parse request body
     const body = await request.json();
 
+    logger.info('Received quiz submission', {
+      context: 'POST /api/submit-quiz',
+      data: { hasName: !!body.name, hasEmail: !!body.email, answersCount: body.answers?.length },
+    });
+
     // Validate request data
     const validationResult = QuizSubmissionSchema.safeParse(body);
 
     if (!validationResult.success) {
+      logger.error('Validation failed', validationResult.error, {
+        context: 'POST /api/submit-quiz',
+        data: { errors: validationResult.error.errors },
+      });
       return NextResponse.json(
         {
           data: null,
@@ -101,7 +111,9 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (dbError || !result) {
-      console.error('Database error:', dbError);
+      logger.error('Database error', dbError, {
+        context: 'POST /api/submit-quiz',
+      });
       return NextResponse.json(
         {
           data: null,
@@ -127,7 +139,9 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
   } catch (error) {
-    console.error('Unexpected error in POST /api/submit-quiz:', error);
+    logger.error('Unexpected error in POST /api/submit-quiz', error, {
+      context: 'POST /api/submit-quiz',
+    });
 
     return NextResponse.json(
       {
@@ -145,14 +159,32 @@ export async function POST(request: NextRequest) {
 
 /**
  * OPTIONS handler for CORS preflight
+ * Allows requests from same origin and configured domains
  */
-export async function OPTIONS() {
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || '';
+  const allowedOrigins = [
+    process.env.NEXT_PUBLIC_SITE_URL || 'https://eredeticsakra.hu',
+    'http://localhost:3000',
+    'http://localhost:3001',
+  ];
+
+  const corsHeaders: Record<string, string> = {
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Max-Age': '86400', // 24 hours
+  };
+
+  // In development, allow all origins; in production, only allow configured origins
+  if (process.env.NODE_ENV === 'development') {
+    corsHeaders['Access-Control-Allow-Origin'] = '*';
+  } else if (allowedOrigins.includes(origin)) {
+    corsHeaders['Access-Control-Allow-Origin'] = origin;
+    corsHeaders['Vary'] = 'Origin';
+  }
+
   return new NextResponse(null, {
     status: 204,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
-    },
+    headers: corsHeaders,
   });
 }

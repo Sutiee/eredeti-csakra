@@ -103,12 +103,15 @@ export default function UserInfoForm({ onSubmit, disabled = false }: UserInfoFor
     const dataToValidate = {
       full_name: formData.full_name,
       email: formData.email,
-      age: formData.age === '' ? null : Number(formData.age),
+      age: formData.age === '' ? undefined : Number(formData.age),
     };
+
+    console.log('UserInfoForm submitting:', dataToValidate);
 
     // Validate all fields
     try {
       const validatedData = userInfoSchema.parse(dataToValidate);
+      console.log('UserInfoForm validated:', validatedData);
       onSubmit(validatedData as UserInfo);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -173,9 +176,13 @@ export default function UserInfoForm({ onSubmit, disabled = false }: UserInfoFor
                 : 'border-gray-200 focus:border-spiritual-purple-400'
             } disabled:bg-gray-100 disabled:cursor-not-allowed`}
             required
+            aria-invalid={errors.full_name && touched.full_name ? 'true' : 'false'}
+            aria-describedby={errors.full_name && touched.full_name ? 'full_name-error' : undefined}
           />
           {errors.full_name && touched.full_name && (
-            <p className="mt-1 text-sm text-red-600">{errors.full_name}</p>
+            <p id="full_name-error" className="mt-1 text-sm text-red-600" role="alert">
+              {errors.full_name}
+            </p>
           )}
         </div>
 
@@ -202,11 +209,15 @@ export default function UserInfoForm({ onSubmit, disabled = false }: UserInfoFor
                 : 'border-gray-200 focus:border-spiritual-purple-400'
             } disabled:bg-gray-100 disabled:cursor-not-allowed`}
             required
+            aria-invalid={errors.email && touched.email ? 'true' : 'false'}
+            aria-describedby={errors.email && touched.email ? 'email-error' : 'email-hint'}
           />
           {errors.email && touched.email && (
-            <p className="mt-1 text-sm text-red-600">{errors.email}</p>
+            <p id="email-error" className="mt-1 text-sm text-red-600" role="alert">
+              {errors.email}
+            </p>
           )}
-          <p className="mt-2 text-xs text-gray-500">
+          <p id="email-hint" className="mt-2 text-xs text-gray-500">
             📧 Az email címedet csak az eredmény elküldésére használjuk. Nem küldünk spam-et!
           </p>
         </div>
@@ -235,9 +246,13 @@ export default function UserInfoForm({ onSubmit, disabled = false }: UserInfoFor
                 ? 'border-red-400 bg-red-50'
                 : 'border-gray-200 focus:border-spiritual-purple-400'
             } disabled:bg-gray-100 disabled:cursor-not-allowed`}
+            aria-invalid={errors.age && touched.age ? 'true' : 'false'}
+            aria-describedby={errors.age && touched.age ? 'age-error' : undefined}
           />
           {errors.age && touched.age && (
-            <p className="mt-1 text-sm text-red-600">{errors.age}</p>
+            <p id="age-error" className="mt-1 text-sm text-red-600" role="alert">
+              {errors.age}
+            </p>
           )}
         </div>
 

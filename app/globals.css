@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -43,4 +41,180 @@ html {
 
 ::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+}
+
+/* Focus indicators for keyboard navigation - WCAG AA Compliance */
+*:focus-visible {
+  outline: 3px solid #A855F7; /* purple-500 */
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+button:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible,
+[role="tab"]:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 3px solid #EC4899; /* pink-500 */
+  outline-offset: 2px;
+}
+
+/* Ensure skip link is accessible */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* ============================================
+   v1.1 PATCH: Spirituális Animációk + Accessibility
+   ============================================ */
+
+/* Reduced Motion Support - WCAG AAA */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* Breathing animations letiltása */
+  .animate-breathe,
+  .animate-energy-flow,
+  .animate-chakra-pulse,
+  .animate-float-slow {
+    animation: none !important;
+  }
+}
+
+/* CSS változók csakra színekhez */
+:root {
+  --chakra-root: #DC143C;
+  --chakra-sacral: #FF8C00;
+  --chakra-solar: #FFD700;
+  --chakra-heart: #32CD32;
+  --chakra-throat: #4169E1;
+  --chakra-third-eye: #9370DB;
+  --chakra-crown: #9400D3;
+}
+
+/* Glassmorphism utility */
+.glass-effect {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Glow text effect */
+.text-glow {
+  text-shadow: 0 0 20px currentColor, 0 0 40px currentColor;
+}
+
+/* Subtle gradient border */
+.gradient-border {
+  position: relative;
+  background-clip: padding-box;
+}
+
+.gradient-border::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: -1;
+  margin: -2px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, var(--chakra-color, #9333ea), transparent);
+}
+
+/* Smooth scroll enhancement - updated with reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* Chakra-specific focus colors */
+.focus-chakra:focus-visible {
+  outline-color: var(--chakra-color, #A855F7);
+  box-shadow: 0 0 0 4px rgba(var(--chakra-color-rgb, 168, 85, 247), 0.2);
+}
+
+/* Selection color */
+::selection {
+  background-color: rgba(147, 112, 219, 0.3);
+  color: inherit;
+}
+
+::-moz-selection {
+  background-color: rgba(147, 112, 219, 0.3);
+  color: inherit;
+}
+
+/* Scroll track styling (enhanced) */
+::-webkit-scrollbar-track {
+  background: rgba(243, 244, 246, 0.5);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(147, 112, 219, 0.3);
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(147, 112, 219, 0.5);
+}
+
+/* Loading skeleton animation (future use) */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(243, 244, 246, 1) 0%,
+    rgba(229, 231, 235, 1) 50%,
+    rgba(243, 244, 246, 1) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Print styles (eredmény oldal nyomtatáshoz) */
+@media print {
+  /* Hide navigation, progress bars */
+  .no-print {
+    display: none !important;
+  }
+
+  /* Reset backgrounds */
+  body {
+    background: white !important;
+  }
+
+  /* Ensure text is readable */
+  * {
+    color: black !important;
+    text-shadow: none !important;
+  }
 }
