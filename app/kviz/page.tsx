@@ -4,13 +4,17 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { QuizAnswers, UserInfo } from '@/types';
 import QuizContainer from '@/components/quiz/QuizContainer';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import Toast from '@/components/ui/Toast';
 
 export default function QuizPage() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleQuizComplete = async (answers: QuizAnswers, userInfo: UserInfo) => {
     setError(null);
+    setIsSubmitting(true);
 
     try {
       // Submit quiz to API
@@ -20,7 +24,9 @@ export default function QuizPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          ...userInfo,
+          name: userInfo.full_name,
+          email: userInfo.email,
+          age: userInfo.age,
           answers,
         }),
       });
@@ -34,28 +40,34 @@ export default function QuizPage() {
 
       // Redirect to result page
       if (data.data?.id) {
-        router.push(`/eredmeny/${data.data.id}`);
+        // Small delay to show success state
+        setTimeout(() => {
+          router.push(`/eredmeny/${data.data.id}`);
+        }, 500);
       } else {
         throw new Error('Nincs eredmény azonosító');
       }
     } catch (err) {
       console.error('Quiz submission error:', err);
       setError(err instanceof Error ? err.message : 'Ismeretlen hiba történt');
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <main className="min-h-screen">
-      {error && (
-        <div className="fixed top-4 right-4 max-w-md bg-red-100 border-2 border-red-400 text-red-700 px-6 py-4 rounded-xl shadow-lg z-50">
-          <p className="font-semibold">Hiba történt:</p>
-          <p className="text-sm mt-1">{error}</p>
-          <button
-            onClick={() => setError(null)}
-            className="mt-2 text-sm underline hover:no-underline"
-          >
-            Bezárás
-          </button>
+    <main className="min-h-screen relative">
+      {/* Error Toast */}
+      {error && <Toast message={error} type="error" onClose={() => setError(null)} />}
+
+      {/* Loading Overlay */}
+      {isSubmitting && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="bg-white rounded-2xl p-8 shadow-2xl">
+            <LoadingSpinner size="lg" message="Csakráid elemzése folyamatban..." />
+            <p className="text-center text-gray-500 text-sm mt-4">
+              Kérlek várj, amíg kiszámítjuk az eredményeidet
+            </p>
+          </div>
         </div>
       )}
 
