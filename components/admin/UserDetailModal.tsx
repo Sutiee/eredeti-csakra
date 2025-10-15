@@ -7,35 +7,13 @@
 
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useMemo } from 'react';
 import { format } from 'date-fns';
 import { hu } from 'date-fns/locale';
 import useSWR from 'swr';
 import { fetcher } from '@/lib/admin/swr-config';
 import { CHAKRAS } from '@/lib/quiz/chakras';
-
-interface UserDetailData {
-  id: string;
-  name: string;
-  email: string;
-  age: number | null;
-  answers: number[];
-  chakraScores: Record<string, number>;
-  quizStatus: 'completed' | 'abandoned';
-  reachedQuestion: number;
-  createdAt: string;
-  lastActivity: string;
-  purchases: Purchase[];
-  totalSpent: number;
-}
-
-interface Purchase {
-  id: string;
-  productName: string;
-  amount: number;
-  status: string;
-  createdAt: string;
-}
+import { UserDetail } from '@/types/admin-users';
 
 interface UserDetailModalProps {
   userId: string | null;
@@ -70,10 +48,16 @@ export function UserDetailModal({
   const modalRef = useRef<HTMLDivElement>(null);
 
   // Fetch user details
-  const { data: user, isLoading, error } = useSWR<UserDetailData>(
+  const { data: user, isLoading, error } = useSWR<UserDetail>(
     userId ? `/api/admin/users/${userId}` : null,
     fetcher
   );
+
+  // Calculate total spent from purchases
+  const totalSpent = useMemo(() => {
+    if (!user?.purchases) return 0;
+    return user.purchases.reduce((sum, p) => sum + p.amount, 0);
+  }, [user?.purchases]);
 
   // Handle escape key
   useEffect(() => {
@@ -194,11 +178,11 @@ export function UserDetailModal({
                     </div>
                     <div>
                       <p className="text-sm font-medium text-gray-500">
-                        Létrehozva
+                        Kvíz kitöltve
                       </p>
                       <p className="text-base text-white">
-                        {user.createdAt
-                          ? format(new Date(user.createdAt), 'yyyy. MMMM dd. HH:mm', {
+                        {user.quiz.completedAt
+                          ? format(new Date(user.quiz.completedAt), 'yyyy. MMMM dd. HH:mm', {
                               locale: hu,
                             })
                           : 'Nincs adat'}
@@ -206,11 +190,11 @@ export function UserDetailModal({
                     </div>
                     <div>
                       <p className="text-sm font-medium text-gray-500">
-                        Utolsó aktivitás
+                        Legutóbbi session
                       </p>
                       <p className="text-base text-white">
-                        {user.lastActivity
-                          ? format(new Date(user.lastActivity), 'yyyy. MMMM dd. HH:mm', {
+                        {user.sessions && user.sessions.length > 0 && user.sessions[0].startedAt
+                          ? format(new Date(user.sessions[0].startedAt), 'yyyy. MMMM dd. HH:mm', {
                               locale: hu,
                             })
                           : 'Nincs adat'}
@@ -231,45 +215,39 @@ export function UserDetailModal({
                     <span className="text-sm font-medium text-gray-500">
                       Állapot
                     </span>
-                    {user.quizStatus === 'completed' ? (
-                      <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
-                        ✓ Befejezett
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
-                        ⚠ Félbehagyott
-                      </span>
-                    )}
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                      ✓ Befejezett
+                    </span>
                   </div>
 
                   {/* Progress */}
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-sm font-medium text-gray-500">
-                        Előrehaladás
+                        Válaszok száma
                       </span>
                       <span className="text-sm font-semibold text-white">
-                        {user.reachedQuestion}/28 kérdés
+                        {user.quiz.answers?.length || 0}/28 kérdés
                       </span>
                     </div>
                     <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
                       <div
                         className="h-full bg-gradient-to-r from-purple-500 to-rose-500 transition-all duration-300"
                         style={{
-                          width: `${(user.reachedQuestion / 28) * 100}%`,
+                          width: `${((user.quiz.answers?.length || 0) / 28) * 100}%`,
                         }}
                       ></div>
                     </div>
                   </div>
 
                   {/* Answers Grid */}
-                  {user.answers.length > 0 && (
+                  {user.quiz.answers && user.quiz.answers.length > 0 && (
                     <div>
                       <p className="text-sm font-medium text-gray-500 mb-2">
                         Válaszok (1-4 skála)
                       </p>
                       <div className="grid grid-cols-7 sm:grid-cols-14 gap-2">
-                        {user.answers.map((answer, index) => (
+                        {user.quiz.answers.map((answer, index) => (
                           <div
                             key={index}
                             className="flex flex-col items-center justify-center p-2 bg-gray-800 rounded-lg border border-gray-700"
@@ -295,7 +273,7 @@ export function UserDetailModal({
                 </h3>
                 <div className="backdrop-blur-md bg-gray-800/70 rounded-xl p-6 border border-gray-700 space-y-4">
                   {CHAKRAS.map((chakra) => {
-                    const score = user.chakraScores[chakra.name] || 0;
+                    const score = user.quiz.chakraScores?.[chakra.name] || 0;
                     const maxScore = 16;
                     const percentage = (score / maxScore) * 100;
                     const isHealthy = score >= 12;
@@ -387,7 +365,7 @@ export function UserDetailModal({
                             Összesen
                           </span>
                           <span className="font-bold text-lg text-purple-700">
-                            {user.totalSpent.toLocaleString('hu-HU')} Ft
+                            {totalSpent.toLocaleString('hu-HU')} Ft
                           </span>
                         </div>
                       </div>
