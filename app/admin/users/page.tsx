@@ -7,8 +7,9 @@
 
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import useSWR from 'swr';
+import { toast } from 'sonner';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { UserTable, UserTableRow, SortColumn, SortDirection } from '@/components/admin/UserTable';
 import { Pagination } from '@/components/admin/Pagination';
@@ -43,6 +44,16 @@ export default function AdminUsersPage() {
 
   // Extract users array from response
   const users = response?.data || [];
+
+  // Show error toast when data loading fails
+  useEffect(() => {
+    if (error) {
+      toast.error('Hiba történt az adatok betöltése közben', {
+        description: 'Kérjük, frissítse az oldalt vagy próbálja újra később.',
+        duration: 5000,
+      });
+    }
+  }, [error]);
 
   /**
    * Filter users based on active filters
@@ -190,10 +201,6 @@ export default function AdminUsersPage() {
   const handleExport = () => {
     // Export filtered users (not just current page)
     exportUsersToCSV(sortedUsers);
-
-    // Show success toast (optional - implement later)
-    // For now, just log
-    console.log(`Exported ${sortedUsers.length} users to CSV`);
   };
 
   /**

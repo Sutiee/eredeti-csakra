@@ -12,6 +12,7 @@ import UpsellCheckboxes from './UpsellCheckboxes';
 import BundleOffer from './BundleOffer';
 import { PRODUCTS } from '@/lib/stripe/products';
 import type { ProductId } from '@/lib/stripe/products';
+import { useAnalytics } from '@/lib/admin/tracking/client';
 
 type CheckoutFormProps = {
   resultId: string;
@@ -32,6 +33,7 @@ export default function CheckoutForm({ resultId, email }: CheckoutFormProps) {
   ]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { trackEvent } = useAnalytics();
 
   /**
    * Calculate total price
@@ -54,28 +56,42 @@ export default function CheckoutForm({ resultId, email }: CheckoutFormProps) {
    */
   const toggleProduct = (productId: ProductId) => {
     setSelectedProducts((prev) => {
+      let newSelection: ProductId[];
+
       // If toggling bundle
       if (productId === 'prod_full_harmony_bundle') {
         if (prev.includes(productId)) {
           // Remove bundle, keep base report
-          return ['prod_personal_chakra_report'];
+          newSelection = ['prod_personal_chakra_report'];
         } else {
           // Select bundle only
-          return ['prod_full_harmony_bundle'];
+          newSelection = ['prod_full_harmony_bundle'];
+        }
+      } else {
+        // If bundle is selected, deselect it when selecting individual items
+        const withoutBundle = prev.filter((id) => id !== 'prod_full_harmony_bundle');
+
+        // Toggle individual product
+        if (withoutBundle.includes(productId)) {
+          const filtered = withoutBundle.filter((id) => id !== productId);
+          // Keep at least base report
+          newSelection = filtered.length > 0 ? filtered : ['prod_personal_chakra_report'];
+        } else {
+          newSelection = [...withoutBundle, productId];
         }
       }
 
-      // If bundle is selected, deselect it when selecting individual items
-      const withoutBundle = prev.filter((id) => id !== 'prod_full_harmony_bundle');
-
-      // Toggle individual product
-      if (withoutBundle.includes(productId)) {
-        const filtered = withoutBundle.filter((id) => id !== productId);
-        // Keep at least base report
-        return filtered.length > 0 ? filtered : ['prod_personal_chakra_report'];
-      } else {
-        return [...withoutBundle, productId];
+      // Track product selection
+      const isAdding = !prev.includes(productId);
+      if (isAdding) {
+        trackEvent('product_selected', {
+          product_id: productId,
+          product_name: PRODUCTS[productId]?.name,
+          result_id: resultId,
+        });
       }
+
+      return newSelection;
     });
   };
 

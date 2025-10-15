@@ -197,9 +197,11 @@ export function UserDetailModal({
                         Létrehozva
                       </p>
                       <p className="text-base text-white">
-                        {format(new Date(user.createdAt), 'yyyy. MMMM dd. HH:mm', {
-                          locale: hu,
-                        })}
+                        {user.createdAt
+                          ? format(new Date(user.createdAt), 'yyyy. MMMM dd. HH:mm', {
+                              locale: hu,
+                            })
+                          : 'Nincs adat'}
                       </p>
                     </div>
                     <div>
@@ -207,9 +209,11 @@ export function UserDetailModal({
                         Utolsó aktivitás
                       </p>
                       <p className="text-base text-white">
-                        {format(new Date(user.lastActivity), 'yyyy. MMMM dd. HH:mm', {
-                          locale: hu,
-                        })}
+                        {user.lastActivity
+                          ? format(new Date(user.lastActivity), 'yyyy. MMMM dd. HH:mm', {
+                              locale: hu,
+                            })
+                          : 'Nincs adat'}
                       </p>
                     </div>
                   </div>
@@ -358,11 +362,13 @@ export function UserDetailModal({
                               {purchase.productName}
                             </p>
                             <p className="text-sm text-gray-500">
-                              {format(
-                                new Date(purchase.createdAt),
-                                'yyyy. MM. dd. HH:mm',
-                                { locale: hu }
-                              )}
+                              {purchase.createdAt
+                                ? format(
+                                    new Date(purchase.createdAt),
+                                    'yyyy. MM. dd. HH:mm',
+                                    { locale: hu }
+                                  )
+                                : 'Nincs adat'}
                             </p>
                           </div>
                           <div className="text-right">

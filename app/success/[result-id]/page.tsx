@@ -11,6 +11,7 @@ import { motion } from 'framer-motion';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import ThankYouMessage from '@/components/success/ThankYouMessage';
 import DownloadLinks from '@/components/success/DownloadLinks';
+import { useAnalytics } from '@/lib/admin/tracking/client';
 
 /**
  * Purchase data type
@@ -37,6 +38,7 @@ export default function SuccessPage() {
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { trackEvent } = useAnalytics();
 
   /**
    * Fetch purchase data
@@ -52,7 +54,7 @@ export default function SuccessPage() {
         await new Promise((resolve) => setTimeout(resolve, 1500));
 
         // Mock data (replace with actual API call)
-        setPurchases([
+        const mockPurchases = [
           {
             id: '1',
             product_id: 'prod_personal_chakra_report',
@@ -62,7 +64,24 @@ export default function SuccessPage() {
             pdf_url: null,
             created_at: new Date().toISOString(),
           },
-        ]);
+        ];
+        setPurchases(mockPurchases);
+
+        // Track purchase completion
+        trackEvent('page_view', {
+          page_path: `/success/${resultId}`,
+          page_name: 'success',
+        });
+        trackEvent('purchase_completed', {
+          result_id: resultId,
+          session_id: sessionId,
+          products: mockPurchases.map((p) => p.product_id),
+          total_amount: mockPurchases.reduce((sum, p) => sum + p.amount, 0),
+        });
+        trackEvent('email_sent', {
+          result_id: resultId,
+          email_type: 'purchase_confirmation',
+        });
       } catch (err) {
         console.error('Error fetching purchases:', err);
         setError('Hiba történt a vásárlás adatainak betöltésekor');
@@ -74,7 +93,7 @@ export default function SuccessPage() {
     if (resultId && sessionId) {
       fetchPurchases();
     }
-  }, [resultId, sessionId]);
+  }, [resultId, sessionId, trackEvent]);
 
   /**
    * Loading State

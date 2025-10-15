@@ -8,6 +8,7 @@
 import { useState, ReactNode } from 'react';
 import { AdminSidebar } from './AdminSidebar';
 import { AdminHeader } from './AdminHeader';
+import { Toaster } from '@/components/ui/Toaster';
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -40,6 +41,9 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
           <div className="max-w-7xl mx-auto">{children}</div>
         </main>
       </div>
+
+      {/* Toast Notifications */}
+      <Toaster />
     </div>
   );
 }

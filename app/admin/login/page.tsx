@@ -7,6 +7,7 @@
 
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -32,16 +33,29 @@ export default function AdminLoginPage() {
       const result = await response.json();
 
       if (!response.ok) {
-        setError(result.error?.message || 'Bejelentkezési hiba történt');
+        const errorMessage = result.error?.message || 'Bejelentkezési hiba történt';
+        setError(errorMessage);
+        toast.error('Bejelentkezés sikertelen', {
+          description: errorMessage,
+          duration: 5000,
+        });
         setIsLoading(false);
         return;
       }
 
-      // Success - redirect to admin overview
+      // Success - show toast and redirect to admin overview
+      toast.success('Sikeres bejelentkezés!', {
+        description: 'Átirányítás az admin felületre...',
+      });
       router.push('/admin');
       router.refresh();
     } catch (err) {
-      setError('Hálózati hiba történt. Kérjük, próbálja újra.');
+      const errorMessage = 'Hálózati hiba történt. Kérjük, próbálja újra.';
+      setError(errorMessage);
+      toast.error('Kapcsolódási hiba', {
+        description: errorMessage,
+        duration: 5000,
+      });
       setIsLoading(false);
     }
   };

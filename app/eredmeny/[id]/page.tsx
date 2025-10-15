@@ -8,6 +8,7 @@ import ChakraSilhouette from '@/components/result/ChakraSilhouette';
 import ChakraCards from '@/components/result/ChakraCards';
 import { getChakraByName, CHAKRAS } from '@/lib/quiz/chakras';
 import type { QuizResultWithInterpretations, ChakraMetadata } from '@/types';
+import { useAnalytics } from '@/lib/admin/tracking/client';
 
 /**
  * Helper: Get chakra emoji symbol by position
@@ -63,6 +64,9 @@ export default function ResultPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<{ message: string; code: string } | null>(null);
 
+  // Analytics
+  const { trackEvent } = useAnalytics();
+
   // Refs for scroll-to functionality
   const chakraCardsRef = useRef<HTMLDivElement>(null);
 
@@ -88,6 +92,15 @@ export default function ResultPage() {
 
         if (data.data) {
           setResult(data.data);
+
+          // Track result view
+          trackEvent('page_view', {
+            page_path: `/eredmeny/${id}`,
+            page_name: 'result',
+          });
+          trackEvent('result_viewed', {
+            result_id: id,
+          });
         }
       } catch (err) {
         console.error('Error fetching result:', err);
@@ -103,7 +116,7 @@ export default function ResultPage() {
     if (id) {
       fetchResult();
     }
-  }, [id]);
+  }, [id, trackEvent]);
 
   /**
    * Get dominant chakra (most blocked/imbalanced) for dynamic theming
@@ -162,6 +175,12 @@ export default function ResultPage() {
    * Scroll to specific chakra card
    */
   const handleChakraClick = (chakraKey: string) => {
+    // Track chakra click
+    trackEvent('chakra_clicked', {
+      result_id: id,
+      chakra_name: chakraKey,
+    });
+
     if (chakraCardsRef.current) {
       const cardElement = chakraCardsRef.current.querySelector(`[data-chakra="${chakraKey}"]`);
       if (cardElement) {

@@ -5,7 +5,8 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { toast } from 'sonner';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { ProductKPICards } from '@/components/admin/ProductKPICards';
 import { ProductTable } from '@/components/admin/ProductTable';
@@ -87,6 +88,16 @@ export default function AdminProductsPage() {
     fetcher,
     { refreshInterval: 60000 } // Refresh every minute
   );
+
+  // Show error toast when data loading fails
+  useEffect(() => {
+    if (error) {
+      toast.error('Hiba történt az adatok betöltése közben', {
+        description: 'A termék adatokat nem sikerült betölteni. Próbálja újra később.',
+        duration: 5000,
+      });
+    }
+  }, [error]);
 
   return (
     <AdminLayout title="Termékek">

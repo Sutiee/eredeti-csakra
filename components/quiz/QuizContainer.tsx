@@ -8,6 +8,7 @@ import { CHAKRAS } from '@/lib/quiz/chakras';
 import ProgressBar from './ProgressBar';
 import SingleQuestionView from './SingleQuestionView';
 import UserInfoForm from './UserInfoForm';
+import { useAnalytics } from '@/lib/admin/tracking/client';
 
 interface QuizContainerProps {
   onComplete: (answers: QuizAnswers, userInfo: UserInfo) => void;
@@ -33,6 +34,9 @@ export default function QuizContainer({ onComplete }: QuizContainerProps) {
   const [showUserInfoForm, setShowUserInfoForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Analytics
+  const { trackEvent } = useAnalytics();
+
   // Számított értékek
   const currentChakraIndex = Math.floor(currentQuestionIndex / 4); // 0-6
   const questionWithinChakra = (currentQuestionIndex % 4) + 1; // 1-4
@@ -47,12 +51,20 @@ export default function QuizContainer({ onComplete }: QuizContainerProps) {
     newAnswers[currentQuestionIndex] = value;
     setAnswers(newAnswers);
 
-    // 2. Töröld az esetleges korábbi timert
+    // 2. Track question answered
+    trackEvent('quiz_question_answered', {
+      question_index: currentQuestionIndex,
+      question_number: currentQuestionIndex + 1,
+      chakra: currentChakra.name,
+      answer_value: value,
+    });
+
+    // 3. Töröld az esetleges korábbi timert
     if (autoAdvanceTimer) {
       clearTimeout(autoAdvanceTimer);
     }
 
-    // 3. Auto-advance 800ms után (csak ha választottál!)
+    // 4. Auto-advance 800ms után (csak ha választottál!)
     const timer = setTimeout(() => {
       if (currentQuestionIndex < 27) {
         handleNext();

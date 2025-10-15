@@ -8,6 +8,7 @@
 'use client';
 
 import { useState } from 'react';
+import { toast } from 'sonner';
 
 export interface UserFilters {
   search: string;
@@ -87,7 +88,14 @@ export function UserFilters({
           )}
           {onExport && (
             <button
-              onClick={onExport}
+              onClick={() => {
+                try {
+                  onExport();
+                  toast.success('Felhasználók sikeresen exportálva!');
+                } catch (error) {
+                  toast.error('Hiba történt az exportálás során');
+                }
+              }}
               className="px-3 py-1.5 text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-rose-600 rounded-md hover:from-purple-700 hover:to-rose-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-all duration-200 shadow-md"
               aria-label="Exportálás CSV formátumban"
             >

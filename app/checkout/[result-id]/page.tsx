@@ -12,6 +12,7 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import CheckoutForm from '@/components/checkout/CheckoutForm';
 import ProductSummary from '@/components/checkout/ProductSummary';
 import type { QuizResult } from '@/types';
+import { useAnalytics } from '@/lib/admin/tracking/client';
 
 /**
  * API Response type
@@ -35,6 +36,7 @@ export default function CheckoutPage() {
   const [result, setResult] = useState<QuizResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<{ message: string; code: string } | null>(null);
+  const { trackEvent } = useAnalytics();
 
   /**
    * Fetch quiz result
@@ -74,6 +76,16 @@ export default function CheckoutPage() {
       fetchResult();
     }
   }, [resultId]);
+
+  /**
+   * Track page view and checkout initiation
+   */
+  useEffect(() => {
+    if (resultId) {
+      trackEvent('page_view', { page_path: `/checkout/${resultId}`, page_name: 'checkout' });
+      trackEvent('checkout_initiated', { result_id: resultId });
+    }
+  }, [trackEvent, resultId]);
 
   /**
    * Loading State

@@ -1,16 +1,33 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { QuizAnswers, UserInfo } from '@/types';
 import QuizContainer from '@/components/quiz/QuizContainer';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import Toast from '@/components/ui/Toast';
+import { useAnalytics } from '@/lib/admin/tracking/client';
 
 export default function QuizPage() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { trackEvent } = useAnalytics();
+
+  // Track page view on mount
+  useEffect(() => {
+    trackEvent('page_view', { page_path: '/kviz', page_name: 'quiz' });
+    trackEvent('quiz_start');
+  }, [trackEvent]);
+
+  // Track abandonment on unmount (if quiz not completed)
+  useEffect(() => {
+    return () => {
+      if (!isSubmitting) {
+        trackEvent('quiz_abandoned');
+      }
+    };
+  }, [trackEvent, isSubmitting]);
 
   const handleQuizComplete = async (answers: QuizAnswers, userInfo: UserInfo) => {
     setError(null);
@@ -42,6 +59,9 @@ export default function QuizPage() {
       }
 
       const data = await response.json();
+
+      // Track quiz completion
+      trackEvent('quiz_completed', { result_id: data.data?.id });
 
       // Redirect to result page
       if (data.data?.id) {
