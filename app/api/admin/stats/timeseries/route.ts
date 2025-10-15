@@ -46,9 +46,9 @@ export async function GET(request: NextRequest) {
     let data: TimeSeriesData[] = [];
 
     if (metric === 'visitors') {
-      // Query unique visitors per day
-      const { data: pageViews, error } = await supabase
-        .from('page_views')
+      // FIXED: Query unique visitors per day from analytics_events
+      const { data: events, error } = await supabase
+        .from('analytics_events')
         .select('created_at, session_id')
         .gte('created_at', startDateStr);
 
@@ -56,12 +56,13 @@ export async function GET(request: NextRequest) {
 
       // Group by date manually
       const dailyMap = new Map<string, Set<string>>();
-      pageViews?.forEach((pv: any) => {
-        const date = new Date(pv.created_at).toISOString().split('T')[0];
+      events?.forEach((ev: any) => {
+        if (!ev.session_id) return; // Skip null session_ids
+        const date = new Date(ev.created_at).toISOString().split('T')[0];
         if (!dailyMap.has(date)) {
           dailyMap.set(date, new Set());
         }
-        dailyMap.get(date)?.add(pv.session_id);
+        dailyMap.get(date)?.add(ev.session_id);
       });
 
       data = Array.from(dailyMap.entries())
@@ -71,11 +72,11 @@ export async function GET(request: NextRequest) {
         }))
         .sort((a, b) => a.date.localeCompare(b.date));
     } else if (metric === 'revenue') {
-      // Query revenue per day
+      // FIXED: Query revenue per day (check for both statuses)
       const { data: purchases, error } = await supabase
         .from('purchases')
         .select('created_at, amount')
-        .eq('status', 'completed')
+        .in('status', ['completed', 'paid'])
         .gte('created_at', startDateStr);
 
       if (error) throw error;

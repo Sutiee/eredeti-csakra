@@ -35,36 +35,54 @@ export async function GET(request: NextRequest) {
     const startDateStr = startDate.toISOString();
 
     // Stage 1: Landing Page Visit
+    // FIXED: Use analytics_events with event_name='page_view' (page_views table is empty)
     const { data: landingVisits, error: landingError } = await supabase
-      .from('page_views')
+      .from('analytics_events')
       .select('session_id')
-      .eq('page_path', '/')
+      .eq('event_name', 'page_view')
       .gte('created_at', startDateStr);
 
     if (landingError) throw landingError;
 
-    const uniqueLandingVisitors = new Set(landingVisits?.map((v: any) => v.session_id)).size;
+    const uniqueLandingVisitors = new Set(
+      landingVisits?.map((v: any) => v.session_id).filter(Boolean)
+    ).size;
 
     // Stage 2: Started Quiz
+    // FIXED: Use analytics_events with event_name='quiz_start'
     const { data: quizStarts, error: quizStartsError } = await supabase
-      .from('quiz_sessions')
+      .from('analytics_events')
       .select('session_id')
-      .gte('started_at', startDateStr);
+      .eq('event_name', 'quiz_start')
+      .gte('created_at', startDateStr);
 
     if (quizStartsError) throw quizStartsError;
 
-    const uniqueQuizStarts = new Set(quizStarts?.map((q: any) => q.session_id)).size;
+    const uniqueQuizStarts = new Set(
+      quizStarts?.map((q: any) => q.session_id).filter(Boolean)
+    ).size;
 
-    // Stage 3: Reached Q10 (current_question_index >= 10)
+    // Stage 3: Reached Q10 (quiz_question_answered where question >= 10)
+    // FIXED: Use analytics_events
     const { data: q10Reached, error: q10Error } = await supabase
-      .from('quiz_sessions')
-      .select('session_id')
-      .gte('current_question_index', 10)
-      .gte('started_at', startDateStr);
+      .from('analytics_events')
+      .select('session_id, event_data')
+      .eq('event_name', 'quiz_question_answered')
+      .gte('created_at', startDateStr);
 
     if (q10Error) throw q10Error;
 
-    const uniqueQ10 = new Set(q10Reached?.map((q: any) => q.session_id)).size;
+    // Filter for question_index >= 10
+    const q10Sessions = new Set(
+      q10Reached
+        ?.filter((e: any) => {
+          const questionIndex = e.event_data?.question_index || 0;
+          return questionIndex >= 10;
+        })
+        .map((e: any) => e.session_id)
+        .filter(Boolean)
+    );
+    const uniqueQ10 = q10Sessions.size;
 
     // Stage 4: Completed Quiz
     const { count: completedQuizzes, error: completedError } = await supabase
@@ -74,44 +92,54 @@ export async function GET(request: NextRequest) {
 
     if (completedError) throw completedError;
 
-    // Stage 5: Viewed Results (page_path like '/eredmeny/%')
+    // Stage 5: Viewed Results
+    // FIXED: Use analytics_events with event_name='result_viewed'
     const { data: resultsViews, error: resultsError } = await supabase
-      .from('page_views')
+      .from('analytics_events')
       .select('session_id')
-      .like('page_path', '/eredmeny/%')
+      .eq('event_name', 'result_viewed')
       .gte('created_at', startDateStr);
 
     if (resultsError) throw resultsError;
 
-    const uniqueResultsViews = new Set(resultsViews?.map((v: any) => v.session_id)).size;
+    const uniqueResultsViews = new Set(
+      resultsViews?.map((v: any) => v.session_id).filter(Boolean)
+    ).size;
 
-    // Stage 6: Viewed Checkout (page_path like '/checkout/%')
+    // Stage 6: Viewed Checkout
+    // FIXED: Use analytics_events with event_name='checkout_initiated'
     const { data: checkoutViews, error: checkoutError } = await supabase
-      .from('page_views')
-      .select('session_id')
-      .like('page_path', '/checkout/%')
-      .gte('created_at', startDateStr);
-
-    if (checkoutError) throw checkoutError;
-
-    const uniqueCheckoutViews = new Set(checkoutViews?.map((v: any) => v.session_id)).size;
-
-    // Stage 7: Initiated Payment (event_name='checkout_initiated')
-    const { data: checkoutInitiations, error: initiationError } = await supabase
       .from('analytics_events')
       .select('session_id')
       .eq('event_name', 'checkout_initiated')
       .gte('created_at', startDateStr);
 
+    if (checkoutError) throw checkoutError;
+
+    const uniqueCheckoutViews = new Set(
+      checkoutViews?.map((v: any) => v.session_id).filter(Boolean)
+    ).size;
+
+    // Stage 7: Initiated Payment
+    // Use product_selected event as proxy
+    const { data: checkoutInitiations, error: initiationError } = await supabase
+      .from('analytics_events')
+      .select('session_id')
+      .eq('event_name', 'product_selected')
+      .gte('created_at', startDateStr);
+
     if (initiationError) throw initiationError;
 
-    const uniqueInitiations = new Set(checkoutInitiations?.map((e: any) => e.session_id)).size;
+    const uniqueInitiations = new Set(
+      checkoutInitiations?.map((e: any) => e.session_id).filter(Boolean)
+    ).size;
 
     // Stage 8: Completed Purchase
+    // FIXED: Check for both 'completed' and 'paid' status
     const { count: completedPurchases, error: purchaseError } = await supabase
       .from('purchases')
       .select('*', { count: 'exact', head: true })
-      .eq('status', 'completed')
+      .in('status', ['completed', 'paid'])
       .gte('created_at', startDateStr);
 
     if (purchaseError) throw purchaseError;

@@ -34,13 +34,19 @@ export async function GET(request: NextRequest) {
     startDate.setDate(startDate.getDate() - days);
     const startDateStr = startDate.toISOString();
 
-    // Query 1: Total Visitors (unique session_ids from page_views)
-    const { count: totalVisitors, error: visitorsError } = await supabase
-      .from('page_views')
-      .select('session_id', { count: 'exact', head: true })
+    // Query 1: Total Visitors (unique session_ids from analytics_events)
+    // FIXED: Use analytics_events instead of page_views (page_views table is empty)
+    const { data: visitorData, error: visitorsError } = await supabase
+      .from('analytics_events')
+      .select('session_id')
       .gte('created_at', startDateStr);
 
     if (visitorsError) throw visitorsError;
+
+    // Count unique session_ids (filter out nulls)
+    const totalVisitors = visitorData
+      ? new Set(visitorData.map((v: any) => v.session_id).filter(Boolean)).size
+      : 0;
 
     // Query 2: Completed Quizzes
     const { count: completedQuizzes, error: quizzesError } = await supabase
@@ -51,10 +57,11 @@ export async function GET(request: NextRequest) {
     if (quizzesError) throw quizzesError;
 
     // Query 3: Total Revenue and Purchase Count
+    // FIXED: Check for both 'completed' and 'paid' status
     const { data: revenueData, error: revenueError } = await supabase
       .from('purchases')
       .select('amount')
-      .eq('status', 'completed')
+      .in('status', ['completed', 'paid'])
       .gte('created_at', startDateStr);
 
     if (revenueError) throw revenueError;
@@ -64,17 +71,22 @@ export async function GET(request: NextRequest) {
     const averageOrderValue = purchaseCount > 0 ? totalRevenue / purchaseCount : 0;
 
     // Query 4: Active Sessions (last 24 hours)
+    // FIXED: Count unique sessions from analytics_events (quiz_sessions table is empty)
     const last24Hours = new Date();
     last24Hours.setHours(last24Hours.getHours() - 24);
     const last24HoursStr = last24Hours.toISOString();
 
-    const { count: activeSessions, error: sessionsError } = await supabase
-      .from('quiz_sessions')
-      .select('*', { count: 'exact', head: true })
-      .eq('status', 'active')
-      .gte('started_at', last24HoursStr);
+    const { data: recentSessions, error: sessionsError } = await supabase
+      .from('analytics_events')
+      .select('session_id')
+      .gte('created_at', last24HoursStr);
 
     if (sessionsError) throw sessionsError;
+
+    // Count unique sessions in last 24 hours
+    const activeSessions = recentSessions
+      ? new Set(recentSessions.map((s: any) => s.session_id).filter(Boolean)).size
+      : 0;
 
     // Calculate conversion rate
     const conversionRate =
