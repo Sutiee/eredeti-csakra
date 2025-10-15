@@ -1,61 +1,128 @@
 /**
  * Stripe Product Definitions
  * Eredeti Csakra - Product Metadata
+ *
+ * SETUP INSTRUCTIONS:
+ * 1. Create products in Stripe Dashboard (see docs/STRIPE_PRODUCT_SETUP.md)
+ * 2. Replace STRIPE_PRODUCT_IDS placeholder values with actual Product IDs from Stripe
+ * 3. Update STRIPE_PRICE_IDS with actual Price IDs from Stripe
  */
 
 export type ProductId =
-  | 'prod_personal_chakra_report'
-  | 'prod_chakra_handbook'
-  | 'prod_chakra_meditations'
-  | 'prod_full_harmony_bundle';
+  | 'detailed_pdf'
+  | 'meditations'
+  | 'bundle'
+  | 'ebook';
 
 export type ProductMetadata = {
   id: ProductId;
+  stripeProductId: string; // Actual Stripe Product ID (prod_xxx...)
+  stripePriceId: string;   // Actual Stripe Price ID (price_xxx...)
   name: string;
   description: string;
   price: number; // In HUF
-  priceId: string;
   currency: string;
-  bundlePrice?: number; // Discounted price when bought in bundle
+  metadata: {
+    product_type: string;
+    includes_meditation?: boolean;
+    includes_pdf?: boolean;
+    pdf_template?: string;
+    meditation_count?: number;
+    chakra_specific?: boolean;
+    access_duration_days?: number;
+    downloadable?: boolean;
+  };
 };
+
+/**
+ * IMPORTANT: Replace these with actual Stripe Product IDs
+ * Get these from: Stripe Dashboard → Products → [Product] → Copy Product ID
+ */
+const STRIPE_PRODUCT_IDS = {
+  DETAILED_PDF: process.env.STRIPE_PRODUCT_ID_DETAILED_PDF || 'prod_REPLACE_ME',
+  MEDITATIONS: process.env.STRIPE_PRODUCT_ID_MEDITATIONS || 'prod_REPLACE_ME',
+  BUNDLE: process.env.STRIPE_PRODUCT_ID_BUNDLE || 'prod_REPLACE_ME',
+  EBOOK: process.env.STRIPE_PRODUCT_ID_EBOOK || 'prod_REPLACE_ME',
+} as const;
+
+/**
+ * IMPORTANT: Replace these with actual Stripe Price IDs
+ * Get these from: Stripe Dashboard → Products → [Product] → Pricing → Copy Price ID
+ */
+const STRIPE_PRICE_IDS = {
+  DETAILED_PDF: process.env.STRIPE_PRICE_ID_DETAILED_PDF || 'price_REPLACE_ME',
+  MEDITATIONS: process.env.STRIPE_PRICE_ID_MEDITATIONS || 'price_REPLACE_ME',
+  BUNDLE: process.env.STRIPE_PRICE_ID_BUNDLE || 'price_REPLACE_ME',
+  EBOOK: process.env.STRIPE_PRICE_ID_EBOOK || 'price_REPLACE_ME',
+} as const;
 
 /**
  * Product catalog - all available products
  */
 export const PRODUCTS: Record<ProductId, ProductMetadata> = {
-  prod_personal_chakra_report: {
-    id: 'prod_personal_chakra_report',
-    name: 'Személyre Szabott Csakra Csomag',
-    description: 'Részletes PDF jelentés a csakráidról, személyre szabott javaslatokkal',
-    price: 2990,
-    priceId: 'price_2990_huf',
+  detailed_pdf: {
+    id: 'detailed_pdf',
+    stripeProductId: STRIPE_PRODUCT_IDS.DETAILED_PDF,
+    stripePriceId: STRIPE_PRICE_IDS.DETAILED_PDF,
+    name: 'Részletes Csakra Elemzés PDF',
+    description: 'Személyre szabott, 15+ oldalas PDF elemzés a 7 csakra részletes diagnosztikájával, gyakorlatokkal és első segély tervvel.',
+    price: 4990,
     currency: 'HUF',
+    metadata: {
+      product_type: 'detailed_pdf',
+      includes_meditation: false,
+      pdf_template: 'detailed_analysis',
+      chakra_specific: false,
+    },
   },
-  prod_chakra_handbook: {
-    id: 'prod_chakra_handbook',
-    name: 'Csakra Kézikönyv',
-    description: 'Átfogó útmutató a csakrák megértéséhez és harmonizálásához',
-    price: 1990,
-    priceId: 'price_1990_huf',
+  meditations: {
+    id: 'meditations',
+    stripeProductId: STRIPE_PRODUCT_IDS.MEDITATIONS,
+    stripePriceId: STRIPE_PRICE_IDS.MEDITATIONS,
+    name: '7 Meditációs Audiófájl Csomag',
+    description: 'Minden csakrához személyre szabott, magyar nyelvű geführt meditáció (összesen 7 audiófájl) a blokkok feloldására.',
+    price: 9990,
     currency: 'HUF',
-    bundlePrice: 1490, // Discounted in bundle
+    metadata: {
+      product_type: 'meditations',
+      includes_meditation: true,
+      meditation_count: 7,
+      chakra_specific: true,
+      access_duration_days: 365,
+    },
   },
-  prod_chakra_meditations: {
-    id: 'prod_chakra_meditations',
-    name: 'Meditációs Csomag',
-    description: '7 vezetett meditáció minden csakrához, professzionális hangminőséggel',
-    price: 3990,
-    priceId: 'price_3990_huf',
+  bundle: {
+    id: 'bundle',
+    stripeProductId: STRIPE_PRODUCT_IDS.BUNDLE,
+    stripePriceId: STRIPE_PRICE_IDS.BUNDLE,
+    name: 'Teljes Csakra Csomag (PDF + Meditációk)',
+    description: 'Kombinált ajánlat: Részletes PDF elemzés + 7 személyre szabott meditációs audiófájl. Teljes spirituális önfejlesztési csomag.',
+    price: 12990,
     currency: 'HUF',
-    bundlePrice: 2990, // Discounted in bundle
+    metadata: {
+      product_type: 'bundle',
+      includes_meditation: true,
+      includes_pdf: true,
+      meditation_count: 7,
+      chakra_specific: true,
+      access_duration_days: 365,
+    },
   },
-  prod_full_harmony_bundle: {
-    id: 'prod_full_harmony_bundle',
-    name: 'Teljes Harmónia Csomag',
-    description: 'Minden termék együtt - Jelentés + Kézikönyv + Meditációk (22% kedvezmény)',
+  ebook: {
+    id: 'ebook',
+    stripeProductId: STRIPE_PRODUCT_IDS.EBOOK,
+    stripePriceId: STRIPE_PRICE_IDS.EBOOK,
+    name: 'Csakra Gyógyítás Kézikönyv PDF',
+    description: 'Átfogó, 50+ oldalas digitális kézikönyv a 7 csakráról, gyógyítási technikákról, gyakorlatokról és mindennapi rutinokról.',
     price: 6990,
-    priceId: 'price_6990_huf',
     currency: 'HUF',
+    metadata: {
+      product_type: 'ebook',
+      includes_meditation: false,
+      pdf_template: 'handbook',
+      chakra_specific: false,
+      downloadable: true,
+    },
   },
 };
 
