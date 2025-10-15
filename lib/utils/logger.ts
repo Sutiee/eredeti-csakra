@@ -9,6 +9,7 @@ type LogLevel = 'info' | 'warn' | 'error' | 'debug';
 interface LoggerOptions {
   context?: string;
   data?: Record<string, unknown>;
+  [key: string]: unknown; // Allow any additional properties
 }
 
 /**

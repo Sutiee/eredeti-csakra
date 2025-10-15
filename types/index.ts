@@ -120,3 +120,35 @@ export type PersonalField = {
   min?: number;
   max?: number;
 };
+
+// Meditation Access Types
+export type MeditationAccess = {
+  id: string;
+  purchase_id: string;
+  email: string;
+  access_token: string;
+  expires_at: string | null;
+  is_active: boolean;
+  product_type: 'meditations' | 'bundle';
+  access_granted_at: string;
+  last_accessed_at: string | null;
+  access_count: number;
+  created_at: string;
+};
+
+// Purchase Types
+export type Purchase = {
+  id: string;
+  result_id: string | null;
+  email: string;
+  product_id: string;
+  product_name: string;
+  amount: number;
+  currency: string;
+  stripe_session_id: string | null;
+  stripe_payment_intent_id: string | null;
+  status: 'pending' | 'completed' | 'failed' | 'refunded';
+  pdf_url: string | null;
+  created_at: string;
+  updated_at: string;
+};

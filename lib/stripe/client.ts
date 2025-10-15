@@ -13,8 +13,8 @@ if (!process.env.STRIPE_SECRET_KEY) {
  * Server-side Stripe client instance
  * Used for creating checkout sessions, handling webhooks, etc.
  */
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: '2025-02-24.acacia',
+export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: '2025-09-30.clover',
   typescript: true,
   appInfo: {
     name: 'Eredeti Csakra',

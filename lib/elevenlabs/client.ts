@@ -5,15 +5,12 @@
 
 import { ElevenLabsClient } from "@elevenlabs/elevenlabs-js";
 
-if (!process.env.ELEVENLABS_API_KEY) {
-  throw new Error("ELEVENLABS_API_KEY environment variable is required");
-}
-
 /**
  * Initialize ElevenLabs client with API key
+ * Note: API key validation happens at runtime, not build time
  */
 export const elevenlabs = new ElevenLabsClient({
-  apiKey: process.env.ELEVENLABS_API_KEY
+  apiKey: process.env.ELEVENLABS_API_KEY || 'placeholder_for_build'
 });
 
 /**
@@ -26,6 +23,11 @@ export async function generateMeditationAudio(
   text: string,
   voiceId: string
 ): Promise<Buffer> {
+  // Runtime validation
+  if (!process.env.ELEVENLABS_API_KEY) {
+    throw new Error("ELEVENLABS_API_KEY environment variable is required");
+  }
+
   try {
     // Generate audio stream using ElevenLabs TTS
     const audioStream = await elevenlabs.textToSpeech.convert(voiceId, {
