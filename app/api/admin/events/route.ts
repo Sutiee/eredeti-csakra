@@ -61,20 +61,8 @@ function getUserAgent(request: NextRequest): string | undefined {
 /**
  * POST handler for event tracking
  * Receives events from client-side and stores them in the database
- *
- * NOTE: Temporarily disabled until database migration 005 is run
  */
 export async function POST(request: NextRequest): Promise<NextResponse> {
-  // TODO: Uncomment after running migration 005_admin_analytics_tables.sql
-
-  const response: APIResponse<{ message: string }> = {
-    data: { message: 'Event tracking temporarily disabled. Run database migration 005 first.' },
-    error: null,
-  };
-
-  return NextResponse.json(response, { status: 200 });
-
-  /* COMMENTED OUT UNTIL MIGRATION IS RUN
   try {
     // Parse request body
     const body = await request.json();
@@ -175,7 +163,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     return NextResponse.json(response, { status: 500 });
   }
-  */
 }
 
 /**

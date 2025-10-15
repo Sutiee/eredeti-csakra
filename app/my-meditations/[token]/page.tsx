@@ -84,7 +84,6 @@ export default async function MeditationAccessPage({ params }: PageProps) {
       last_accessed_at: new Date().toISOString(),
       access_count: (accessData.access_count || 0) + 1,
     };
-    // @ts-expect-error - Supabase typing limitation for update on server client
     await supabase.from('meditation_access').update(updatePayload).eq('access_token', token);
   } catch (trackError) {
     // Log but don't block meditation access

@@ -1,30 +1,15 @@
 /**
  * GET /api/admin/auth/verify
  * Verify admin session endpoint
- *
- * NOTE: Temporarily disabled until database migration 005 is run
  */
 
-import { NextResponse } from 'next/server';
-
-export async function GET() {
-  return NextResponse.json(
-    {
-      data: null,
-      error: {
-        message: 'Admin verification temporarily disabled. Run database migration 005 first.',
-        code: 'MIGRATION_REQUIRED',
-      },
-    },
-    { status: 503 }
-  );
-}
-
-/* ORIGINAL CODE - UNCOMMENT AFTER MIGRATION
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAdminSession } from '@/lib/admin/auth';
 import { logger } from '@/lib/utils/logger';
 
+/**
+ * GET handler for session verification
+ */
 export async function GET(request: NextRequest) {
   try {
     // Get session token from cookie
@@ -88,4 +73,3 @@ export async function GET(request: NextRequest) {
     );
   }
 }
-*/
