@@ -12,6 +12,7 @@
   "dependencies": {
     "@elevenlabs/elevenlabs-js": "^2.19.0",
     "@jpisnice/shadcn-ui-mcp-server": "^1.1.0",
+    "@stripe/stripe-js": "^8.0.0",
     "@supabase/supabase-js": "^2.45.4",
     "framer-motion": "^11.11.11",
     "jspdf": "^3.0.3",
