@@ -29,12 +29,12 @@ function CustomTooltip({ active, payload }: any) {
   if (active && payload && payload.length) {
     const data = payload[0];
     return (
-      <div className="backdrop-blur-md bg-white/90 rounded-lg p-4 border border-gray-200 shadow-lg">
-        <p className="font-bold text-gray-900 mb-2">{data.name}</p>
-        <p className="text-sm text-gray-700">
+      <div className="backdrop-blur-md bg-gray-800 rounded-lg p-4 border border-gray-700 shadow-lg">
+        <p className="font-bold text-white mb-2">{data.name}</p>
+        <p className="text-sm text-gray-300">
           Eladások: {data.payload.sales.toLocaleString('hu-HU')}
         </p>
-        <p className="text-sm text-gray-700">
+        <p className="text-sm text-gray-300">
           Bevétel: {data.payload.revenue.toLocaleString('hu-HU')} Ft
         </p>
         <p className="text-sm font-bold" style={{ color: data.payload.fill }}>
@@ -52,10 +52,10 @@ function CustomTooltip({ active, payload }: any) {
 function AnalysisSkeleton() {
   return (
     <div className="space-y-4">
-      <div className="h-[300px] bg-white/5 rounded-lg animate-pulse"></div>
+      <div className="h-[300px] bg-gray-800/50 rounded-lg animate-pulse"></div>
       <div className="grid grid-cols-2 gap-4">
-        <div className="h-20 bg-white/5 rounded-lg animate-pulse"></div>
-        <div className="h-20 bg-white/5 rounded-lg animate-pulse"></div>
+        <div className="h-20 bg-gray-800/50 rounded-lg animate-pulse"></div>
+        <div className="h-20 bg-gray-800/50 rounded-lg animate-pulse"></div>
       </div>
     </div>
   );
@@ -67,7 +67,7 @@ function AnalysisSkeleton() {
 export function BundleAnalysis({ bundleAnalysis, isLoading }: BundleAnalysisProps) {
   if (isLoading) {
     return (
-      <div className="backdrop-blur-md bg-white/10 rounded-xl p-6 border border-white/20">
+      <div className="backdrop-blur-md bg-gray-800/70 rounded-xl p-6 border border-gray-700">
         <h3 className="text-xl font-bold text-white mb-4">Csomag vs. Egyedi Vásárlás</h3>
         <AnalysisSkeleton />
       </div>
@@ -76,7 +76,7 @@ export function BundleAnalysis({ bundleAnalysis, isLoading }: BundleAnalysisProp
 
   if (!bundleAnalysis) {
     return (
-      <div className="backdrop-blur-md bg-white/10 rounded-xl p-6 border border-white/20 text-center">
+      <div className="backdrop-blur-md bg-gray-800/70 rounded-xl p-6 border border-gray-700 text-center">
         <h3 className="text-xl font-bold text-white mb-4">Csomag vs. Egyedi Vásárlás</h3>
         <p className="text-gray-300">Nincs megjeleníthető adat ebben az időszakban.</p>
       </div>
@@ -105,7 +105,7 @@ export function BundleAnalysis({ bundleAnalysis, isLoading }: BundleAnalysisProp
   ];
 
   return (
-    <div className="backdrop-blur-md bg-white/10 rounded-xl p-6 border border-white/20">
+    <div className="backdrop-blur-md bg-gray-800/70 rounded-xl p-6 border border-gray-700">
       <h3 className="text-xl font-bold text-white mb-4">Csomag vs. Egyedi Vásárlás</h3>
       <p className="text-sm text-gray-300 mb-6">Vásárlási mintázatok összehasonlítása</p>
 
@@ -174,10 +174,10 @@ export function BundleAnalysis({ bundleAnalysis, isLoading }: BundleAnalysisProp
             {bundleAnalysis.commonCombinations.map((combo, index) => (
               <div
                 key={index}
-                className="bg-white/5 rounded-lg p-3 border border-white/10 flex items-center justify-between"
+                className="bg-gray-800/50 rounded-lg p-3 border border-white/10 flex items-center justify-between"
               >
                 <span className="text-sm text-gray-200">{combo.combination}</span>
-                <span className="text-sm font-bold text-white bg-white/10 px-3 py-1 rounded-full">
+                <span className="text-sm font-bold text-white bg-gray-800/70 px-3 py-1 rounded-full">
                   {combo.count}×
                 </span>
               </div>

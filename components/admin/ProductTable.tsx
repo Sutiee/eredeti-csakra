@@ -48,9 +48,9 @@ function TableSkeleton() {
     <div className="space-y-3">
       {[...Array(5)].map((_, i) => (
         <div key={i} className="flex gap-4 animate-pulse">
-          <div className="h-12 bg-white/10 rounded flex-1"></div>
-          <div className="h-12 bg-white/10 rounded flex-1"></div>
-          <div className="h-12 bg-white/10 rounded flex-1"></div>
+          <div className="h-12 bg-gray-800/70 rounded flex-1"></div>
+          <div className="h-12 bg-gray-800/70 rounded flex-1"></div>
+          <div className="h-12 bg-gray-800/70 rounded flex-1"></div>
         </div>
       ))}
     </div>
@@ -107,7 +107,7 @@ export function ProductTable({ products, isLoading }: ProductTableProps) {
 
   if (isLoading) {
     return (
-      <div className="backdrop-blur-md bg-white/10 rounded-xl p-6 border border-white/20">
+      <div className="backdrop-blur-md bg-gray-800/70 rounded-xl p-6 border border-gray-700">
         <TableSkeleton />
       </div>
     );
@@ -115,7 +115,7 @@ export function ProductTable({ products, isLoading }: ProductTableProps) {
 
   if (products.length === 0) {
     return (
-      <div className="backdrop-blur-md bg-white/10 rounded-xl p-6 border border-white/20 text-center">
+      <div className="backdrop-blur-md bg-gray-800/70 rounded-xl p-6 border border-gray-700 text-center">
         <p className="text-gray-300">Nincs megjeleníthető adat ebben az időszakban.</p>
       </div>
     );
@@ -124,17 +124,17 @@ export function ProductTable({ products, isLoading }: ProductTableProps) {
   const maxRevenue = Math.max(...products.map(p => p.revenue));
 
   return (
-    <div className="backdrop-blur-md bg-white/10 rounded-xl border border-white/20 overflow-hidden">
+    <div className="backdrop-blur-md bg-gray-800/70 rounded-xl border border-gray-700 overflow-hidden">
       <div className="p-6">
         <h3 className="text-xl font-bold text-white mb-4">Termék Teljesítmény</h3>
       </div>
 
       <div className="overflow-x-auto">
         <table className="w-full">
-          <thead className="bg-white/5 border-y border-white/10">
+          <thead className="bg-gray-800/50 border-y border-white/10">
             <tr>
               <th
-                className="px-6 py-3 text-left text-xs font-medium text-gray-200 uppercase tracking-wider cursor-pointer hover:bg-white/5"
+                className="px-6 py-3 text-left text-xs font-medium text-gray-200 uppercase tracking-wider cursor-pointer hover:bg-gray-800/50"
                 onClick={() => handleSort('productName')}
               >
                 <div className="flex items-center gap-2">
@@ -142,7 +142,7 @@ export function ProductTable({ products, isLoading }: ProductTableProps) {
                 </div>
               </th>
               <th
-                className="px-6 py-3 text-left text-xs font-medium text-gray-200 uppercase tracking-wider cursor-pointer hover:bg-white/5"
+                className="px-6 py-3 text-left text-xs font-medium text-gray-200 uppercase tracking-wider cursor-pointer hover:bg-gray-800/50"
                 onClick={() => handleSort('salesCount')}
               >
                 <div className="flex items-center gap-2">
@@ -150,7 +150,7 @@ export function ProductTable({ products, isLoading }: ProductTableProps) {
                 </div>
               </th>
               <th
-                className="px-6 py-3 text-left text-xs font-medium text-gray-200 uppercase tracking-wider cursor-pointer hover:bg-white/5"
+                className="px-6 py-3 text-left text-xs font-medium text-gray-200 uppercase tracking-wider cursor-pointer hover:bg-gray-800/50"
                 onClick={() => handleSort('revenue')}
               >
                 <div className="flex items-center gap-2">
@@ -158,7 +158,7 @@ export function ProductTable({ products, isLoading }: ProductTableProps) {
                 </div>
               </th>
               <th
-                className="px-6 py-3 text-left text-xs font-medium text-gray-200 uppercase tracking-wider cursor-pointer hover:bg-white/5"
+                className="px-6 py-3 text-left text-xs font-medium text-gray-200 uppercase tracking-wider cursor-pointer hover:bg-gray-800/50"
                 onClick={() => handleSort('averagePrice')}
               >
                 <div className="flex items-center gap-2">
@@ -166,7 +166,7 @@ export function ProductTable({ products, isLoading }: ProductTableProps) {
                 </div>
               </th>
               <th
-                className="px-6 py-3 text-left text-xs font-medium text-gray-200 uppercase tracking-wider cursor-pointer hover:bg-white/5"
+                className="px-6 py-3 text-left text-xs font-medium text-gray-200 uppercase tracking-wider cursor-pointer hover:bg-gray-800/50"
                 onClick={() => handleSort('conversionRate')}
               >
                 <div className="flex items-center gap-2">
@@ -177,7 +177,7 @@ export function ProductTable({ products, isLoading }: ProductTableProps) {
                 Trend
               </th>
               <th
-                className="px-6 py-3 text-left text-xs font-medium text-gray-200 uppercase tracking-wider cursor-pointer hover:bg-white/5"
+                className="px-6 py-3 text-left text-xs font-medium text-gray-200 uppercase tracking-wider cursor-pointer hover:bg-gray-800/50"
                 onClick={() => handleSort('firstSaleDate')}
               >
                 <div className="flex items-center gap-2">
@@ -185,7 +185,7 @@ export function ProductTable({ products, isLoading }: ProductTableProps) {
                 </div>
               </th>
               <th
-                className="px-6 py-3 text-left text-xs font-medium text-gray-200 uppercase tracking-wider cursor-pointer hover:bg-white/5"
+                className="px-6 py-3 text-left text-xs font-medium text-gray-200 uppercase tracking-wider cursor-pointer hover:bg-gray-800/50"
                 onClick={() => handleSort('lastSaleDate')}
               >
                 <div className="flex items-center gap-2">
@@ -198,7 +198,7 @@ export function ProductTable({ products, isLoading }: ProductTableProps) {
             {sortedProducts.map((product) => (
               <tr
                 key={product.productId}
-                className="hover:bg-white/5 transition-colors"
+                className="hover:bg-gray-800/50 transition-colors"
               >
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm font-medium text-white">{product.productName}</div>

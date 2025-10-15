@@ -29,7 +29,7 @@ const DATE_RANGE_OPTIONS: DateRangeOption[] = [
  */
 export function DateRangePicker({ value, onChange }: DateRangePickerProps) {
   return (
-    <div className="backdrop-blur-md bg-white/10 rounded-xl p-4 border border-white/20">
+    <div className="backdrop-blur-md bg-gray-800/70 rounded-xl p-4 border border-gray-700">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold text-white">Dashboard Áttekintés</h2>
@@ -49,7 +49,7 @@ export function DateRangePicker({ value, onChange }: DateRangePickerProps) {
                 ${
                   value === option.value
                     ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg'
-                    : 'bg-white/10 text-gray-200 hover:bg-white/20'
+                    : 'bg-gray-800/70 text-gray-200 hover:bg-gray-700'
                 }
               `}
             >

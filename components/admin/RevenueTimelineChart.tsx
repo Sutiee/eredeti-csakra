@@ -38,14 +38,14 @@ const PRODUCT_CONFIG: Record<string, { name: string; color: string }> = {
 function CustomTooltip({ active, payload, label }: any) {
   if (active && payload && payload.length) {
     return (
-      <div className="backdrop-blur-md bg-white/90 rounded-lg p-4 border border-gray-200 shadow-lg">
-        <p className="font-bold text-gray-900 mb-2">{new Date(label).toLocaleDateString('hu-HU')}</p>
+      <div className="backdrop-blur-md bg-gray-800 rounded-lg p-4 border border-gray-700 shadow-lg">
+        <p className="font-bold text-white mb-2">{new Date(label).toLocaleDateString('hu-HU')}</p>
         {payload.map((entry: any, index: number) => (
           <p key={index} style={{ color: entry.color }} className="text-sm">
             {entry.name}: {entry.value.toLocaleString('hu-HU')} Ft
           </p>
         ))}
-        <p className="text-sm font-bold text-gray-900 mt-2 pt-2 border-t border-gray-200">
+        <p className="text-sm font-bold text-white mt-2 pt-2 border-t border-gray-700">
           Összesen: {payload.reduce((sum: number, entry: any) => sum + entry.value, 0).toLocaleString('hu-HU')} Ft
         </p>
       </div>
@@ -89,7 +89,7 @@ export function RevenueTimelineChart({ timeline, isLoading }: RevenueTimelineCha
 
   if (isLoading) {
     return (
-      <div className="backdrop-blur-md bg-white/10 rounded-xl p-6 border border-white/20">
+      <div className="backdrop-blur-md bg-gray-800/70 rounded-xl p-6 border border-gray-700">
         <h3 className="text-xl font-bold text-white mb-4">Bevételi Idővonalon</h3>
         <ChartSkeleton />
       </div>
@@ -98,7 +98,7 @@ export function RevenueTimelineChart({ timeline, isLoading }: RevenueTimelineCha
 
   if (!timeline || timeline.length === 0) {
     return (
-      <div className="backdrop-blur-md bg-white/10 rounded-xl p-6 border border-white/20 text-center">
+      <div className="backdrop-blur-md bg-gray-800/70 rounded-xl p-6 border border-gray-700 text-center">
         <h3 className="text-xl font-bold text-white mb-4">Bevételi Idővonalon</h3>
         <p className="text-gray-300">Nincs megjeleníthető adat ebben az időszakban.</p>
       </div>
@@ -106,7 +106,7 @@ export function RevenueTimelineChart({ timeline, isLoading }: RevenueTimelineCha
   }
 
   return (
-    <div className="backdrop-blur-md bg-white/10 rounded-xl p-6 border border-white/20">
+    <div className="backdrop-blur-md bg-gray-800/70 rounded-xl p-6 border border-gray-700">
       <div className="flex items-center justify-between mb-4">
         <div>
           <h3 className="text-xl font-bold text-white">Bevételi Idővonalon</h3>
@@ -121,8 +121,8 @@ export function RevenueTimelineChart({ timeline, isLoading }: RevenueTimelineCha
               onClick={() => toggleProduct(toggle.id)}
               className={`px-3 py-1 rounded-lg text-sm font-medium transition-all border ${
                 toggle.enabled
-                  ? 'bg-white/20 border-white/40 text-white'
-                  : 'bg-white/5 border-white/10 text-gray-400'
+                  ? 'bg-gray-700 border-white/40 text-white'
+                  : 'bg-gray-800/50 border-white/10 text-gray-400'
               }`}
               style={
                 toggle.enabled

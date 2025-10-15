@@ -53,23 +53,23 @@ export function UserFilters({
     filters.chakraHealth !== 'all';
 
   return (
-    <div className="backdrop-blur-md bg-white/70 rounded-2xl border border-white/50 p-6 shadow-lg">
+    <div className="backdrop-blur-md bg-gray-800/70 rounded-2xl border border-gray-700 p-6 shadow-lg">
       {/* Header with toggle and actions */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
         <div className="flex items-center gap-3">
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="lg:hidden p-2 rounded-lg bg-spiritual-purple-100 text-spiritual-purple-700 hover:bg-spiritual-purple-200 transition-colors duration-200"
+            className="lg:hidden p-2 rounded-lg bg-purple-600 text-white hover:bg-purple-700 transition-colors duration-200"
             aria-expanded={isExpanded}
             aria-label={isExpanded ? 'Szűrők elrejtése' : 'Szűrők megjelenítése'}
           >
             {isExpanded ? '▲' : '▼'} Szűrők
           </button>
-          <h2 className="text-lg font-semibold text-gray-900">
+          <h2 className="text-lg font-semibold text-white">
             Felhasználók Szűrése
           </h2>
           {hasActiveFilters && (
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-spiritual-purple-100 text-spiritual-purple-800">
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-500/20 text-purple-300">
               Aktív szűrők
             </span>
           )}
@@ -80,7 +80,7 @@ export function UserFilters({
           {hasActiveFilters && (
             <button
               onClick={handleReset}
-              className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white/90 border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-spiritual-purple-500 transition-colors duration-200"
+              className="px-3 py-1.5 text-sm font-medium text-gray-300 bg-gray-700 border border-gray-600 rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors duration-200"
             >
               Szűrők törlése
             </button>
@@ -88,7 +88,7 @@ export function UserFilters({
           {onExport && (
             <button
               onClick={onExport}
-              className="px-3 py-1.5 text-sm font-medium text-white bg-gradient-to-r from-spiritual-purple-600 to-spiritual-rose-600 rounded-md hover:from-spiritual-purple-700 hover:to-spiritual-rose-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-spiritual-purple-500 transition-all duration-200 shadow-md"
+              className="px-3 py-1.5 text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-rose-600 rounded-md hover:from-purple-700 hover:to-rose-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-all duration-200 shadow-md"
               aria-label="Exportálás CSV formátumban"
             >
               📥 Exportálás CSV
@@ -99,7 +99,7 @@ export function UserFilters({
 
       {/* Filter results count */}
       {totalFilteredCount !== undefined && (
-        <div className="mb-4 text-sm text-gray-600">
+        <div className="mb-4 text-sm text-gray-300">
           <span className="font-medium">{totalFilteredCount}</span> felhasználó
           található
         </div>
@@ -116,7 +116,7 @@ export function UserFilters({
         <div className="sm:col-span-2">
           <label
             htmlFor="search"
-            className="block text-sm font-medium text-gray-700 mb-1"
+            className="block text-sm font-medium text-gray-300 mb-1"
           >
             Keresés
           </label>
@@ -128,7 +128,7 @@ export function UserFilters({
             onChange={(e) =>
               onFiltersChange({ ...filters, search: e.target.value })
             }
-            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md bg-white/90 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-spiritual-purple-500 focus:border-transparent transition-colors duration-200"
+            className="w-full px-3 py-2 text-sm border border-gray-700 rounded-md bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors duration-200"
             aria-label="Keresés név vagy email alapján"
           />
         </div>
@@ -137,7 +137,7 @@ export function UserFilters({
         <div>
           <label
             htmlFor="quiz-status"
-            className="block text-sm font-medium text-gray-700 mb-1"
+            className="block text-sm font-medium text-gray-300 mb-1"
           >
             Kvíz Állapot
           </label>
@@ -150,7 +150,7 @@ export function UserFilters({
                 quizStatus: e.target.value as UserFilters['quizStatus'],
               })
             }
-            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md bg-white/90 focus:outline-none focus:ring-2 focus:ring-spiritual-purple-500 focus:border-transparent transition-colors duration-200"
+            className="w-full px-3 py-2 text-sm border border-gray-700 rounded-md bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors duration-200"
             aria-label="Kvíz állapot szűrő"
           >
             <option value="all">Összes</option>
@@ -163,7 +163,7 @@ export function UserFilters({
         <div>
           <label
             htmlFor="purchase-status"
-            className="block text-sm font-medium text-gray-700 mb-1"
+            className="block text-sm font-medium text-gray-300 mb-1"
           >
             Vásárlás
           </label>
@@ -176,7 +176,7 @@ export function UserFilters({
                 purchaseStatus: e.target.value as UserFilters['purchaseStatus'],
               })
             }
-            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md bg-white/90 focus:outline-none focus:ring-2 focus:ring-spiritual-purple-500 focus:border-transparent transition-colors duration-200"
+            className="w-full px-3 py-2 text-sm border border-gray-700 rounded-md bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors duration-200"
             aria-label="Vásárlás állapot szűrő"
           >
             <option value="all">Összes</option>
@@ -189,7 +189,7 @@ export function UserFilters({
         <div>
           <label
             htmlFor="chakra-health"
-            className="block text-sm font-medium text-gray-700 mb-1"
+            className="block text-sm font-medium text-gray-300 mb-1"
           >
             Csakra Egészség
           </label>
@@ -202,7 +202,7 @@ export function UserFilters({
                 chakraHealth: e.target.value as UserFilters['chakraHealth'],
               })
             }
-            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md bg-white/90 focus:outline-none focus:ring-2 focus:ring-spiritual-purple-500 focus:border-transparent transition-colors duration-200"
+            className="w-full px-3 py-2 text-sm border border-gray-700 rounded-md bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors duration-200"
             aria-label="Csakra egészség szűrő"
           >
             <option value="all">Összes</option>
@@ -216,7 +216,7 @@ export function UserFilters({
         <div>
           <label
             htmlFor="date-from"
-            className="block text-sm font-medium text-gray-700 mb-1"
+            className="block text-sm font-medium text-gray-300 mb-1"
           >
             Dátum-tól
           </label>
@@ -230,7 +230,7 @@ export function UserFilters({
                 dateFrom: e.target.value || null,
               })
             }
-            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md bg-white/90 focus:outline-none focus:ring-2 focus:ring-spiritual-purple-500 focus:border-transparent transition-colors duration-200"
+            className="w-full px-3 py-2 text-sm border border-gray-700 rounded-md bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors duration-200"
             aria-label="Kezdő dátum"
           />
         </div>
@@ -239,7 +239,7 @@ export function UserFilters({
         <div>
           <label
             htmlFor="date-to"
-            className="block text-sm font-medium text-gray-700 mb-1"
+            className="block text-sm font-medium text-gray-300 mb-1"
           >
             Dátum-ig
           </label>
@@ -253,7 +253,7 @@ export function UserFilters({
                 dateTo: e.target.value || null,
               })
             }
-            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md bg-white/90 focus:outline-none focus:ring-2 focus:ring-spiritual-purple-500 focus:border-transparent transition-colors duration-200"
+            className="w-full px-3 py-2 text-sm border border-gray-700 rounded-md bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors duration-200"
             aria-label="Befejező dátum"
           />
         </div>

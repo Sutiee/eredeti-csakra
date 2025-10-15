@@ -12,18 +12,18 @@ interface AdminHeaderProps {
 
 export function AdminHeader({ title, onMenuToggle }: AdminHeaderProps) {
   return (
-    <header className="sticky top-0 z-30 backdrop-blur-md bg-white/70 border-b border-gray-200 shadow-sm">
+    <header className="sticky top-0 z-30 backdrop-blur-md bg-gray-900/70 border-b border-gray-700 shadow-sm">
       <div className="flex items-center justify-between px-6 py-4">
         {/* Left: Mobile Menu + Title */}
         <div className="flex items-center gap-4">
           {/* Mobile Menu Button */}
           <button
             onClick={onMenuToggle}
-            className="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
+            className="lg:hidden p-2 rounded-lg hover:bg-gray-700 transition-colors"
             aria-label="Toggle menu"
           >
             <svg
-              className="w-6 h-6 text-gray-600"
+              className="w-6 h-6 text-gray-300"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -39,7 +39,7 @@ export function AdminHeader({ title, onMenuToggle }: AdminHeaderProps) {
           </button>
 
           {/* Page Title */}
-          <h2 className="text-2xl font-serif font-bold text-gray-900">
+          <h2 className="text-2xl font-serif font-bold text-white">
             {title}
           </h2>
         </div>
@@ -47,17 +47,17 @@ export function AdminHeader({ title, onMenuToggle }: AdminHeaderProps) {
         {/* Right: Date Picker Placeholder + User */}
         <div className="flex items-center gap-4">
           {/* Date Range Picker Placeholder */}
-          <div className="hidden md:flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-100 text-gray-600 text-sm">
+          <div className="hidden md:flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 text-gray-200 text-sm">
             <span aria-hidden="true">📅</span>
             <span>Utolsó 30 nap</span>
           </div>
 
           {/* Admin User Info */}
-          <div className="flex items-center gap-3 px-4 py-2 rounded-lg bg-gradient-to-r from-spiritual-purple-100 to-spiritual-rose-100">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-spiritual-purple-500 to-spiritual-rose-500 flex items-center justify-center text-white font-bold text-sm">
+          <div className="flex items-center gap-3 px-4 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-rose-600">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-700 to-rose-700 flex items-center justify-center text-white font-bold text-sm">
               A
             </div>
-            <span className="hidden sm:block font-medium text-gray-700">
+            <span className="hidden sm:block font-medium text-white">
               Admin
             </span>
           </div>

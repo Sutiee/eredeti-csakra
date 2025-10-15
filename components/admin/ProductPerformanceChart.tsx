@@ -30,8 +30,8 @@ interface ChartData {
 function CustomTooltip({ active, payload, label }: any) {
   if (active && payload && payload.length) {
     return (
-      <div className="backdrop-blur-md bg-white/90 rounded-lg p-4 border border-gray-200 shadow-lg">
-        <p className="font-bold text-gray-900 mb-2">{label}</p>
+      <div className="backdrop-blur-md bg-gray-800 rounded-lg p-4 border border-gray-700 shadow-lg">
+        <p className="font-bold text-white mb-2">{label}</p>
         {payload.map((entry: any, index: number) => (
           <p key={index} style={{ color: entry.color }} className="text-sm">
             {entry.name}: {entry.value.toLocaleString('hu-HU')} Ft
@@ -60,7 +60,7 @@ function ChartSkeleton() {
 export function ProductPerformanceChart({ products, isLoading }: ProductPerformanceChartProps) {
   if (isLoading) {
     return (
-      <div className="backdrop-blur-md bg-white/10 rounded-xl p-6 border border-white/20">
+      <div className="backdrop-blur-md bg-gray-800/70 rounded-xl p-6 border border-gray-700">
         <h3 className="text-xl font-bold text-white mb-4">Termék Teljesítmény Összehasonlítás</h3>
         <ChartSkeleton />
       </div>
@@ -69,7 +69,7 @@ export function ProductPerformanceChart({ products, isLoading }: ProductPerforma
 
   if (products.length === 0) {
     return (
-      <div className="backdrop-blur-md bg-white/10 rounded-xl p-6 border border-white/20 text-center">
+      <div className="backdrop-blur-md bg-gray-800/70 rounded-xl p-6 border border-gray-700 text-center">
         <h3 className="text-xl font-bold text-white mb-4">Termék Teljesítmény Összehasonlítás</h3>
         <p className="text-gray-300">Nincs megjeleníthető adat ebben az időszakban.</p>
       </div>
@@ -90,7 +90,7 @@ export function ProductPerformanceChart({ products, isLoading }: ProductPerforma
   });
 
   return (
-    <div className="backdrop-blur-md bg-white/10 rounded-xl p-6 border border-white/20">
+    <div className="backdrop-blur-md bg-gray-800/70 rounded-xl p-6 border border-gray-700">
       <h3 className="text-xl font-bold text-white mb-4">Termék Teljesítmény Összehasonlítás</h3>
       <p className="text-sm text-gray-300 mb-6">Bevétel időszakonként (HUF)</p>
 

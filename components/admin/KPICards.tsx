@@ -31,18 +31,18 @@ interface KPICardProps {
 function KPICard({ title, value, icon, subtitle, gradient, isLoading }: KPICardProps) {
   if (isLoading) {
     return (
-      <div className="backdrop-blur-md bg-white/10 rounded-xl p-6 border border-white/20 animate-pulse">
-        <div className="h-12 bg-white/20 rounded mb-3"></div>
-        <div className="h-8 bg-white/20 rounded mb-2"></div>
-        <div className="h-4 bg-white/20 rounded w-2/3"></div>
+      <div className="backdrop-blur-md bg-gray-800/70 rounded-xl p-6 border border-gray-700 animate-pulse">
+        <div className="h-12 bg-gray-700 rounded mb-3"></div>
+        <div className="h-8 bg-gray-700 rounded mb-2"></div>
+        <div className="h-4 bg-gray-700 rounded w-2/3"></div>
       </div>
     );
   }
 
   return (
     <div
-      className={`backdrop-blur-md bg-white/10 rounded-xl p-6 border border-white/20
-        hover:border-white/40 transition-all duration-300 transform hover:scale-105
+      className={`backdrop-blur-md bg-gray-800/70 rounded-xl p-6 border border-gray-700
+        hover:border-gray-600 transition-all duration-300 transform hover:scale-105
         hover:shadow-xl ${gradient}`}
     >
       <div className="flex items-start justify-between mb-3">
@@ -50,10 +50,10 @@ function KPICard({ title, value, icon, subtitle, gradient, isLoading }: KPICardP
       </div>
 
       <div className="space-y-1">
-        <p className="text-sm font-medium text-gray-100 opacity-80">{title}</p>
+        <p className="text-sm font-medium text-gray-300">{title}</p>
         <p className="text-3xl font-bold text-white">{value}</p>
         {subtitle && (
-          <p className="text-xs text-gray-200 opacity-60">{subtitle}</p>
+          <p className="text-xs text-gray-400">{subtitle}</p>
         )}
       </div>
     </div>
@@ -73,7 +73,7 @@ export function KPICards({ days = 30 }: KPICardsProps) {
   if (error) {
     return (
       <div className="backdrop-blur-md bg-red-500/10 rounded-xl p-6 border border-red-500/20">
-        <p className="text-red-100">
+        <p className="text-red-300">
           Hiba történt az adatok betöltése közben. Kérjük, próbálja újra később.
         </p>
       </div>

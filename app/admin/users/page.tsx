@@ -16,6 +16,7 @@ import { UserFilters, UserFilters as UserFiltersType } from '@/components/admin/
 import { UserDetailModal } from '@/components/admin/UserDetailModal';
 import { fetcher } from '@/lib/admin/swr-config';
 import { exportUsersToCSV } from '@/lib/admin/export';
+import { UsersListResponse } from '@/types/admin-users';
 
 export default function AdminUsersPage() {
   // State management
@@ -34,17 +35,20 @@ export default function AdminUsersPage() {
   const [itemsPerPage, setItemsPerPage] = useState(25);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
-  // Fetch users data (mock API endpoint - Agent 2 will implement this)
-  const { data: users, isLoading, error } = useSWR<UserTableRow[]>(
+  // Fetch users data
+  const { data: response, isLoading, error } = useSWR<UsersListResponse>(
     '/api/admin/users',
     fetcher
   );
+
+  // Extract users array from response
+  const users = response?.data || [];
 
   /**
    * Filter users based on active filters
    */
   const filteredUsers = useMemo(() => {
-    if (!users) return [];
+    if (!Array.isArray(users) || users.length === 0) return [];
 
     return users.filter((user) => {
       // Search filter (name or email)
@@ -213,7 +217,7 @@ export default function AdminUsersPage() {
       {/* Error state */}
       {error && (
         <div className="mt-6 backdrop-blur-md bg-red-500/10 rounded-xl p-6 border border-red-500/20">
-          <p className="text-red-800">
+          <p className="text-red-300">
             Hiba történt az adatok betöltése közben. Kérjük, próbálja újra később.
           </p>
         </div>

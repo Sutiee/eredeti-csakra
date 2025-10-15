@@ -33,13 +33,13 @@ export function Pagination({
   const canGoNext = currentPage < totalPages;
 
   return (
-    <div className="backdrop-blur-md bg-white/70 rounded-xl border border-white/50 p-4 mt-6">
+    <div className="backdrop-blur-md bg-gray-800/70 rounded-xl border border-gray-700 p-4 mt-6">
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
         {/* Items per page selector */}
         <div className="flex items-center gap-2">
           <label
             htmlFor="items-per-page"
-            className="text-sm font-medium text-gray-700 whitespace-nowrap"
+            className="text-sm font-medium text-gray-300 whitespace-nowrap"
           >
             Elemek száma:
           </label>
@@ -50,7 +50,7 @@ export function Pagination({
               onItemsPerPageChange(Number(e.target.value));
               onPageChange(1); // Reset to first page when changing items per page
             }}
-            className="px-3 py-1.5 text-sm border border-gray-300 rounded-md bg-white/90 hover:bg-white focus:outline-none focus:ring-2 focus:ring-spiritual-purple-500 focus:border-transparent transition-colors duration-200"
+            className="px-3 py-1.5 text-sm border border-gray-700 rounded-md bg-gray-800 text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors duration-200"
             aria-label="Elemek száma oldalanként"
           >
             {ITEMS_PER_PAGE_OPTIONS.map((option) => (
@@ -64,7 +64,7 @@ export function Pagination({
         {/* Page info and navigation */}
         <div className="flex items-center gap-4">
           {/* Item count display */}
-          <div className="text-sm text-gray-600">
+          <div className="text-sm text-gray-300">
             <span className="font-medium">
               {startItem}-{endItem}
             </span>
@@ -82,8 +82,8 @@ export function Pagination({
                 px-3 py-1.5 text-sm font-medium rounded-md transition-all duration-200
                 ${
                   canGoPrevious
-                    ? 'bg-spiritual-purple-100 text-spiritual-purple-700 hover:bg-spiritual-purple-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-spiritual-purple-500'
-                    : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    ? 'bg-purple-600 text-white hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500'
+                    : 'bg-gray-700 text-gray-500 cursor-not-allowed'
                 }
               `}
               aria-label="Előző oldal"
@@ -93,9 +93,9 @@ export function Pagination({
             </button>
 
             {/* Page indicator */}
-            <div className="px-4 py-1.5 text-sm font-medium text-gray-700 bg-white/90 rounded-md border border-gray-200">
+            <div className="px-4 py-1.5 text-sm font-medium text-gray-300 bg-gray-900 rounded-md border border-gray-700">
               Oldal{' '}
-              <span className="text-spiritual-purple-700 font-semibold">
+              <span className="text-purple-400 font-semibold">
                 {currentPage}
               </span>
               {' / '}
@@ -110,8 +110,8 @@ export function Pagination({
                 px-3 py-1.5 text-sm font-medium rounded-md transition-all duration-200
                 ${
                   canGoNext
-                    ? 'bg-spiritual-purple-100 text-spiritual-purple-700 hover:bg-spiritual-purple-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-spiritual-purple-500'
-                    : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    ? 'bg-purple-600 text-white hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500'
+                    : 'bg-gray-700 text-gray-500 cursor-not-allowed'
                 }
               `}
               aria-label="Következő oldal"
@@ -125,10 +125,10 @@ export function Pagination({
 
       {/* Optional: Jump to page (only show if there are many pages) */}
       {totalPages > 5 && (
-        <div className="mt-3 pt-3 border-t border-white/30 flex items-center justify-center gap-2">
+        <div className="mt-3 pt-3 border-t border-gray-700 flex items-center justify-center gap-2">
           <label
             htmlFor="jump-to-page"
-            className="text-sm font-medium text-gray-700"
+            className="text-sm font-medium text-gray-300"
           >
             Ugrás az oldalra:
           </label>
@@ -144,7 +144,7 @@ export function Pagination({
                 onPageChange(page);
               }
             }}
-            className="w-20 px-3 py-1.5 text-sm border border-gray-300 rounded-md bg-white/90 focus:outline-none focus:ring-2 focus:ring-spiritual-purple-500 focus:border-transparent"
+            className="w-20 px-3 py-1.5 text-sm border border-gray-700 rounded-md bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
             aria-label="Oldalszám bevitele"
           />
         </div>

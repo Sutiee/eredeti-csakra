@@ -42,12 +42,12 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
   const data = payload[0].payload;
 
   return (
-    <div className="backdrop-blur-md bg-white/90 border border-gray-200 rounded-lg p-3 shadow-xl">
-      <p className="text-sm font-semibold text-gray-900">{data.product_name}</p>
+    <div className="backdrop-blur-md bg-gray-800 border border-gray-700 rounded-lg p-3 shadow-xl">
+      <p className="text-sm font-semibold text-white">{data.product_name}</p>
       <p className="text-lg font-bold" style={{ color: data.fill }}>
         {data.revenue.toLocaleString('hu-HU')} Ft
       </p>
-      <p className="text-sm text-gray-600">
+      <p className="text-sm text-gray-300">
         {data.sales_count} eladás • {data.percentage}%
       </p>
     </div>
@@ -137,7 +137,7 @@ export function ProductBreakdownChart({ days }: ProductBreakdownChartProps) {
 
   if (error) {
     return (
-      <div className="backdrop-blur-md bg-white/10 rounded-xl p-6 border border-white/20">
+      <div className="backdrop-blur-md bg-gray-800/70 rounded-xl p-6 border border-gray-700">
         <h3 className="text-xl font-semibold text-white mb-4">Termék Bevételek</h3>
         <div className="flex items-center justify-center h-96 bg-red-500/10 rounded-lg border border-red-500/20">
           <p className="text-red-100">Hiba történt az adatok betöltése közben</p>
@@ -148,18 +148,18 @@ export function ProductBreakdownChart({ days }: ProductBreakdownChartProps) {
 
   if (isLoading) {
     return (
-      <div className="backdrop-blur-md bg-white/10 rounded-xl p-6 border border-white/20 animate-pulse">
-        <div className="h-8 bg-white/20 rounded mb-4 w-1/3"></div>
-        <div className="h-96 bg-white/20 rounded"></div>
+      <div className="backdrop-blur-md bg-gray-800/70 rounded-xl p-6 border border-gray-700 animate-pulse">
+        <div className="h-8 bg-gray-700 rounded mb-4 w-1/3"></div>
+        <div className="h-96 bg-gray-700 rounded"></div>
       </div>
     );
   }
 
   if (!productData || productData.length === 0) {
     return (
-      <div className="backdrop-blur-md bg-white/10 rounded-xl p-6 border border-white/20">
+      <div className="backdrop-blur-md bg-gray-800/70 rounded-xl p-6 border border-gray-700">
         <h3 className="text-xl font-semibold text-white mb-4">Termék Bevételek</h3>
-        <div className="flex items-center justify-center h-96 bg-white/5 rounded-lg border border-white/10">
+        <div className="flex items-center justify-center h-96 bg-gray-800/50 rounded-lg border border-white/10">
           <p className="text-gray-300">Nincs megjeleníthető adat</p>
         </div>
       </div>
@@ -167,7 +167,7 @@ export function ProductBreakdownChart({ days }: ProductBreakdownChartProps) {
   }
 
   return (
-    <div className="backdrop-blur-md bg-white/10 rounded-xl p-6 border border-white/20 hover:border-white/40 transition-all">
+    <div className="backdrop-blur-md bg-gray-800/70 rounded-xl p-6 border border-gray-700 hover:border-white/40 transition-all">
       <h3 className="text-xl font-semibold text-white mb-4">Termék Bevételek</h3>
 
       <ResponsiveContainer width="100%" height={350}>
@@ -199,7 +199,7 @@ export function ProductBreakdownChart({ days }: ProductBreakdownChartProps) {
         {productData.map((product: ProductStat, index: number) => (
           <div
             key={product.product_id}
-            className="flex items-center justify-between p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-colors"
+            className="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg hover:bg-gray-800/70 transition-colors"
           >
             <div className="flex items-center gap-3">
               <div

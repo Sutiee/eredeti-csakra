@@ -33,17 +33,17 @@ interface KPICardProps {
 function ProductKPICard({ title, value, icon, subtitle, gradient, isLoading }: KPICardProps) {
   if (isLoading) {
     return (
-      <div className="backdrop-blur-md bg-white/10 rounded-xl p-6 border border-white/20 animate-pulse">
-        <div className="h-12 bg-white/20 rounded mb-3"></div>
-        <div className="h-8 bg-white/20 rounded mb-2"></div>
-        <div className="h-4 bg-white/20 rounded w-2/3"></div>
+      <div className="backdrop-blur-md bg-gray-800/70 rounded-xl p-6 border border-gray-700 animate-pulse">
+        <div className="h-12 bg-gray-700 rounded mb-3"></div>
+        <div className="h-8 bg-gray-700 rounded mb-2"></div>
+        <div className="h-4 bg-gray-700 rounded w-2/3"></div>
       </div>
     );
   }
 
   return (
     <div
-      className={`backdrop-blur-md bg-white/10 rounded-xl p-6 border border-white/20
+      className={`backdrop-blur-md bg-gray-800/70 rounded-xl p-6 border border-gray-700
         hover:border-white/40 transition-all duration-300 transform hover:scale-105
         hover:shadow-xl ${gradient}`}
     >
