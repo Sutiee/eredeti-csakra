@@ -1,8 +1,27 @@
 /**
  * POST /api/admin/auth/login
  * Admin login endpoint
+ *
+ * NOTE: Temporarily disabled until database migration 005 is run
+ * TODO: Uncomment after running migration 005_admin_analytics_tables.sql
  */
 
+import { NextResponse } from 'next/server';
+
+export async function POST() {
+  return NextResponse.json(
+    {
+      data: null,
+      error: {
+        message: 'Admin login temporarily disabled. Run database migration 005 first.',
+        code: 'MIGRATION_REQUIRED',
+      },
+    },
+    { status: 503 }
+  );
+}
+
+/* ORIGINAL CODE - UNCOMMENT AFTER MIGRATION
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getAdminUserByUsername, verifyPassword, updateAdminLastLogin } from '@/lib/admin/auth';
@@ -10,30 +29,20 @@ import { createAdminSession } from '@/lib/admin/session';
 import { getClientIp, getUserAgent } from '@/lib/admin/middleware';
 import { logger } from '@/lib/utils/logger';
 
-/**
- * Zod validation schema for login request
- */
 const LoginSchema = z.object({
   username: z.string().min(1, 'Username is required'),
   password: z.string().min(1, 'Password is required'),
 });
 
-/**
- * In-memory rate limiting (simple implementation)
- * In production, use Redis or similar
- */
 const loginAttempts = new Map<
   string,
   { count: number; lastAttempt: number; lockedUntil?: number }
 >();
 
 const MAX_ATTEMPTS = 5;
-const LOCK_DURATION_MS = 15 * 60 * 1000; // 15 minutes
-const ATTEMPT_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
+const LOCK_DURATION_MS = 15 * 60 * 1000;
+const ATTEMPT_WINDOW_MS = 15 * 60 * 1000;
 
-/**
- * Check if IP is rate limited
- */
 function checkRateLimit(ip: string): { allowed: boolean; remainingAttempts?: number; lockedUntil?: number } {
   const now = Date.now();
   const attempts = loginAttempts.get(ip);
@@ -42,18 +51,15 @@ function checkRateLimit(ip: string): { allowed: boolean; remainingAttempts?: num
     return { allowed: true, remainingAttempts: MAX_ATTEMPTS };
   }
 
-  // Check if locked
   if (attempts.lockedUntil && attempts.lockedUntil > now) {
     return { allowed: false, lockedUntil: attempts.lockedUntil };
   }
 
-  // Reset if window expired
   if (now - attempts.lastAttempt > ATTEMPT_WINDOW_MS) {
     loginAttempts.delete(ip);
     return { allowed: true, remainingAttempts: MAX_ATTEMPTS };
   }
 
-  // Check if too many attempts
   if (attempts.count >= MAX_ATTEMPTS) {
     const lockedUntil = attempts.lastAttempt + LOCK_DURATION_MS;
     attempts.lockedUntil = lockedUntil;
@@ -63,9 +69,6 @@ function checkRateLimit(ip: string): { allowed: boolean; remainingAttempts?: num
   return { allowed: true, remainingAttempts: MAX_ATTEMPTS - attempts.count };
 }
 
-/**
- * Record failed login attempt
- */
 function recordFailedAttempt(ip: string): void {
   const now = Date.now();
   const attempts = loginAttempts.get(ip);
@@ -78,58 +81,43 @@ function recordFailedAttempt(ip: string): void {
   }
 }
 
-/**
- * Clear login attempts on successful login
- */
 function clearAttempts(ip: string): void {
   loginAttempts.delete(ip);
 }
 
-/**
- * POST handler for admin login
- */
-export async function POST(request: NextRequest) {
+export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
-    const ip = getClientIp(request);
-    const userAgent = getUserAgent(request);
+    const body = await request.json();
+    const ip = getClientIp(request) || 'unknown';
 
-    // Check rate limit
     const rateLimit = checkRateLimit(ip);
     if (!rateLimit.allowed) {
-      const lockedMinutes = rateLimit.lockedUntil
-        ? Math.ceil((rateLimit.lockedUntil - Date.now()) / 60000)
-        : 15;
-
       logger.warn('Login rate limit exceeded', {
         context: 'POST /api/admin/auth/login',
-        data: { ip, lockedMinutes },
+        data: { ip, lockedUntil: rateLimit.lockedUntil },
       });
 
       return NextResponse.json(
         {
           data: null,
           error: {
-            message: `Túl sok sikertelen bejelentkezési kísérlet. Próbálja újra ${lockedMinutes} perc múlva.`,
+            message: 'Túl sok sikertelen bejelentkezési kísérlet. Próbáld újra 15 perc múlva.',
             code: 'RATE_LIMIT_EXCEEDED',
+            details: { lockedUntil: rateLimit.lockedUntil },
           },
         },
         { status: 429 }
       );
     }
 
-    // Parse and validate request body
-    const body = await request.json();
     const validationResult = LoginSchema.safeParse(body);
-
     if (!validationResult.success) {
-      recordFailedAttempt(ip);
       return NextResponse.json(
         {
           data: null,
           error: {
-            message: 'Érvénytelen bejelentkezési adatok',
+            message: 'Hiányzó felhasználónév vagy jelszó',
             code: 'VALIDATION_ERROR',
-            details: validationResult.error.errors,
           },
         },
         { status: 400 }
@@ -138,12 +126,10 @@ export async function POST(request: NextRequest) {
 
     const { username, password } = validationResult.data;
 
-    // Get admin user
     const user = await getAdminUserByUsername(username);
-
     if (!user) {
       recordFailedAttempt(ip);
-      logger.warn('Login attempt with invalid username', {
+      logger.warn('Login attempt with non-existent username', {
         context: 'POST /api/admin/auth/login',
         data: { username, ip },
       });
@@ -152,7 +138,7 @@ export async function POST(request: NextRequest) {
         {
           data: null,
           error: {
-            message: 'Helytelen felhasználónév vagy jelszó',
+            message: 'Hibás felhasználónév vagy jelszó',
             code: 'INVALID_CREDENTIALS',
           },
         },
@@ -160,12 +146,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verify password
-    const isValidPassword = await verifyPassword(password, user.passwordHash);
-
-    if (!isValidPassword) {
+    const isPasswordValid = await verifyPassword(password, user.password_hash);
+    if (!isPasswordValid) {
       recordFailedAttempt(ip);
-      logger.warn('Login attempt with invalid password', {
+      logger.warn('Login attempt with incorrect password', {
         context: 'POST /api/admin/auth/login',
         data: { username, ip },
       });
@@ -174,7 +158,7 @@ export async function POST(request: NextRequest) {
         {
           data: null,
           error: {
-            message: 'Helytelen felhasználónév vagy jelszó',
+            message: 'Hibás felhasználónév vagy jelszó',
             code: 'INVALID_CREDENTIALS',
           },
         },
@@ -182,56 +166,39 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create session
-    const sessionToken = await createAdminSession(user.id, ip, userAgent);
-
-    if (!sessionToken) {
-      logger.error('Failed to create admin session', null, {
-        context: 'POST /api/admin/auth/login',
-        data: { userId: user.id },
-      });
-
-      return NextResponse.json(
-        {
-          data: null,
-          error: {
-            message: 'Hiba történt a bejelentkezés során',
-            code: 'SESSION_CREATION_FAILED',
-          },
-        },
-        { status: 500 }
-      );
-    }
-
-    // Update last login
-    await updateAdminLastLogin(user.id);
-
-    // Clear rate limit attempts
     clearAttempts(ip);
+
+    const userAgent = getUserAgent(request);
+    const session = await createAdminSession(user.id, ip, userAgent);
+
+    await updateAdminLastLogin(user.id);
 
     logger.info('Admin login successful', {
       context: 'POST /api/admin/auth/login',
       data: { username, ip },
     });
 
-    // Set HTTP-only cookie with session token
     const response = NextResponse.json(
       {
         data: {
-          success: true,
-          username: user.username,
+          user: {
+            id: user.id,
+            username: user.username,
+          },
+          session: {
+            expiresAt: session.expiresAt,
+          },
         },
         error: null,
       },
       { status: 200 }
     );
 
-    // Set secure cookie
-    response.cookies.set('admin_session', sessionToken, {
+    response.cookies.set('admin_session', session.sessionToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 7 * 24 * 60 * 60, // 7 days
+      expires: session.expiresAt,
       path: '/',
     });
 
@@ -245,7 +212,7 @@ export async function POST(request: NextRequest) {
       {
         data: null,
         error: {
-          message: 'Váratlan hiba történt',
+          message: 'Belső szerverhiba történt',
           code: 'INTERNAL_ERROR',
         },
       },
@@ -253,3 +220,4 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+*/

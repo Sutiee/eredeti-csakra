@@ -1,15 +1,30 @@
 /**
  * POST /api/admin/auth/logout
  * Admin logout endpoint
+ *
+ * NOTE: Temporarily disabled until database migration 005 is run
  */
 
+import { NextResponse } from 'next/server';
+
+export async function POST() {
+  return NextResponse.json(
+    {
+      data: null,
+      error: {
+        message: 'Admin logout temporarily disabled. Run database migration 005 first.',
+        code: 'MIGRATION_REQUIRED',
+      },
+    },
+    { status: 503 }
+  );
+}
+
+/* ORIGINAL CODE - UNCOMMENT AFTER MIGRATION
 import { NextRequest, NextResponse } from 'next/server';
 import { deleteAdminSession } from '@/lib/admin/session';
 import { logger } from '@/lib/utils/logger';
 
-/**
- * POST handler for admin logout
- */
 export async function POST(request: NextRequest) {
   try {
     // Get session token from cookie
@@ -70,3 +85,4 @@ export async function POST(request: NextRequest) {
     return response;
   }
 }
+*/

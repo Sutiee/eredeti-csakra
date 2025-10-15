@@ -60,11 +60,13 @@ export default function UpsellCheckboxes({
                   <span className="text-lg font-bold text-purple-700">
                     +{product.price.toLocaleString()} Ft
                   </span>
+                  {/* Temporarily commented out - bundlePrice property removed
                   {product.bundlePrice && (
                     <span className="text-xs text-gray-500">
                       (Bundle-ben: {product.bundlePrice.toLocaleString()} Ft)
                     </span>
                   )}
+                  */}
                 </div>
               </div>
             </div>

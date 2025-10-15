@@ -12,7 +12,12 @@ export type ProductId =
   | 'detailed_pdf'
   | 'meditations'
   | 'bundle'
-  | 'ebook';
+  | 'ebook'
+  // Backward compatibility
+  | 'prod_personal_chakra_report'
+  | 'prod_chakra_handbook'
+  | 'prod_chakra_meditations'
+  | 'prod_full_harmony_bundle';
 
 export type ProductMetadata = {
   id: ProductId;
@@ -124,7 +129,18 @@ export const PRODUCTS: Record<ProductId, ProductMetadata> = {
       downloadable: true,
     },
   },
+  // Backward compatibility aliases
+  prod_personal_chakra_report: {} as ProductMetadata,
+  prod_chakra_handbook: {} as ProductMetadata,
+  prod_chakra_meditations: {} as ProductMetadata,
+  prod_full_harmony_bundle: {} as ProductMetadata,
 };
+
+// Set up aliases after object creation
+PRODUCTS.prod_personal_chakra_report = PRODUCTS.detailed_pdf;
+PRODUCTS.prod_chakra_handbook = PRODUCTS.ebook;
+PRODUCTS.prod_chakra_meditations = PRODUCTS.meditations;
+PRODUCTS.prod_full_harmony_bundle = PRODUCTS.bundle;
 
 /**
  * Get product by ID
@@ -138,11 +154,11 @@ export function getProductById(id: ProductId): ProductMetadata | null {
  */
 export function calculateBundleDiscount(): number {
   const individualTotal =
-    PRODUCTS.prod_personal_chakra_report.price +
-    PRODUCTS.prod_chakra_handbook.price +
-    PRODUCTS.prod_chakra_meditations.price;
+    PRODUCTS.detailed_pdf.price +
+    PRODUCTS.ebook.price +
+    PRODUCTS.meditations.price;
 
-  const bundlePrice = PRODUCTS.prod_full_harmony_bundle.price;
+  const bundlePrice = PRODUCTS.bundle.price;
   const discount = ((individualTotal - bundlePrice) / individualTotal) * 100;
 
   return Math.round(discount);

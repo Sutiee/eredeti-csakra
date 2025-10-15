@@ -23,7 +23,7 @@ export type ExtendedProductData = {
 /**
  * Extended product information for UI display
  */
-export const PRODUCT_DATA: Record<ProductId, ExtendedProductData> = {
+export const PRODUCT_DATA: Partial<Record<ProductId, ExtendedProductData>> = {
   prod_personal_chakra_report: {
     id: 'prod_personal_chakra_report',
     slug: 'csakra-csomag',

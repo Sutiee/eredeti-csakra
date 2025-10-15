@@ -17,13 +17,13 @@ type BundleOfferProps = {
  * Bundle Offer Component
  */
 export default function BundleOffer({ isSelected, onToggle }: BundleOfferProps) {
-  const bundle = PRODUCTS.prod_full_harmony_bundle;
+  const bundle = PRODUCTS.bundle;
   const discount = calculateBundleDiscount();
 
   const individualTotal =
-    PRODUCTS.prod_personal_chakra_report.price +
-    PRODUCTS.prod_chakra_handbook.price +
-    PRODUCTS.prod_chakra_meditations.price;
+    PRODUCTS.detailed_pdf.price +
+    PRODUCTS.ebook.price +
+    PRODUCTS.meditations.price;
 
   const savings = individualTotal - bundle.price;
 
