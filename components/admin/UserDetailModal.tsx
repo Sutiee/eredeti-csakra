@@ -117,16 +117,16 @@ export function UserDetailModal({
     >
       <div
         ref={modalRef}
-        className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-gradient-to-br from-purple-50 via-white to-rose-50 rounded-2xl shadow-2xl"
+        className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-2xl shadow-2xl border border-gray-700"
       >
         {/* Close button */}
         <button
           onClick={onClose}
-          className="sticky top-4 right-4 float-right z-10 p-2 bg-gray-800 rounded-full hover:bg-white shadow-md focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors duration-200"
+          className="sticky top-4 right-4 float-right z-10 p-2 bg-gray-700 rounded-full hover:bg-gray-600 shadow-md focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors duration-200"
           aria-label="Bezárás"
         >
           <svg
-            className="w-6 h-6 text-gray-300"
+            className="w-6 h-6 text-white"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -143,8 +143,8 @@ export function UserDetailModal({
         <div className="p-8">
           {/* Error state */}
           {error && (
-            <div className="backdrop-blur-md bg-red-500/10 rounded-xl p-6 border border-red-500/20">
-              <p className="text-red-800">
+            <div className="backdrop-blur-md bg-red-500/20 rounded-xl p-6 border border-red-500/50">
+              <p className="text-red-300">
                 Hiba történt az adatok betöltése közben. Kérjük, próbálja újra.
               </p>
             </div>
@@ -212,10 +212,10 @@ export function UserDetailModal({
                 <div className="backdrop-blur-md bg-gray-800/70 rounded-xl p-6 border border-gray-700 space-y-4">
                   {/* Quiz Status */}
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-500">
+                    <span className="text-sm font-medium text-gray-400">
                       Állapot
                     </span>
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-500/20 text-green-300 border border-green-500/50">
                       ✓ Befejezett
                     </span>
                   </div>
@@ -223,14 +223,14 @@ export function UserDetailModal({
                   {/* Progress */}
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium text-gray-500">
+                      <span className="text-sm font-medium text-gray-400">
                         Válaszok száma
                       </span>
                       <span className="text-sm font-semibold text-white">
                         {user.quiz.answers?.length || 0}/28 kérdés
                       </span>
                     </div>
-                    <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div className="w-full h-2 bg-gray-700 rounded-full overflow-hidden">
                       <div
                         className="h-full bg-gradient-to-r from-purple-500 to-rose-500 transition-all duration-300"
                         style={{
@@ -243,19 +243,19 @@ export function UserDetailModal({
                   {/* Answers Grid */}
                   {user.quiz.answers && user.quiz.answers.length > 0 && (
                     <div>
-                      <p className="text-sm font-medium text-gray-500 mb-2">
+                      <p className="text-sm font-medium text-gray-400 mb-2">
                         Válaszok (1-4 skála)
                       </p>
                       <div className="grid grid-cols-7 sm:grid-cols-14 gap-2">
                         {user.quiz.answers.map((answer, index) => (
                           <div
                             key={index}
-                            className="flex flex-col items-center justify-center p-2 bg-gray-800 rounded-lg border border-gray-700"
+                            className="flex flex-col items-center justify-center p-2 bg-gray-700 rounded-lg border border-gray-600"
                           >
-                            <span className="text-xs text-gray-500">
+                            <span className="text-xs text-gray-400">
                               {index + 1}
                             </span>
-                            <span className="text-sm font-semibold text-purple-700">
+                            <span className="text-sm font-semibold text-purple-400">
                               {answer}
                             </span>
                           </div>
@@ -303,7 +303,7 @@ export function UserDetailModal({
                             </span>
                           </div>
                         </div>
-                        <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                        <div className="w-full h-2 bg-gray-700 rounded-full overflow-hidden">
                           <div
                             className="h-full transition-all duration-300"
                             style={{
@@ -333,13 +333,13 @@ export function UserDetailModal({
                       {user.purchases.map((purchase) => (
                         <div
                           key={purchase.id}
-                          className="flex items-center justify-between p-3 bg-gray-800 rounded-lg border border-gray-700"
+                          className="flex items-center justify-between p-3 bg-gray-700 rounded-lg border border-gray-600"
                         >
                           <div>
                             <p className="font-medium text-white">
                               {purchase.productName}
                             </p>
-                            <p className="text-sm text-gray-500">
+                            <p className="text-sm text-gray-400">
                               {purchase.createdAt
                                 ? format(
                                     new Date(purchase.createdAt),
@@ -353,18 +353,18 @@ export function UserDetailModal({
                             <p className="font-semibold text-white">
                               {purchase.amount.toLocaleString('hu-HU')} Ft
                             </p>
-                            <p className="text-sm text-gray-500">
+                            <p className="text-sm text-gray-400">
                               {purchase.status}
                             </p>
                           </div>
                         </div>
                       ))}
-                      <div className="pt-3 border-t border-gray-700">
+                      <div className="pt-3 border-t border-gray-600">
                         <div className="flex items-center justify-between">
                           <span className="font-semibold text-white">
                             Összesen
                           </span>
-                          <span className="font-bold text-lg text-purple-700">
+                          <span className="font-bold text-lg text-purple-400">
                             {totalSpent.toLocaleString('hu-HU')} Ft
                           </span>
                         </div>
@@ -378,7 +378,7 @@ export function UserDetailModal({
               <section className="flex flex-col sm:flex-row gap-3">
                 <button
                   onClick={handleExport}
-                  className="flex-1 px-4 py-2 text-sm font-medium text-purple-700 bg-purple-100 border border-purple-300 rounded-md hover:bg-purple-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors duration-200"
+                  className="flex-1 px-4 py-2 text-sm font-medium text-purple-300 bg-purple-500/20 border border-purple-500/50 rounded-md hover:bg-purple-500/30 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors duration-200"
                 >
                   📥 Adatok exportálása (JSON)
                 </button>
