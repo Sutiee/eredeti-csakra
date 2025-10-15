@@ -1,225 +1,345 @@
-# [PROJECT NAME] - AI Context Template (claude-master)
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## 1. Project Overview
-- **Vision:** [Describe your project's vision and goals]
-- **Current Phase:** [Current development phase and status]
-- **Key Architecture:** [High-level architecture description]
-- **Development Strategy:** [Development approach and strategy notes]
+
+**Eredeti Csakra** is a Hungarian-language spiritual wellness web application that helps women (35+) discover and balance their chakras through an interactive quiz experience.
+
+- **Vision:** Provide personalized chakra health assessments with actionable guidance, monetized through digital products (reports, handbooks, meditations)
+- **Current Phase:** v1.5 - Monetization & UX Improvements (Live in production)
+- **Key Architecture:** Next.js 14 App Router with TypeScript, Supabase backend, Stripe payments, AI-generated content (OpenAI + ElevenLabs)
+- **Target Audience:** Hungarian-speaking women aged 35+ interested in spiritual growth and self-awareness
 
 ## 2. Project Structure
 
 **⚠️ CRITICAL: AI agents MUST read the [Project Structure documentation](/docs/ai-context/project-structure.md) before attempting any task to understand the complete technology stack, file tree and project organization.**
 
-[Project Name] follows a [describe architecture pattern]. For the complete tech stack and file tree structure, see [docs/ai-context/project-structure.md](/docs/ai-context/project-structure.md).
+Eredeti Csakra follows a Next.js App Router architecture with server components, serverless API routes, and a Supabase PostgreSQL backend. For the complete tech stack and file tree structure, see [docs/ai-context/project-structure.md](/docs/ai-context/project-structure.md).
 
-## 3. Coding Standards & AI Instructions
+## 3. Development Commands
 
-### General Instructions
-- Your most important job is to manage your own context. Always read any relevant files BEFORE planning changes.
-- When updating documentation, keep updates concise and on point to prevent bloat.
-- Write code following KISS, YAGNI, and DRY principles.
-- When in doubt follow proven best practices for implementation.
-- Do not commit to git without user approval.
-- Do not run any servers, rather tell the user to run servers for testing.
-- Always consider industry standard libraries/frameworks first over custom implementations.
-- Never mock anything. Never use placeholders. Never omit code.
-- Apply SOLID principles where relevant. Use modern framework features rather than reinventing solutions.
-- Be brutally honest about whether an idea is good or bad.
-- Make side effects explicit and minimal.
-- Design database schema to be evolution-friendly (avoid breaking changes).
+```bash
+# Development
+npm run dev                          # Start dev server (http://localhost:3000)
+npm run build                        # Production build (also runs next-sitemap)
+npm start                            # Start production server
+npm run lint                         # ESLint check
+npm run type-check                   # TypeScript validation (tsc --noEmit)
 
-
-### File Organization & Modularity
-- Default to creating multiple small, focused files rather than large monolithic ones
-- Each file should have a single responsibility and clear purpose
-- Keep files under 350 lines when possible - split larger files by extracting utilities, constants, types, or logical components into separate modules
-- Separate concerns: utilities, constants, types, components, and business logic into different files
-- Prefer composition over inheritance - use inheritance only for true 'is-a' relationships, favor composition for 'has-a' or behavior mixing
-
-- Follow existing project structure and conventions - place files in appropriate directories. Create new directories and move files if deemed appropriate.
-- Use well defined sub-directories to keep things organized and scalable
-- Structure projects with clear folder hierarchies and consistent naming conventions
-- Import/export properly - design for reusability and maintainability
-
-### Type Hints (REQUIRED)
-- **Always** use type hints for function parameters and return values
-- Use `from typing import` for complex types
-- Prefer `Optional[T]` over `Union[T, None]`
-- Use Pydantic models for data structures
-
-```python
-# Good
-from typing import Optional, List, Dict, Tuple
-
-async def process_audio(
-    audio_data: bytes,
-    session_id: str,
-    language: Optional[str] = None
-) -> Tuple[bytes, Dict[str, Any]]:
-    """Process audio through the pipeline."""
-    pass
+# Content Generation Scripts (Backend)
+npm run generate-meditation-scripts  # Generate meditation text scripts (OpenAI)
+npm run generate-meditation-audio    # Generate audio files from scripts (ElevenLabs)
 ```
 
-### Naming Conventions
-- **Classes**: PascalCase (e.g., `VoicePipeline`)
-- **Functions/Methods**: snake_case (e.g., `process_audio`)
-- **Constants**: UPPER_SNAKE_CASE (e.g., `MAX_AUDIO_SIZE`)
-- **Private methods**: Leading underscore (e.g., `_validate_input`)
-- **Pydantic Models**: PascalCase with `Schema` suffix (e.g., `ChatRequestSchema`, `UserSchema`)
+## 4. Core Architecture Patterns
 
+### Quiz Flow Architecture
+The application follows a multi-step funnel pattern:
 
-### Documentation Requirements
-- Every module needs a docstring
-- Every public function needs a docstring
-- Use Google-style docstrings
-- Include type information in docstrings
+1. **Landing Page** (`app/page.tsx`) → Spiritual marketing with problem/solution/CTA
+2. **Pre-Quiz Ritual** (`app/kviz/bevezeto/page.tsx`) → Emotional preparation with breathing exercise
+3. **28-Question Quiz** (`app/kviz/page.tsx`) → One question per page, chakra-colored backgrounds
+4. **Result Page** (`app/eredmeny/[id]/page.tsx`) → SVG body silhouette + 7 detailed chakra cards
+5. **Checkout Flow** (`app/checkout/[result-id]/page.tsx`) → Product selection with upsells
+6. **Success Page** (`app/success/[result-id]/page.tsx`) → Download links + access tokens
 
-```python
-def calculate_similarity(text1: str, text2: str) -> float:
-    """Calculate semantic similarity between two texts.
+### Scoring System
+- **28 questions** = 7 chakras × 4 questions each
+- **Scale**: 1-4 (1 = egyáltalán nem, 4 = teljes mértékben)
+- **Chakra score range**: 4-16 points per chakra
+- **Interpretation levels** (defined in `lib/quiz/interpretations.ts`):
+  - 4-7: Erősen blokkolt (Blocked)
+  - 8-12: Kiegyensúlyozatlan (Imbalanced)
+  - 13-16: Egészséges és kiegyensúlyozott (Balanced)
 
-    Args:
-        text1: First text to compare
-        text2: Second text to compare
+### API Route Patterns
+All API routes follow consistent patterns:
+- **Input validation**: Zod schemas or manual checks
+- **Error handling**: Try-catch with 500 responses
+- **Response format**: `{ data: {...}, error: null }` or `{ data: null, error: {...} }`
+- **Supabase integration**: Server-side client for database operations
 
-    Returns:
-        Similarity score between 0 and 1
+Key endpoints:
+- `POST /api/submit-quiz` - Save quiz results, return chakra scores
+- `GET /api/result/[id]` - Fetch result with interpretations
+- `POST /api/create-checkout-session` - Create Stripe checkout
+- `POST /api/stripe/webhook` - Handle payment events
+- `POST /api/generate-detailed-report` - OpenAI report generation
+- `POST /api/generate-meditation-audio` - ElevenLabs audio synthesis
 
-    Raises:
-        ValueError: If either text is empty
-    """
-    pass
+### Monetization System
+**Products** (defined in `lib/stripe/products.ts`):
+1. **Személyre Szabott Csakra Elsősegély Csomag** - 2,990 Ft (PDF report)
+2. **Csakra Kézikönyv** - 1,990 Ft (80+ page handbook)
+3. **Csakra Aktivizáló Meditációk** - 3,990 Ft (7 audio meditations)
+4. **Teljes Csakra Harmónia Csomag** - 6,990 Ft (bundle with 22% discount)
+
+**Payment Flow**:
+1. User completes quiz → redirected to checkout
+2. Stripe Checkout Session created with metadata (result_id, email)
+3. Webhook receives `checkout.session.completed` event
+4. Purchase record created in `purchases` table
+5. PDF generated (OpenAI + jsPDF) → uploaded to Supabase Storage
+6. Email sent (Resend) with download links
+7. Meditation access tokens created if applicable
+
+### Content Generation Architecture
+**AI-Generated Content**:
+- **Detailed Reports**: OpenAI GPT-4o-mini generates personalized chakra analysis
+- **Meditation Audio**: ElevenLabs generates Hungarian voice audio from scripts
+- **Scripts**: Stored in `data/meditation-scripts.ts` (7 meditations, 15-20 min each)
+
+## 5. TypeScript & Type Safety
+
+### Strict TypeScript Rules
+- **Always run `npm run type-check`** after making changes
+- All functions must have explicit return types
+- Props must be typed with interfaces or types
+- Avoid `any` - use `unknown` and type guards instead
+- Use discriminated unions for complex state
+
+### Key Type Definitions
+Located in `/types/index.ts`:
+- `QuizAnswers` - Array of 28 numbers (1-4)
+- `ChakraScores` - Object mapping chakra names to scores
+- `ChakraName` - Union of 7 chakra Hungarian names
+- `InterpretationLevel` - 'blocked' | 'imbalanced' | 'balanced'
+- `Product` - Stripe product metadata
+- `ProductId` - Union of 4 product IDs
+
+### Next.js Specific Patterns
+- **Server Components by default** - Use `"use client"` only when needed (state, effects, browser APIs)
+- **Server Actions** - NOT used in this project (API routes preferred)
+- **Metadata API** - Used in layouts for SEO (viewport, description, OG images)
+- **Dynamic Routes** - Use `[param]` folders with typed `params` objects
+
+## 6. Styling & Design System
+
+### Tailwind Configuration
+**Spiritual Color Palette** (`tailwind.config.ts`):
+- `spiritual.purple.*` - Primary brand color (lila)
+- `spiritual.rose.*` - Secondary accent (rózsaszín)
+- `spiritual.gold.*` - Highlight accent (arany)
+- `chakra.root` through `chakra.crown` - 7 chakra-specific colors
+
+**Custom Animations**:
+- `animate-pulse-slow` - Slow pulsing for chakra points
+- `animate-float` - Floating motion for decorative elements
+- `animate-breathe` - Breathing effect (scale + opacity)
+- `animate-chakra-pulse` - Pulsing glow effect
+- `animate-energy-flow` - Upward flowing particles
+
+**Background Gradients**:
+- `bg-gradient-spiritual` - Purple gradient (primary)
+- `bg-gradient-rose-gold` - Rose-gold gradient
+- `bg-gradient-mystical` - Soft mystical gradient
+
+### Typography
+- **Headings**: `font-serif` (Playfair Display) - Elegant, spiritual
+- **Body**: `font-sans` (Inter) - Modern, readable
+- Fonts loaded via `app/fonts.ts` using `next/font/google`
+
+### Component Patterns
+- **Card Backgrounds**: Glass morphism (`backdrop-blur-sm`, `bg-white/10`)
+- **Hover States**: Smooth transitions with `transition-all duration-300`
+- **Chakra-Colored Sections**: Dynamic background colors per chakra
+- **Framer Motion**: Used for page transitions, scroll animations, entrance effects
+
+## 7. Database Schema (Supabase)
+
+### Tables
+**quiz_results** - Stores completed quiz data
+- `id` (UUID) - Primary key
+- `name`, `email`, `age` - User info
+- `answers` (JSONB) - Array of 28 scores
+- `chakra_scores` (JSONB) - Calculated scores per chakra
+- `created_at`, `updated_at` - Timestamps
+
+**purchases** - E-commerce transactions
+- `id` (UUID) - Primary key
+- `result_id` (FK) - Links to quiz result
+- `email`, `product_id`, `amount`, `currency`
+- `stripe_session_id`, `stripe_payment_intent_id`
+- `status` - 'pending' | 'completed' | 'failed'
+- `pdf_url` - Supabase Storage URL
+
+**meditation_access** - Token-based meditation access
+- `id` (UUID) - Primary key
+- `purchase_id` (FK) - Links to purchase
+- `email`, `access_token` (unique)
+- `expires_at` - Expiration timestamp
+
+### Row Level Security (RLS)
+- **quiz_results**: Public read/write (no auth required)
+- **purchases**: Secured by server-side API only
+- **meditation_access**: Token-based validation in API routes
+
+## 8. Environment Variables
+
+Required in `.env.local`:
+```bash
+# Supabase (Backend)
+NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJxxx...
+
+# Stripe (Payments - LIVE keys)
+STRIPE_SECRET_KEY=sk_live_xxx
+STRIPE_WEBHOOK_SECRET=whsec_xxx
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_xxx
+
+# OpenAI (AI Report Generation)
+OPENAI_API_KEY=sk-proj-xxx
+OPENAI_MODEL=gpt-4o-mini
+
+# Resend (Email Delivery)
+RESEND_API_KEY=re_xxx
+RESEND_AUDIENCE_ID=xxx
+RESEND_FROM_EMAIL=hello@eredeticsakra.hu
+
+# ElevenLabs (AI Voice Synthesis)
+ELEVENLABS_API_KEY=xxx
+ELEVENLABS_VOICE_ID=xxx  # Hungarian female voice
+
+# Site Configuration
+NEXT_PUBLIC_SITE_URL=https://eredeticsakra.hu
 ```
 
-### Security First
-- Never trust external inputs - validate everything at the boundaries
-- Keep secrets in environment variables, never in code
-- Log security events (login attempts, auth failures, rate limits, permission denials) but never log sensitive data (audio, conversation content, tokens, personal info)
-- Authenticate users at the API gateway level - never trust client-side tokens
-- Use Row Level Security (RLS) to enforce data isolation between users
-- Design auth to work across all client types consistently
-- Use secure authentication patterns for your platform
-- Validate all authentication tokens server-side before creating sessions
-- Sanitize all user inputs before storing or processing
+## 9. Coding Standards
 
-### Error Handling
-- Use specific exceptions over generic ones
-- Always log errors with context
-- Provide helpful error messages
-- Fail securely - errors shouldn't reveal system internals
+### Component Organization
+- **Client Components**: Mark with `"use client"` at top
+- **Component Files**: PascalCase (e.g., `ChakraSilhouette.tsx`)
+- **Props Types**: Define as `type ComponentNameProps = {...}` above component
+- **Conditional Rendering**: Use early returns for loading/error states
+- **Event Handlers**: Prefix with `handle` (e.g., `handleSubmit`)
 
-### Observable Systems & Logging Standards
-- Every request needs a correlation ID for debugging
-- Structure logs for machines, not humans - use JSON format with consistent fields (timestamp, level, correlation_id, event, context) for automated analysis
-- Make debugging possible across service boundaries
+### Business Logic Separation
+- **lib/** - Pure functions, no UI dependencies
+- **components/** - UI only, import from lib/ for logic
+- **app/api/** - Server-side logic, database operations
+- **data/** - Static content (products, testimonials, meditations)
 
-### State Management
-- Have one source of truth for each piece of state
-- Make state changes explicit and traceable
-- Design for multi-service voice processing - use session IDs for state coordination, avoid storing conversation data in server memory
-- Keep conversation history lightweight (text, not audio)
+### Error Handling Patterns
+```typescript
+// API Routes
+try {
+  // ... operation
+  return NextResponse.json({ data: result, error: null });
+} catch (error) {
+  console.error('[API_ROUTE_NAME] Error:', error);
+  return NextResponse.json(
+    { data: null, error: { message: 'Error description' } },
+    { status: 500 }
+  );
+}
 
-### API Design Principles
-- RESTful design with consistent URL patterns
-- Use HTTP status codes correctly
-- Version APIs from day one (/v1/, /v2/)
-- Support pagination for list endpoints
-- Use consistent JSON response format:
-  - Success: `{ "data": {...}, "error": null }`
-  - Error: `{ "data": null, "error": {"message": "...", "code": "..."} }`
-
-
-## 4. Multi-Agent Workflows & Context Injection
-
-### Automatic Context Injection for Sub-Agents
-When using the Task tool to spawn sub-agents, the core project context (CLAUDE.md, project-structure.md, docs-overview.md) is automatically injected into their prompts via the subagent-context-injector hook. This ensures all sub-agents have immediate access to essential project documentation without the need of manual specification in each Task prompt.
-
-
-## 5. MCP Server Integrations
-
-### Gemini Consultation Server
-**When to use:**
-- Complex coding problems requiring deep analysis or multiple approaches
-- Code reviews and architecture discussions
-- Debugging complex issues across multiple files
-- Performance optimization and refactoring guidance
-- Detailed explanations of complex implementations
-- Highly security relevant tasks
-
-**Automatic Context Injection:**
-- The kit's `gemini-context-injector.sh` hook automatically includes two key files for new sessions:
-  - `/docs/ai-context/project-structure.md` - Complete project structure and tech stack
-  - `/MCP-ASSISTANT-RULES.md` - Your project-specific coding standards and guidelines
-- This ensures Gemini always has comprehensive understanding of your technology stack, architecture, and project standards
-
-**Usage patterns:**
-```python
-# New consultation session (project structure auto-attached by hooks)
-mcp__gemini__consult_gemini(
-    specific_question="How should I optimize this voice pipeline?",
-    problem_description="Need to reduce latency in real-time audio processing",
-    code_context="Current pipeline processes audio sequentially...",
-    attached_files=[
-        "src/core/pipelines/voice_pipeline.py"  # Your specific files
-    ],
-    preferred_approach="optimize"
-)
-
-# Follow-up in existing session
-mcp__gemini__consult_gemini(
-    specific_question="What about memory usage?",
-    session_id="session_123",
-    additional_context="Implemented your suggestions, now seeing high memory usage"
-)
+// Client Components
+const [error, setError] = useState<string | null>(null);
+// ... show error in UI with conditional rendering
 ```
 
-**Key capabilities:**
-- Persistent conversation sessions with context retention
-- File attachment and caching for multi-file analysis
-- Specialized assistance modes (solution, review, debug, optimize, explain)
-- Session management for complex, multi-step problems
+### Quiz Logic Rules
+- **Question Order**: NEVER shuffle - chakra order is sacred (root → crown)
+- **Score Calculation**: Use functions from `lib/quiz/scoring.ts`
+- **Interpretations**: Fetch from `lib/quiz/interpretations.ts` based on score ranges
+- **Validation**: All 28 questions must be answered before submission
 
-**Important:** Treat Gemini's responses as advisory feedback. Evaluate the suggestions critically, incorporate valuable insights into your solution, then proceed with your implementation.
+## 10. Testing & Quality Assurance
 
-### Context7 Documentation Server
-**Repository**: [Context7 MCP Server](https://github.com/upstash/context7)
+### Pre-Deployment Checklist
+1. **Type Check**: `npm run type-check` (must pass with 0 errors)
+2. **Linting**: `npm run lint` (fix all issues)
+3. **Build**: `npm run build` (must succeed)
+4. **Manual Testing Flow**:
+   - Landing → Pre-Quiz → Complete all 28 questions → Result page
+   - Result → Checkout → Test Stripe payment (use test card)
+   - Verify email delivery (check Resend logs)
+   - Test PDF download links
 
-**When to use:**
-- Working with external libraries/frameworks (React, FastAPI, Next.js, etc.)
-- Need current documentation beyond training cutoff
-- Implementing new integrations or features with third-party tools
-- Troubleshooting library-specific issues
+### Common Issues
+- **Build Errors**: Usually missing `export default` or async/await in Server Components
+- **Hydration Errors**: Client/Server state mismatch - check `"use client"` placement
+- **Stripe Webhook Failures**: Verify webhook secret in `.env.local`
+- **Supabase Errors**: Check RLS policies and connection credentials
 
-**Usage patterns:**
-```python
-# Resolve library name to Context7 ID
-mcp__context7__resolve_library_id(libraryName="react")
+## 11. Deployment (Vercel)
 
-# Fetch focused documentation
-mcp__context7__get_library_docs(
-    context7CompatibleLibraryID="/facebook/react",
-    topic="hooks",
-    tokens=8000
-)
-```
+### Deployment Process
+1. Push to `main` branch on GitHub
+2. Vercel auto-deploys (connected to repository)
+3. Verify environment variables in Vercel dashboard
+4. Check build logs for errors
+5. Test production site thoroughly
 
-**Key capabilities:**
-- Up-to-date library documentation access
-- Topic-focused documentation retrieval
-- Support for specific library versions
-- Integration with current development practices
+### Post-Deployment Verification
+- Test complete quiz flow end-to-end
+- Verify Stripe webhook endpoint (check Vercel function logs)
+- Test email delivery
+- Verify Supabase Storage access (PDFs, meditation audio)
 
+## 12. Content & Translation
 
+### Language Requirements
+- **All UI text**: Hungarian only
+- **Tone**: Empátikus, meleg, spirituális (empathetic, warm, spiritual)
+- **Target Audience**: Tegeződés (informal "you") for 35+ women
+- **Copywriting Style**: Solution-focused, non-judgmental, nurturing
 
-## 6. Post-Task Completion Protocol
-After completing any coding task, follow this checklist:
+### Spiritual Terminology
+Use consistent Hungarian terms:
+- Gyökércsakra (Root Chakra)
+- Szakrális csakra (Sacral Chakra)
+- Napfonat csakra (Solar Plexus)
+- Szív csakra (Heart Chakra)
+- Torok csakra (Throat Chakra)
+- Harmadik szem (Third Eye)
+- Korona csakra (Crown Chakra)
 
-### 1. Type Safety & Quality Checks
-Run the appropriate commands based on what was modified:
-- **Python projects**: Run mypy type checking
-- **TypeScript projects**: Run tsc --noEmit
-- **Other languages**: Run appropriate linting/type checking tools
+## 13. Security Considerations
 
-### 2. Verification
-- Ensure all type checks pass before considering the task complete
-- If type errors are found, fix them before marking the task as done
+### Sensitive Data Handling
+- **Never log**: User emails, answers, payment details
+- **Sanitize inputs**: Validate all user inputs before database insertion
+- **API Keys**: Never expose in client-side code (use server-side only)
+- **Stripe Keys**: Use publishable key in client, secret key only in API routes/webhooks
+
+### Supabase Security
+- **RLS Policies**: Properly configured for public quiz access
+- **Storage Buckets**: Use private buckets for user-generated content
+- **API Keys**: Use anon key for public operations only
+
+## 14. AI Integration Patterns
+
+### OpenAI Report Generation
+- **Model**: GPT-4o-mini (cost-effective, fast)
+- **Prompt Engineering**: Structured prompts in `lib/openai/report-generator.ts`
+- **Content**: Personalized based on chakra scores and interpretation levels
+- **Output**: Markdown format converted to HTML/PDF
+
+### ElevenLabs Audio Synthesis
+- **Voice ID**: Hungarian female voice (configured in env)
+- **Input**: Pre-written meditation scripts from `data/meditation-scripts.ts`
+- **Output**: MP3 files uploaded to Supabase Storage
+- **Access**: Token-based URLs with expiration
+
+## 15. Known Limitations & Future Considerations
+
+### Current Limitations
+- No user authentication (email-based identification only)
+- No admin dashboard (database management via Supabase UI)
+- Single language support (Hungarian only)
+- No A/B testing framework
+
+### Future Enhancements (Not Yet Implemented)
+- User accounts with login/dashboard
+- Retake quiz feature with history tracking
+- Mobile app (React Native)
+- Additional languages (English, German)
+- Subscription model for ongoing content
+
+---
+
+**Last Updated**: 2025-10-15 | **Version**: v1.5 (Monetization & UX Complete)
+
+For detailed development history and phase breakdowns, see [docs/v1.5-DEVELOPMENT-PLAN.md](docs/v1.5-DEVELOPMENT-PLAN.md).
