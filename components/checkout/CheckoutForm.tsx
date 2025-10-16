@@ -37,8 +37,8 @@ export default function CheckoutForm({ resultId, email }: CheckoutFormProps) {
     if (preselectedProduct && PRODUCTS[preselectedProduct]) {
       return [preselectedProduct];
     }
-    // Default to old product for backward compatibility
-    return ['prod_personal_chakra_report'];
+    // Default to new AI Analysis product (v2.0)
+    return ['ai_analysis_pdf'];
   };
 
   const [selectedProducts, setSelectedProducts] = useState<ProductId[]>(getInitialSelection());
@@ -83,7 +83,7 @@ export default function CheckoutForm({ resultId, email }: CheckoutFormProps) {
       if (productId === 'prod_full_harmony_bundle') {
         if (prev.includes(productId)) {
           // Remove bundle, keep base report
-          newSelection = ['prod_personal_chakra_report'];
+          newSelection = ['ai_analysis_pdf'];
         } else {
           // Select bundle only
           newSelection = ['prod_full_harmony_bundle'];
@@ -96,7 +96,7 @@ export default function CheckoutForm({ resultId, email }: CheckoutFormProps) {
         if (withoutBundle.includes(productId)) {
           const filtered = withoutBundle.filter((id) => id !== productId);
           // Keep at least base report
-          newSelection = filtered.length > 0 ? filtered : ['prod_personal_chakra_report'];
+          newSelection = filtered.length > 0 ? filtered : ['ai_analysis_pdf'];
         } else {
           newSelection = [...withoutBundle, productId];
         }
@@ -195,13 +195,13 @@ export default function CheckoutForm({ resultId, email }: CheckoutFormProps) {
           </div>
           <div className="flex-1">
             <h3 className="font-semibold text-gray-800">
-              {PRODUCTS.prod_personal_chakra_report.name}
+              {PRODUCTS.ai_analysis_pdf.name}
             </h3>
             <p className="text-sm text-gray-600 mt-1">
-              {PRODUCTS.prod_personal_chakra_report.description}
+              {PRODUCTS.ai_analysis_pdf.description}
             </p>
             <p className="text-lg font-bold text-purple-700 mt-2">
-              {PRODUCTS.prod_personal_chakra_report.price.toLocaleString()} Ft
+              {PRODUCTS.ai_analysis_pdf.price.toLocaleString()} Ft
             </p>
           </div>
         </div>
