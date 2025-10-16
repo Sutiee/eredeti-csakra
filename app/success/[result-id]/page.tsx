@@ -11,6 +11,7 @@ import { motion } from 'framer-motion';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import ThankYouMessage from '@/components/success/ThankYouMessage';
 import DownloadLinks from '@/components/success/DownloadLinks';
+import UpsellModal from '@/components/success/UpsellModal';
 import { useAnalytics } from '@/lib/admin/tracking/client';
 
 /**
@@ -38,6 +39,8 @@ export default function SuccessPage() {
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showUpsell, setShowUpsell] = useState(false);
+  const [hasSeenUpsell, setHasSeenUpsell] = useState(false);
   const { trackEvent } = useAnalytics();
 
   /**
@@ -94,6 +97,40 @@ export default function SuccessPage() {
       fetchPurchases();
     }
   }, [resultId, sessionId, trackEvent]);
+
+  /**
+   * Show upsell modal after 5 seconds (only once)
+   */
+  useEffect(() => {
+    if (!hasSeenUpsell && sessionId && !loading && !error) {
+      const timer = setTimeout(() => {
+        setShowUpsell(true);
+        setHasSeenUpsell(true);
+
+        // Track upsell modal impression
+        trackEvent('upsell_viewed', {
+          result_id: resultId,
+          session_id: sessionId,
+          product_id: 'workbook_30day',
+        });
+      }, 5000); // 5 seconds delay
+
+      return () => clearTimeout(timer);
+    }
+  }, [hasSeenUpsell, sessionId, loading, error, resultId, trackEvent]);
+
+  /**
+   * Handle upsell modal close
+   */
+  const handleUpsellClose = () => {
+    setShowUpsell(false);
+
+    // Track upsell declined
+    trackEvent('upsell_declined', {
+      result_id: resultId,
+      session_id: sessionId || '',
+    });
+  };
 
   /**
    * Loading State
@@ -242,6 +279,15 @@ export default function SuccessPage() {
           </div>
         </motion.div>
       </div>
+
+      {/* Upsell Modal (only if sessionId exists and user hasn't seen it yet) */}
+      {showUpsell && sessionId && (
+        <UpsellModal
+          sessionId={sessionId}
+          resultId={resultId}
+          onClose={handleUpsellClose}
+        />
+      )}
     </main>
   );
 }

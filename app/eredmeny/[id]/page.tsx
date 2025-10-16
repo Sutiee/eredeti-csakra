@@ -646,21 +646,15 @@ export default function ResultPage() {
           />
 
           <div className="relative z-10">
-            <h2 className="text-3xl md:text-4xl font-serif font-bold text-white mb-4">
-              Mit szeretnél most?
-            </h2>
-            <p className="text-white/90 text-lg mb-8 max-w-2xl mx-auto">
-              Mented az eredményed, oszd meg másokkal, vagy fedezd fel a csakraharmonizáló programjainkat!
-            </p>
-
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+            {/* Action buttons (Save/Copy) */}
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
               <motion.button
                 onClick={() => window.print()}
-                className="bg-white text-spiritual-purple-700 font-semibold py-3 px-8 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300"
+                className="bg-white/10 backdrop-blur-sm text-white font-semibold py-3 px-6 rounded-lg border-2 border-white/30 hover:bg-white/20 transition-colors duration-300"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
-                Eredmény mentése
+                💾 Eredmény mentése
               </motion.button>
 
               <motion.button
@@ -669,21 +663,80 @@ export default function ResultPage() {
                   navigator.clipboard.writeText(url);
                   alert('Link vágólapra másolva!');
                 }}
-                className="bg-white/10 backdrop-blur-sm text-white font-semibold py-3 px-8 rounded-lg border-2 border-white/30 hover:bg-white/20 transition-colors duration-300"
+                className="bg-white/10 backdrop-blur-sm text-white font-semibold py-3 px-6 rounded-lg border-2 border-white/30 hover:bg-white/20 transition-colors duration-300"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
-                Link másolása
+                🔗 Link másolása
               </motion.button>
+            </div>
 
-              <motion.button
-                onClick={() => router.push('/')}
-                className="bg-white/10 backdrop-blur-sm text-white font-semibold py-3 px-8 rounded-lg border-2 border-white/30 hover:bg-white/20 transition-colors duration-300"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                Programok felfedezése
-              </motion.button>
+            {/* Main Product Offer */}
+            <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-8 max-w-3xl mx-auto shadow-2xl">
+              <h2 className="text-3xl md:text-4xl font-serif font-bold text-purple-900 mb-3 text-center">
+                🔮 Mélyíts még tovább!
+              </h2>
+              <p className="text-gray-700 text-lg mb-6 text-center">
+                A kvíz eredményed csak a <strong>felszín</strong>.
+                <br />
+                Az igazi átalakulás a <strong>részletekben</strong> rejlik.
+              </p>
+
+              {/* Product Card */}
+              <div className="border-2 border-purple-200 rounded-xl p-6 mb-6">
+                <div className="flex items-start gap-4 mb-4">
+                  <div className="text-5xl">📄</div>
+                  <div className="flex-1">
+                    <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                      AI Csakra Elemzés PDF
+                    </h3>
+                    <p className="text-gray-600 mb-4">
+                      20+ oldalas AI-generált személyre szabott jelentés
+                    </p>
+                  </div>
+                </div>
+
+                <ul className="space-y-2 mb-6">
+                  <li className="flex items-start gap-2 text-gray-700">
+                    <span className="text-purple-600 mt-1">✨</span>
+                    <span>Minden csakrára <strong>részletes elemzés</strong> a pontszámaid alapján</span>
+                  </li>
+                  <li className="flex items-start gap-2 text-gray-700">
+                    <span className="text-purple-600 mt-1">🎯</span>
+                    <span><strong>Konkrét gyakorlati tanácsok</strong> (jóga pózok, affirmációk, kristályok)</span>
+                  </li>
+                  <li className="flex items-start gap-2 text-gray-700">
+                    <span className="text-purple-600 mt-1">💡</span>
+                    <span><strong>7 napos akcióterv</strong> a csakra egyensúly visszaállításához</span>
+                  </li>
+                  <li className="flex items-start gap-2 text-gray-700">
+                    <span className="text-purple-600 mt-1">📈</span>
+                    <span>Személyre szabott <strong>meditációs gyakorlatok</strong></span>
+                  </li>
+                </ul>
+
+                <div className="bg-purple-50 rounded-lg p-4 mb-6">
+                  <div className="flex items-baseline justify-center gap-3">
+                    <span className="text-4xl font-bold text-purple-600">2990 Ft</span>
+                  </div>
+                  <p className="text-center text-sm text-gray-600 mt-2">
+                    Egyszeri fizetés • Azonnali hozzáférés
+                  </p>
+                </div>
+
+                <motion.button
+                  onClick={() => router.push(`/checkout/${id}?product=ai_analysis_pdf`)}
+                  className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold py-4 px-8 rounded-xl text-lg hover:from-purple-700 hover:to-pink-700 transition-all shadow-lg hover:shadow-xl"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  🚀 Megrendelem az AI Elemzést
+                </motion.button>
+
+                <p className="text-center text-sm text-gray-500 mt-4">
+                  🔒 Biztonságos fizetés • ⚡ Azonnali email küldés
+                </p>
+              </div>
             </div>
           </div>
         </motion.div>

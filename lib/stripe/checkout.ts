@@ -57,15 +57,33 @@ export async function createCheckoutSession(
     payment_method_types: ['card'],
     line_items: lineItems,
     mode: 'payment',
+
+    // ⚠️ CRITICAL: Save payment method for future upsell charges
+    payment_intent_data: {
+      setup_future_usage: 'off_session', // Allows charging without user present
+      metadata: {
+        result_id: resultId,
+        product_ids: items.map((item) => item.productId).join(','),
+      },
+    },
+
+    customer_creation: 'always', // Always create a Stripe customer
+
     success_url: successUrl,
     cancel_url: cancelUrl,
     customer_email: email,
     metadata: {
       result_id: resultId,
       email,
+      product_ids: items.map((item) => item.productId).join(','),
     },
     allow_promotion_codes: true,
     billing_address_collection: 'auto',
+
+    // GDPR Compliance: User must accept Terms of Service
+    consent_collection: {
+      terms_of_service: 'required',
+    },
   });
 
   return session;

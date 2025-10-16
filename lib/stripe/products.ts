@@ -9,6 +9,10 @@
  */
 
 export type ProductId =
+  // v2.0 Upsell Products
+  | 'ai_analysis_pdf'        // NEW: 2990 HUF - Entry product
+  | 'workbook_30day'         // NEW: 3990 HUF - Upsell product
+  // v1.x Products
   | 'detailed_pdf'
   | 'meditations'
   | 'bundle'
@@ -26,6 +30,7 @@ export type ProductMetadata = {
   name: string;
   description: string;
   price: number; // In HUF
+  originalPrice?: number; // For upsell products (strikethrough price)
   currency: string;
   metadata: {
     product_type: string;
@@ -36,6 +41,9 @@ export type ProductMetadata = {
     chakra_specific?: boolean;
     access_duration_days?: number;
     downloadable?: boolean;
+    is_entry_product?: boolean;  // NEW: Entry-level product
+    is_upsell?: boolean;          // NEW: Upsell product
+    ai_generated?: boolean;       // NEW: AI-generated content
   };
 };
 
@@ -44,6 +52,10 @@ export type ProductMetadata = {
  * Get these from: Stripe Dashboard → Products → [Product] → Copy Product ID
  */
 const STRIPE_PRODUCT_IDS = {
+  // v2.0 Upsell Products
+  AI_ANALYSIS: process.env.STRIPE_PRODUCT_ID_AI_ANALYSIS || 'prod_REPLACE_ME',
+  WORKBOOK: process.env.STRIPE_PRODUCT_ID_WORKBOOK || 'prod_REPLACE_ME',
+  // v1.x Products
   DETAILED_PDF: process.env.STRIPE_PRODUCT_ID_DETAILED_PDF || 'prod_REPLACE_ME',
   MEDITATIONS: process.env.STRIPE_PRODUCT_ID_MEDITATIONS || 'prod_REPLACE_ME',
   BUNDLE: process.env.STRIPE_PRODUCT_ID_BUNDLE || 'prod_REPLACE_ME',
@@ -55,6 +67,10 @@ const STRIPE_PRODUCT_IDS = {
  * Get these from: Stripe Dashboard → Products → [Product] → Pricing → Copy Price ID
  */
 const STRIPE_PRICE_IDS = {
+  // v2.0 Upsell Products
+  AI_ANALYSIS: process.env.STRIPE_PRICE_ID_AI_ANALYSIS || 'price_REPLACE_ME',
+  WORKBOOK: process.env.STRIPE_PRICE_ID_WORKBOOK || 'price_REPLACE_ME',
+  // v1.x Products
   DETAILED_PDF: process.env.STRIPE_PRICE_ID_DETAILED_PDF || 'price_REPLACE_ME',
   MEDITATIONS: process.env.STRIPE_PRICE_ID_MEDITATIONS || 'price_REPLACE_ME',
   BUNDLE: process.env.STRIPE_PRICE_ID_BUNDLE || 'price_REPLACE_ME',
@@ -65,6 +81,47 @@ const STRIPE_PRICE_IDS = {
  * Product catalog - all available products
  */
 export const PRODUCTS: Record<ProductId, ProductMetadata> = {
+  // ========================================
+  // v2.0 Upsell Products (PRIMARY)
+  // ========================================
+  ai_analysis_pdf: {
+    id: 'ai_analysis_pdf',
+    stripeProductId: STRIPE_PRODUCT_IDS.AI_ANALYSIS,
+    stripePriceId: STRIPE_PRICE_IDS.AI_ANALYSIS,
+    name: 'AI Csakra Elemzés PDF',
+    description: '20+ oldalas AI-generált személyre szabott csakra jelentés a 7 csakra részletes diagnosztikájával, konkrét gyakorlatokkal és 7 napos akciótervvel.',
+    price: 2990,
+    currency: 'HUF',
+    metadata: {
+      product_type: 'ai_pdf',
+      includes_meditation: false,
+      includes_pdf: true,
+      pdf_template: 'ai_analysis',
+      ai_generated: true,
+      is_entry_product: true,
+    },
+  },
+  workbook_30day: {
+    id: 'workbook_30day',
+    stripeProductId: STRIPE_PRODUCT_IDS.WORKBOOK,
+    stripePriceId: STRIPE_PRICE_IDS.WORKBOOK,
+    name: '30 Napos Csakra Munkafüzet',
+    description: 'Személyre szabott 30 napos gyakorlati program napi meditációkkal, journaling kérdésekkel, heti értékelő lapokkal és konkrét csakra gyakorlatokkal.',
+    price: 3990,
+    originalPrice: 9990, // Strikethrough price for upsell
+    currency: 'HUF',
+    metadata: {
+      product_type: 'workbook',
+      includes_meditation: false,
+      includes_pdf: true,
+      pdf_template: 'workbook_30day',
+      is_upsell: true,
+    },
+  },
+
+  // ========================================
+  // v1.x Products (LEGACY)
+  // ========================================
   detailed_pdf: {
     id: 'detailed_pdf',
     stripeProductId: STRIPE_PRODUCT_IDS.DETAILED_PDF,

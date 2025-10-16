@@ -5,7 +5,8 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { loadStripe } from '@stripe/stripe-js';
 import UpsellCheckboxes from './UpsellCheckboxes';
@@ -28,12 +29,32 @@ const stripePromise = loadStripe(
  * Checkout Form Component
  */
 export default function CheckoutForm({ resultId, email }: CheckoutFormProps) {
-  const [selectedProducts, setSelectedProducts] = useState<ProductId[]>([
-    'prod_personal_chakra_report',
-  ]);
+  const searchParams = useSearchParams();
+  const preselectedProduct = searchParams.get('product') as ProductId | null;
+
+  // Initialize with preselected product from query param or default
+  const getInitialSelection = (): ProductId[] => {
+    if (preselectedProduct && PRODUCTS[preselectedProduct]) {
+      return [preselectedProduct];
+    }
+    // Default to old product for backward compatibility
+    return ['prod_personal_chakra_report'];
+  };
+
+  const [selectedProducts, setSelectedProducts] = useState<ProductId[]>(getInitialSelection());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { trackEvent } = useAnalytics();
+
+  // Track when preselected product is loaded
+  useEffect(() => {
+    if (preselectedProduct && PRODUCTS[preselectedProduct]) {
+      trackEvent('checkout_product_preselected', {
+        product_id: preselectedProduct,
+        result_id: resultId,
+      });
+    }
+  }, [preselectedProduct, resultId, trackEvent]);
 
   /**
    * Calculate total price
