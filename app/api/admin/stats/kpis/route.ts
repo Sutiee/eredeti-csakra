@@ -43,6 +43,16 @@ export async function GET(request: NextRequest) {
 
     if (visitorsError) throw visitorsError;
 
+    // DEBUG: Log what we got
+    logger.debug('Visitor data query result', {
+      context: 'kpis-api',
+      data: {
+        rowCount: visitorData?.length || 0,
+        firstFewSessionIds: visitorData?.slice(0, 5).map((v: any) => v.session_id),
+        startDateStr
+      },
+    });
+
     // Count unique session_ids (filter out nulls)
     const totalVisitors = visitorData
       ? new Set(visitorData.map((v: any) => v.session_id).filter(Boolean)).size
