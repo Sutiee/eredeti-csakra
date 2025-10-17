@@ -21,9 +21,13 @@ type CheckoutFormProps = {
 };
 
 // Initialize Stripe
-const stripePromise = loadStripe(
-  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || ''
-);
+const STRIPE_KEY = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+if (!STRIPE_KEY) {
+  throw new Error('Missing NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY environment variable');
+}
+console.log('🔑 STRIPE KEY LOADED:', STRIPE_KEY.substring(0, 20) + '...',
+  STRIPE_KEY.startsWith('pk_test_') ? '✅ TEST MODE' : '❌ LIVE MODE');
+const stripePromise = loadStripe(STRIPE_KEY);
 
 /**
  * Checkout Form Component

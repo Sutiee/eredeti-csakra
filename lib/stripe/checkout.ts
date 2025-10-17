@@ -81,9 +81,10 @@ export async function createCheckoutSession(
     billing_address_collection: 'auto',
 
     // GDPR Compliance: User must accept Terms of Service
-    consent_collection: {
-      terms_of_service: 'required',
-    },
+    // TODO: Enable after setting Terms of Service URL in Stripe Dashboard
+    // consent_collection: {
+    //   terms_of_service: 'required',
+    // },
   });
 
   return session;

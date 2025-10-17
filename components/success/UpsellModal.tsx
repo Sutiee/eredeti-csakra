@@ -14,6 +14,7 @@ type UpsellModalProps = {
   sessionId: string;
   resultId: string;
   onClose: () => void;
+  onPurchaseSuccess?: () => void | Promise<void>;
 };
 
 /**
@@ -28,7 +29,12 @@ function formatTime(seconds: number): string {
 /**
  * Upsell Modal Component
  */
-export default function UpsellModal({ sessionId, resultId, onClose }: UpsellModalProps) {
+export default function UpsellModal({
+  sessionId,
+  resultId,
+  onClose,
+  onPurchaseSuccess
+}: UpsellModalProps) {
   const [timeLeft, setTimeLeft] = useState(600); // 10 minutes in seconds
   const [loading, setLoading] = useState(false);
   const [purchased, setPurchased] = useState(false);
@@ -86,6 +92,11 @@ export default function UpsellModal({ sessionId, resultId, onClose }: UpsellModa
         product_id: 'workbook_30day',
         amount: 3990,
       });
+
+      // Call success callback to refresh purchases
+      if (onPurchaseSuccess) {
+        await onPurchaseSuccess();
+      }
 
       // Close modal after 3 seconds
       setTimeout(() => {

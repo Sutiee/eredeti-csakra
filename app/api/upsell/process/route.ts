@@ -76,7 +76,10 @@ export async function POST(request: NextRequest) {
     }
 
     const paymentMethodId = paymentIntent.payment_method as string;
-    const customerId = originalSession.customer as string;
+
+    // Extract customer ID from expanded customer object
+    const customer = originalSession.customer as Stripe.Customer;
+    const customerId = typeof customer === 'string' ? customer : customer.id;
 
     if (!paymentMethodId) {
       console.error('[UPSELL] No payment method saved:', sessionId);

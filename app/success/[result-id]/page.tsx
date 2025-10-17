@@ -44,33 +44,25 @@ export default function SuccessPage() {
   const { trackEvent } = useAnalytics();
 
   /**
-   * Fetch purchase data
+   * Fetch purchase data from API
    */
-  useEffect(() => {
-    const fetchPurchases = async () => {
-      try {
-        setLoading(true);
-        setError(null);
+  const fetchPurchases = async () => {
+    try {
+      setLoading(true);
+      setError(null);
 
-        // In a real implementation, you'd fetch from an API endpoint
-        // For now, we'll simulate a successful purchase
-        await new Promise((resolve) => setTimeout(resolve, 1500));
+      // Fetch purchases from API
+      const response = await fetch(`/api/purchases/${resultId}`);
+      const data = await response.json();
 
-        // Mock data (replace with actual API call)
-        const mockPurchases = [
-          {
-            id: '1',
-            product_id: 'prod_personal_chakra_report',
-            product_name: 'Személyre Szabott Csakra Csomag',
-            amount: 2990,
-            currency: 'HUF',
-            pdf_url: null,
-            created_at: new Date().toISOString(),
-          },
-        ];
-        setPurchases(mockPurchases);
+      if (!response.ok || data.error) {
+        throw new Error(data.error || 'Failed to fetch purchases');
+      }
 
-        // Track purchase completion
+      setPurchases(data.data || []);
+
+      // Track purchase completion (only on initial load with no existing purchases)
+      if (data.data && data.data.length > 0 && purchases.length === 0) {
         trackEvent('page_view', {
           page_path: `/success/${resultId}`,
           page_name: 'success',
@@ -78,25 +70,31 @@ export default function SuccessPage() {
         trackEvent('purchase_completed', {
           result_id: resultId,
           session_id: sessionId,
-          products: mockPurchases.map((p) => p.product_id),
-          total_amount: mockPurchases.reduce((sum, p) => sum + p.amount, 0),
+          products: data.data.map((p: Purchase) => p.product_id),
+          total_amount: data.data.reduce((sum: number, p: Purchase) => sum + p.amount, 0),
         });
         trackEvent('email_sent', {
           result_id: resultId,
           email_type: 'purchase_confirmation',
         });
-      } catch (err) {
-        console.error('Error fetching purchases:', err);
-        setError('Hiba történt a vásárlás adatainak betöltésekor');
-      } finally {
-        setLoading(false);
       }
-    };
+    } catch (err) {
+      console.error('Error fetching purchases:', err);
+      setError('Hiba történt a vásárlás adatainak betöltésekor');
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  /**
+   * Initial fetch on mount
+   */
+  useEffect(() => {
     if (resultId && sessionId) {
       fetchPurchases();
     }
-  }, [resultId, sessionId, trackEvent]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resultId, sessionId]);
 
   /**
    * Show upsell modal after 5 seconds (only once)
@@ -118,6 +116,15 @@ export default function SuccessPage() {
       return () => clearTimeout(timer);
     }
   }, [hasSeenUpsell, sessionId, loading, error, resultId, trackEvent]);
+
+  /**
+   * Handle upsell purchase success
+   */
+  const handleUpsellSuccess = async () => {
+    // Refresh purchases to show the newly purchased item
+    await fetchPurchases();
+    setShowUpsell(false);
+  };
 
   /**
    * Handle upsell modal close
@@ -286,6 +293,7 @@ export default function SuccessPage() {
           sessionId={sessionId}
           resultId={resultId}
           onClose={handleUpsellClose}
+          onPurchaseSuccess={handleUpsellSuccess}
         />
       )}
     </main>
