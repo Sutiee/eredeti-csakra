@@ -56,10 +56,28 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
     // Create purchase records for each line item
     for (const item of lineItems.data) {
       const product = item.price?.product as Stripe.Product | undefined;
-      const productId = product?.metadata?.product_id || 'unknown';
-      const productName = item.description || 'Unknown Product';
+      const productId = product?.metadata?.product_id || product?.id || 'unknown';
+
+      // FIX: item.description is NULL for dynamic products created with price_data
+      // Fallback chain: description → product.name → product.id → 'Unknown Product'
+      const productName =
+        item.description ||
+        product?.name ||
+        product?.metadata?.name ||
+        'Unknown Product';
+
       const amount = item.amount_total || 0;
       const currency = item.currency || 'huf';
+
+      // DEBUG: Log extracted data
+      console.log('[WEBHOOK] Processing line item:', {
+        productId,
+        productName,
+        amount: amount / 100,
+        currency,
+        raw_description: item.description,
+        raw_product_name: product?.name,
+      });
 
       // Insert purchase record
       const { error: purchaseError } = await supabase.from('purchases').insert({

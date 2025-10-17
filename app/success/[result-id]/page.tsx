@@ -61,6 +61,14 @@ export default function SuccessPage() {
 
       setPurchases(data.data || []);
 
+      // DEBUG: Log fetched purchases
+      console.log('[SUCCESS PAGE] Fetched purchases:', {
+        count: data.data?.length || 0,
+        purchases: data.data,
+        resultId,
+        sessionId,
+      });
+
       // Track purchase completion (only on initial load with no existing purchases)
       if (data.data && data.data.length > 0 && purchases.length === 0) {
         trackEvent('page_view', {
@@ -88,13 +96,15 @@ export default function SuccessPage() {
 
   /**
    * Initial fetch on mount
+   * FIX: Remove sessionId dependency - purchases are linked to result_id, not session_id
+   * This allows the page to work even if the user refreshes or accesses directly without session_id
    */
   useEffect(() => {
-    if (resultId && sessionId) {
+    if (resultId) {
       fetchPurchases();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [resultId, sessionId]);
+  }, [resultId]);
 
   /**
    * Show upsell modal after 5 seconds (only once)
