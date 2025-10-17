@@ -174,7 +174,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('[UPSELL] Purchase saved to database:', purchase.id);
+    console.log('[UPSELL] Purchase saved to database:', {
+      id: purchase.id,
+      product_id: purchase.product_id,
+      product_name: purchase.product_name,
+      amount: purchase.amount,
+      status: purchase.status,
+      result_id: purchase.result_id,
+    });
 
     // 7. Track successful upsell event
     await logEvent('upsell_purchased', {

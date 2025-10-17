@@ -129,11 +129,27 @@ export default function SuccessPage() {
 
   /**
    * Handle upsell purchase success
+   * FIX: Add proper error handling and debugging
    */
   const handleUpsellSuccess = async () => {
-    // Refresh purchases to show the newly purchased item
-    await fetchPurchases();
-    setShowUpsell(false);
+    try {
+      console.log('[UPSELL SUCCESS] Starting purchase refresh...');
+
+      // Small delay to ensure database write completes
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      // Refresh purchases to show the newly purchased item
+      await fetchPurchases();
+
+      console.log('[UPSELL SUCCESS] Purchase refresh completed successfully');
+
+      // Close modal only after successful refresh
+      setShowUpsell(false);
+    } catch (error) {
+      console.error('[UPSELL SUCCESS] Failed to refresh purchases:', error);
+      // Don't close modal on error - let user see what happened
+      // They can manually refresh the page
+    }
   };
 
   /**
