@@ -1,16 +1,17 @@
 /**
  * Styled Markdown to PDF Converter
  * Beautiful chakra-colored PDF with page breaks and visual styling
- * Uses @sparticuz/chromium for Vercel serverless compatibility
+ * Uses @sparticuz/chromium + Puppeteer directly for Vercel serverless compatibility
  */
 
-import mdToPdf from 'md-to-pdf';
 import chromium from '@sparticuz/chromium';
 import puppeteer from 'puppeteer-core';
+import { marked } from 'marked';
 import type { ChakraScores } from '@/types';
 
 /**
  * Convert styled Markdown report to beautifully formatted PDF
+ * Uses Puppeteer directly with @sparticuz/chromium for Vercel compatibility
  */
 export async function convertStyledMarkdownToPDF(
   markdown: string,
@@ -21,14 +22,24 @@ export async function convertStyledMarkdownToPDF(
   console.log('[STYLED_MARKDOWN_TO_PDF] Starting PDF conversion');
   console.log('[STYLED_MARKDOWN_TO_PDF] User:', userName, userEmail);
 
+  let browser = null;
+
   try {
     // Detect environment for Chromium selection
     const isProduction = process.env.NODE_ENV === 'production';
     console.log('[STYLED_MARKDOWN_TO_PDF] Environment:', isProduction ? 'production (Vercel)' : 'development (local)');
 
-    // Inline CSS with full chakra color palette
-    const styledMarkdown = `
-<style>
+    // Convert Markdown to HTML
+    const htmlBody = await marked(markdown);
+
+    // Full HTML document with inline CSS
+    const styledHTML = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Playfair+Display:wght@600;700&display=swap');
 
 /* Base Styles */
@@ -106,34 +117,6 @@ hr {
   border-top: 2px solid #E9D5FF;
   margin: 35px 0;
   page-break-after: always;
-}
-
-/* Cover Page */
-.cover-page {
-  background: linear-gradient(135deg, #F3E8FF 0%, #FFFFFF 100%);
-  padding: 30px;
-  border-radius: 15px;
-  margin: 20px 0;
-  box-shadow: 0 4px 6px rgba(124, 58, 237, 0.1);
-}
-
-/* Priority Box */
-.priority-box {
-  background: linear-gradient(to right, #FEF3C7, #FEF9E7);
-  border-left: 5px solid #F59E0B;
-  padding: 20px;
-  margin: 20px 0;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(245, 158, 11, 0.15);
-}
-
-/* Intro Section */
-.intro-section {
-  background: #F9FAFB;
-  padding: 25px;
-  border-radius: 10px;
-  margin: 25px 0;
-  border: 2px solid #E5E7EB;
 }
 
 /* Chakra Sections - Each with unique color */
@@ -223,94 +206,6 @@ hr {
   border-bottom-color: #D8B4FE;
 }
 
-/* Affirmation Box */
-.affirmation-box {
-  background: linear-gradient(to right, #F3E8FF, #FAF5FF);
-  border: 2px solid #9333EA;
-  border-radius: 10px;
-  padding: 20px;
-  margin: 20px 0;
-  box-shadow: 0 3px 6px rgba(147, 51, 234, 0.15);
-}
-
-.affirmation-box h3 {
-  color: #7C3AED;
-  margin-top: 0;
-}
-
-/* Exercise Card */
-.exercise-card {
-  background: linear-gradient(to bottom, #DBEAFE, #F0F9FF);
-  border-left: 4px solid #3B82F6;
-  border-radius: 8px;
-  padding: 16px;
-  margin: 15px 0;
-  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.12);
-}
-
-.exercise-card strong {
-  color: #1E40AF;
-}
-
-/* Overview Section */
-.overview-section {
-  background: #FFFBEB;
-  padding: 25px;
-  border-radius: 10px;
-  margin: 25px 0;
-  border: 2px solid #FCD34D;
-}
-
-/* Forecast Section */
-.forecast-section {
-  background: #F0FDF4;
-  padding: 25px;
-  border-radius: 10px;
-  margin: 25px 0;
-  border: 2px solid #86EFAC;
-}
-
-.positive-scenario {
-  background: linear-gradient(135deg, #D1FAE5, #ECFDF5);
-  border: 2px solid #10B981;
-  border-radius: 10px;
-  padding: 20px;
-  margin-top: 20px;
-  box-shadow: 0 3px 6px rgba(16, 185, 129, 0.15);
-}
-
-.positive-scenario h3 {
-  color: #047857;
-}
-
-/* Exercises Section */
-.exercises-section {
-  background: #FFF7ED;
-  padding: 25px;
-  border-radius: 10px;
-  margin: 25px 0;
-  page-break-before: always;
-}
-
-/* Tracking Section */
-.tracking-section {
-  background: #F5F3FF;
-  padding: 25px;
-  border-radius: 10px;
-  margin: 25px 0;
-}
-
-/* Closing Section */
-.closing-section {
-  background: linear-gradient(135deg, #FCEEF5 0%, #FFFFFF 100%);
-  padding: 30px;
-  border-radius: 15px;
-  margin: 30px 0;
-  text-align: center;
-  box-shadow: 0 4px 8px rgba(219, 39, 119, 0.1);
-  page-break-inside: avoid;
-}
-
 /* Page Settings */
 @page {
   margin: 20mm;
@@ -331,46 +226,73 @@ hr {
     page-break-after: avoid;
   }
 }
-</style>
-
-${markdown}
+  </style>
+</head>
+<body>
+  ${htmlBody}
+</body>
+</html>
 `;
 
-    const pdf = await mdToPdf(
-      { content: styledMarkdown },
-      {
-        dest: undefined,
-        launch_options: {
-          args: isProduction ? chromium.args : [],
-          executablePath: isProduction
-            ? await chromium.executablePath()
-            : (process.env.PUPPETEER_EXECUTABLE_PATH || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'),
-          headless: true,
-        },
-        pdf_options: {
-          format: 'A4',
-          margin: {
-            top: '20mm',
-            right: '20mm',
-            bottom: '20mm',
-            left: '20mm',
-          },
-          printBackground: true,
-          preferCSSPageSize: true,
-        },
-        body_class: ['chakra-report'],
-      }
-    );
+    console.log('[STYLED_MARKDOWN_TO_PDF] HTML generated, length:', styledHTML.length);
 
-    if (!pdf || !pdf.content) {
-      throw new Error('PDF conversion failed: No content returned');
+    // Launch Puppeteer with appropriate Chromium binary
+    if (isProduction) {
+      console.log('[STYLED_MARKDOWN_TO_PDF] Launching Puppeteer with @sparticuz/chromium');
+      browser = await puppeteer.launch({
+        args: chromium.args,
+        executablePath: await chromium.executablePath(),
+        headless: true,
+      });
+    } else {
+      console.log('[STYLED_MARKDOWN_TO_PDF] Launching Puppeteer with local Chrome');
+      browser = await puppeteer.launch({
+        executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+        headless: true,
+      });
     }
 
-    console.log('[STYLED_MARKDOWN_TO_PDF] PDF generated successfully');
-    console.log('[STYLED_MARKDOWN_TO_PDF] PDF size:', (pdf.content.length / 1024).toFixed(2), 'KB');
+    console.log('[STYLED_MARKDOWN_TO_PDF] Browser launched successfully');
 
-    return pdf.content;
+    // Create a new page
+    const page = await browser.newPage();
+
+    // Set content and wait for fonts to load
+    await page.setContent(styledHTML, {
+      waitUntil: ['networkidle0', 'domcontentloaded'],
+    });
+
+    console.log('[STYLED_MARKDOWN_TO_PDF] Page content set, generating PDF');
+
+    // Generate PDF
+    const pdfBuffer = await page.pdf({
+      format: 'A4',
+      printBackground: true,
+      margin: {
+        top: '20mm',
+        right: '20mm',
+        bottom: '20mm',
+        left: '20mm',
+      },
+    });
+
+    await browser.close();
+    browser = null;
+
+    console.log('[STYLED_MARKDOWN_TO_PDF] PDF generated successfully');
+    console.log('[STYLED_MARKDOWN_TO_PDF] PDF size:', (pdfBuffer.length / 1024).toFixed(2), 'KB');
+
+    return Buffer.from(pdfBuffer);
   } catch (error) {
+    // Ensure browser is closed on error
+    if (browser) {
+      try {
+        await browser.close();
+      } catch (closeError) {
+        console.error('[STYLED_MARKDOWN_TO_PDF] Error closing browser:', closeError);
+      }
+    }
+
     console.error('[STYLED_MARKDOWN_TO_PDF] Error:', error);
 
     if (error instanceof Error) {
