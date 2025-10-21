@@ -31,7 +31,8 @@ export async function generateStyledMarkdownReport(
   const prompt = buildStyledMarkdownReportPrompt(chakraScores, userName);
 
   try {
-    const completion = await openai.chat.completions.create({
+    // GPT-5-mini uses the new Responses API (not Chat Completions API)
+    const response = await openai.chat.responses.create({
       model: MODEL,
       messages: [
         {
@@ -44,10 +45,12 @@ export async function generateStyledMarkdownReport(
         },
       ],
       max_completion_tokens: 16000,
-      response_format: { type: 'json_object' },
+      text: {
+        format: 'json',
+      },
     });
 
-    const responseText = completion.choices[0]?.message?.content;
+    const responseText = response.text;
 
     if (!responseText) {
       throw new Error('No response from OpenAI');
