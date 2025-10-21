@@ -32,20 +32,15 @@ export async function generateStyledMarkdownReport(
 
   try {
     // GPT-5-mini uses the new Responses API (not Chat Completions API)
+    // Responses API uses 'input' instead of 'messages'
     // Note: TypeScript types not yet updated, using type assertion
+    const systemPrompt = 'Te egy tapasztalt spirituális csakra elemző vagy, aki gyönyörűen formázott, színes Markdown+HTML jelentéseket készít. VÁLASZOLJ MINDIG VALID JSON FORMÁTUMBAN!';
+    const fullInput = `${systemPrompt}\n\n${prompt}`;
+
     const response = await (openai as any).responses.create({
       model: MODEL,
-      messages: [
-        {
-          role: 'system',
-          content: 'Te egy tapasztalt spirituális csakra elemző vagy, aki gyönyörűen formázott, színes Markdown+HTML jelentéseket készít. VÁLASZOLJ MINDIG VALID JSON FORMÁTUMBAN!',
-        },
-        {
-          role: 'user',
-          content: prompt,
-        },
-      ],
-      max_completion_tokens: 16000,
+      input: fullInput,
+      max_output_tokens: 16000,
       text: {
         format: 'json',
       },
