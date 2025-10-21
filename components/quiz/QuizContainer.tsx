@@ -37,6 +37,15 @@ export default function QuizContainer({ onComplete }: QuizContainerProps) {
   // Analytics
   const { trackEvent } = useAnalytics();
 
+  // Check for debug mode (URL param or development env)
+  const [isDebugMode, setIsDebugMode] = useState(false);
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const debugParam = params.get('debug') === 'true';
+    const isDev = process.env.NODE_ENV === 'development';
+    setIsDebugMode(debugParam || isDev);
+  }, []);
+
   // Számított értékek
   const currentChakraIndex = Math.floor(currentQuestionIndex / 4); // 0-6
   const questionWithinChakra = (currentQuestionIndex % 4) + 1; // 1-4
@@ -191,8 +200,8 @@ export default function QuizContainer({ onComplete }: QuizContainerProps) {
         />
       </div>
 
-      {/* DEBUG: Auto-fill button (only in development) */}
-      {process.env.NODE_ENV === 'development' && !showUserInfoForm && (
+      {/* DEBUG: Auto-fill button (debug mode or development) */}
+      {isDebugMode && !showUserInfoForm && (
         <button
           onClick={handleDebugAutoFill}
           className="fixed top-4 right-4 z-50 bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg shadow-lg transition-colors"

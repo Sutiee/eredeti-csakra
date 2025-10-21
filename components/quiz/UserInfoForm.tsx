@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { z } from 'zod';
 import { UserInfo } from '@/types';
@@ -37,6 +37,15 @@ export default function UserInfoForm({ onSubmit, disabled = false }: UserInfoFor
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
+
+  // Check for debug mode (URL param or development env)
+  const [isDebugMode, setIsDebugMode] = useState(false);
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const debugParam = params.get('debug') === 'true';
+    const isDev = process.env.NODE_ENV === 'development';
+    setIsDebugMode(debugParam || isDev);
+  }, []);
 
   // Validate single field
   const validateField = (name: string, value: any) => {
@@ -160,8 +169,8 @@ export default function UserInfoForm({ onSubmit, disabled = false }: UserInfoFor
           Add meg az adataidat, hogy elküldhessük a személyre szabott elemzésed.
         </p>
 
-        {/* DEBUG: Auto-fill button (only in development) */}
-        {process.env.NODE_ENV === 'development' && (
+        {/* DEBUG: Auto-fill button (debug mode or development) */}
+        {isDebugMode && (
           <button
             type="button"
             onClick={handleDebugAutoFill}
