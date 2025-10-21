@@ -126,6 +126,15 @@ export default function QuizContainer({ onComplete }: QuizContainerProps) {
     };
   }, [autoAdvanceTimer]);
 
+  // DEBUG: Auto-fill quiz (only in development)
+  const handleDebugAutoFill = () => {
+    // Fill all answers with random values (2-4 for variety)
+    const randomAnswers = Array.from({ length: 28 }, () => Math.floor(Math.random() * 3) + 2);
+    setAnswers(randomAnswers);
+    // Jump to user info form
+    setShowUserInfoForm(true);
+  };
+
   return (
     <div className={`min-h-screen bg-gradient-to-br ${chakraGradients[currentChakraIndex]} transition-colors duration-1000 py-8 px-4 relative overflow-hidden`}>
       {/* Ambient gradient orbs - csakra színekkel */}
@@ -181,6 +190,17 @@ export default function QuizContainer({ onComplete }: QuizContainerProps) {
           }}
         />
       </div>
+
+      {/* DEBUG: Auto-fill button (only in development) */}
+      {process.env.NODE_ENV === 'development' && !showUserInfoForm && (
+        <button
+          onClick={handleDebugAutoFill}
+          className="fixed top-4 right-4 z-50 bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg shadow-lg transition-colors"
+          title="Gyors teszt: Automatikus kitöltés random válaszokkal"
+        >
+          🚀 Gyors Teszt
+        </button>
+      )}
 
       <div className="max-w-4xl mx-auto relative z-10">
         {/* Progress Bar */}

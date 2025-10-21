@@ -134,6 +134,16 @@ export default function UserInfoForm({ onSubmit, disabled = false }: UserInfoFor
     );
   };
 
+  // DEBUG: Auto-fill form (only in development)
+  const handleDebugAutoFill = () => {
+    const timestamp = Date.now();
+    setFormData({
+      full_name: 'Teszt Mária',
+      email: `teszt${timestamp}@example.com`,
+      age: '42',
+    });
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -149,6 +159,18 @@ export default function UserInfoForm({ onSubmit, disabled = false }: UserInfoFor
         <p className="text-gray-600">
           Add meg az adataidat, hogy elküldhessük a személyre szabott elemzésed.
         </p>
+
+        {/* DEBUG: Auto-fill button (only in development) */}
+        {process.env.NODE_ENV === 'development' && (
+          <button
+            type="button"
+            onClick={handleDebugAutoFill}
+            className="mt-4 bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg shadow-lg transition-colors text-sm"
+            title="Automatikus kitöltés teszt adatokkal"
+          >
+            🚀 Gyors Kitöltés
+          </button>
+        )}
       </div>
 
       {/* Form */}
