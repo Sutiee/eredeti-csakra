@@ -12,7 +12,7 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-const MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
+const MODEL = 'gpt-5-mini'; // Use GPT-5-mini for styled Markdown reports
 
 export interface StyledMarkdownReportResult {
   markdown: string;
