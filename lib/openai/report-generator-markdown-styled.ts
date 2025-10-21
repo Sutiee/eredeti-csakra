@@ -12,7 +12,7 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-const MODEL = 'gpt-4o-mini'; // Use GPT-4o-mini for styled Markdown reports (GPT-5 API not stable yet)
+const MODEL = 'gpt-5-mini'; // Cost-optimized reasoning and chat with GPT-5-mini
 
 export interface StyledMarkdownReportResult {
   markdown: string;
@@ -31,25 +31,26 @@ export async function generateStyledMarkdownReport(
   const prompt = buildStyledMarkdownReportPrompt(chakraScores, userName);
 
   try {
-    // Use standard Chat Completions API
-    const completion = await openai.chat.completions.create({
+    // GPT-5-mini uses Responses API (not Chat Completions)
+    // System prompt beépítve az input-ba
+    const systemPrompt = 'Te egy tapasztalt spirituális csakra elemző vagy, aki gyönyörűen formázott, színes Markdown+HTML jelentéseket készít. VÁLASZOLJ MINDIG VALID JSON FORMÁTUMBAN!';
+    const fullInput = `${systemPrompt}\n\n${prompt}`;
+
+    // TypeScript types még nem frissültek, type assertion szükséges
+    const response = await (openai as any).responses.create({
       model: MODEL,
-      messages: [
-        {
-          role: 'system',
-          content: 'Te egy tapasztalt spirituális csakra elemző vagy, aki gyönyörűen formázott, színes Markdown+HTML jelentéseket készít. VÁLASZOLJ MINDIG VALID JSON FORMÁTUMBAN!',
-        },
-        {
-          role: 'user',
-          content: prompt,
-        },
-      ],
-      temperature: 0.7,
-      max_tokens: 16000,
-      response_format: { type: 'json_object' },
+      input: fullInput,
+      max_output_tokens: 16000,
+      reasoning: {
+        effort: 'low'  // Gyors válasz JSON generáláshoz
+      },
+      text: {
+        verbosity: 'high'  // Részletes csakra elemzéshez
+      }
     });
 
-    const responseText = completion.choices[0]?.message?.content;
+    // A válasz a response.output_text-ben van (nem choices[0].message.content)
+    const responseText = response.output_text;
 
     if (!responseText) {
       throw new Error('No response from OpenAI');
