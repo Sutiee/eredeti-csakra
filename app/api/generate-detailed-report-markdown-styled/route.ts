@@ -1,12 +1,12 @@
 /**
- * Generate Detailed Report API Route (Markdown-Styled Version)
+ * Generate Detailed Report API Route (GPT-5 + jsPDF Version)
  * POST /api/generate-detailed-report-markdown-styled
  *
- * Generates a beautifully formatted PDF report using Markdown+HTML with CSS styling
+ * Generates a beautifully formatted PDF report using GPT-5-mini and jsPDF
  *
  * Features:
- * - Chakra-colored design with gradients
- * - Professional typography (Playfair Display + Montserrat)
+ * - GPT-5-mini Responses API for detailed chakra analysis
+ * - jsPDF for reliable serverless PDF generation (no Chromium needed)
  * - 20-25 pages of detailed analysis
  * - Uploads to Supabase Storage with 30-day signed URLs
  */
@@ -94,8 +94,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const result = resultData as QuizResult;
     console.log("[MARKDOWN_STYLED_REPORT] Quiz result fetched:", result.name);
 
-    // LAYER 3: Generate Styled Markdown Report with GPT
-    console.log("[MARKDOWN_STYLED_REPORT] Generating styled markdown report with GPT...");
+    // LAYER 3: Generate Styled Markdown Report with GPT-5
+    console.log("[MARKDOWN_STYLED_REPORT] Generating styled markdown report with GPT-5...");
 
     const { markdown } = await generateStyledMarkdownReport(
       result.chakra_scores,
@@ -104,7 +104,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     console.log("[MARKDOWN_STYLED_REPORT] Markdown generated, length:", markdown.length);
 
-    // LAYER 4: Convert Markdown to PDF with Beautiful Styling
+    // LAYER 4: Convert Markdown to PDF with Puppeteer
     console.log("[MARKDOWN_STYLED_REPORT] Converting markdown to styled PDF...");
 
     const pdfBuffer = await convertStyledMarkdownToPDF(
@@ -204,6 +204,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       file_name: fileName,
       size_bytes: pdfBuffer.length,
       markdown_length: markdown.length,
+      generator: "GPT-5-mini + Puppeteer",
     });
 
   } catch (error) {
