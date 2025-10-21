@@ -240,22 +240,14 @@ hr {
     if (isProduction) {
       console.log('[STYLED_MARKDOWN_TO_PDF] Launching Puppeteer with @sparticuz/chromium');
 
-      // Set font config for Vercel (prevents font errors)
-      chromium.setGraphicsMode = false;
+      //  Set environment variables for @sparticuz/chromium
+      process.env.FONTCONFIG_PATH = '/tmp';
+      process.env.XDG_DATA_HOME = '/tmp';
 
       browser = await puppeteer.launch({
-        args: [
-          ...chromium.args,
-          '--disable-gpu',
-          '--disable-dev-shm-usage',
-          '--disable-setuid-sandbox',
-          '--no-first-run',
-          '--no-sandbox',
-          '--no-zygote',
-          '--single-process',
-        ],
+        args: chromium.args,
         defaultViewport: chromium.defaultViewport,
-        executablePath: await chromium.executablePath(),
+        executablePath: await chromium.executablePath('/tmp'),
         headless: chromium.headless,
         ignoreHTTPSErrors: true,
       });
