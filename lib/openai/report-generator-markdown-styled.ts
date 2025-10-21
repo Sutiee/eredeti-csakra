@@ -45,10 +45,15 @@ export async function generateStyledMarkdownReport(
       // We'll parse JSON from the response manually
     });
 
-    const responseText = response.text;
+    console.log('[STYLED_MARKDOWN_GENERATOR] Raw response:', JSON.stringify(response).substring(0, 500));
+
+    // GPT-5 Responses API returns response differently than Chat Completions
+    // The text might be in response.output or response.choices[0].message.content
+    const responseText = response.output?.text || response.text || response.choices?.[0]?.message?.content;
 
     if (!responseText) {
-      throw new Error('No response from OpenAI');
+      console.error('[STYLED_MARKDOWN_GENERATOR] No text in response. Full response:', JSON.stringify(response));
+      throw new Error('No response text from OpenAI');
     }
 
     console.log('[STYLED_MARKDOWN_GENERATOR] Received response, length:', responseText.length);
