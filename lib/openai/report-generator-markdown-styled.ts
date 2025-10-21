@@ -12,7 +12,7 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-const MODEL = 'gpt-5-mini'; // Use GPT-5-mini for styled Markdown reports
+const MODEL = 'gpt-4o-mini'; // Use GPT-4o-mini for styled Markdown reports (GPT-5 API not stable yet)
 
 export interface StyledMarkdownReportResult {
   markdown: string;
@@ -31,29 +31,28 @@ export async function generateStyledMarkdownReport(
   const prompt = buildStyledMarkdownReportPrompt(chakraScores, userName);
 
   try {
-    // GPT-5-mini uses the new Responses API (not Chat Completions API)
-    // Responses API uses 'input' instead of 'messages'
-    // Note: TypeScript types not yet updated, using type assertion
-    const systemPrompt = 'Te egy tapasztalt spirituális csakra elemző vagy, aki gyönyörűen formázott, színes Markdown+HTML jelentéseket készít. VÁLASZOLJ MINDIG VALID JSON FORMÁTUMBAN!';
-    const fullInput = `${systemPrompt}\n\n${prompt}`;
-
-    const response = await (openai as any).responses.create({
+    // Use standard Chat Completions API
+    const completion = await openai.chat.completions.create({
       model: MODEL,
-      input: fullInput,
-      max_output_tokens: 16000,
-      // GPT-5 Responses API doesn't support text.format like Chat Completions
-      // We'll parse JSON from the response manually
+      messages: [
+        {
+          role: 'system',
+          content: 'Te egy tapasztalt spirituális csakra elemző vagy, aki gyönyörűen formázott, színes Markdown+HTML jelentéseket készít. VÁLASZOLJ MINDIG VALID JSON FORMÁTUMBAN!',
+        },
+        {
+          role: 'user',
+          content: prompt,
+        },
+      ],
+      temperature: 0.7,
+      max_tokens: 16000,
+      response_format: { type: 'json_object' },
     });
 
-    console.log('[STYLED_MARKDOWN_GENERATOR] Raw response:', JSON.stringify(response).substring(0, 500));
-
-    // GPT-5 Responses API returns response differently than Chat Completions
-    // The text might be in response.output or response.choices[0].message.content
-    const responseText = response.output?.text || response.text || response.choices?.[0]?.message?.content;
+    const responseText = completion.choices[0]?.message?.content;
 
     if (!responseText) {
-      console.error('[STYLED_MARKDOWN_GENERATOR] No text in response. Full response:', JSON.stringify(response));
-      throw new Error('No response text from OpenAI');
+      throw new Error('No response from OpenAI');
     }
 
     console.log('[STYLED_MARKDOWN_GENERATOR] Received response, length:', responseText.length);
