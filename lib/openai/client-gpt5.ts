@@ -35,7 +35,8 @@ export const GPT5_CONFIG = {
  */
 export async function testGPT5Connection(): Promise<boolean> {
   try {
-    const response = await openaiClient.responses.create({
+    // Note: TypeScript types not yet updated for Responses API
+    const response = await (openaiClient as any).responses.create({
       model: 'gpt-5-mini',
       input: 'Test magyar nyelv',
       reasoning: { effort: 'minimal' },

@@ -32,7 +32,8 @@ export async function generateStyledMarkdownReport(
 
   try {
     // GPT-5-mini uses the new Responses API (not Chat Completions API)
-    const response = await openai.chat.responses.create({
+    // Note: TypeScript types not yet updated, using type assertion
+    const response = await (openai.chat as any).responses.create({
       model: MODEL,
       messages: [
         {

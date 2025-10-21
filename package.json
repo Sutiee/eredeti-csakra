@@ -17,6 +17,7 @@
   "dependencies": {
     "@elevenlabs/elevenlabs-js": "^2.19.0",
     "@jpisnice/shadcn-ui-mcp-server": "^1.1.0",
+    "@sparticuz/chromium": "^141.0.0",
     "@stripe/stripe-js": "^8.0.0",
     "@supabase/supabase-js": "^2.75.0",
     "@types/bcryptjs": "^2.4.6",
@@ -28,6 +29,7 @@
     "md-to-pdf": "^5.2.4",
     "next": "14.2.18",
     "openai": "^6.3.0",
+    "puppeteer-core": "^24.26.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "recharts": "^3.2.1",

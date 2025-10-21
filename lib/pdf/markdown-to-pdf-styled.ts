@@ -1,9 +1,12 @@
 /**
  * Styled Markdown to PDF Converter
  * Beautiful chakra-colored PDF with page breaks and visual styling
+ * Uses @sparticuz/chromium for Vercel serverless compatibility
  */
 
 import mdToPdf from 'md-to-pdf';
+import chromium from '@sparticuz/chromium';
+import puppeteer from 'puppeteer-core';
 import type { ChakraScores } from '@/types';
 
 /**
@@ -19,6 +22,10 @@ export async function convertStyledMarkdownToPDF(
   console.log('[STYLED_MARKDOWN_TO_PDF] User:', userName, userEmail);
 
   try {
+    // Detect environment for Chromium selection
+    const isProduction = process.env.NODE_ENV === 'production';
+    console.log('[STYLED_MARKDOWN_TO_PDF] Environment:', isProduction ? 'production (Vercel)' : 'development (local)');
+
     // Inline CSS with full chakra color palette
     const styledMarkdown = `
 <style>
@@ -333,6 +340,13 @@ ${markdown}
       { content: styledMarkdown },
       {
         dest: undefined,
+        launch_options: {
+          args: isProduction ? chromium.args : [],
+          executablePath: isProduction
+            ? await chromium.executablePath()
+            : (process.env.PUPPETEER_EXECUTABLE_PATH || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'),
+          headless: true,
+        },
         pdf_options: {
           format: 'A4',
           margin: {
