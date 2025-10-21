@@ -165,7 +165,8 @@ export default function DownloadLinks({ purchases: initialPurchases, resultId }:
                   // READY STATE: PDF is ready for download
                   <motion.a
                     href={purchase.pdf_url || '#'}
-                    download
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="bg-purple-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-purple-700 transition-colors flex items-center gap-2"
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}

@@ -137,10 +137,10 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
 
       // If AI analysis PDF was purchased, trigger PDF generation in background
       if (productId === 'ai_analysis_pdf') {
-        console.log('[WEBHOOK] Triggering PDF generation for result:', resultId);
+        console.log('[WEBHOOK] Triggering Markdown-styled PDF generation for result:', resultId);
 
         // Fire-and-forget: trigger PDF generation without awaiting
-        fetch(`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/generate-detailed-report-gpt5`, {
+        fetch(`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/generate-detailed-report-markdown-styled`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ result_id: resultId }),
