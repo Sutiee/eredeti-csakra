@@ -1,11 +1,15 @@
 /**
  * Download Links Component
  * Eredeti Csakra - Product Download Section
+ *
+ * v2.2: Added PDF generation polling and loading state
  */
 
 'use client';
 
 import { motion } from 'framer-motion';
+import { useEffect, useState } from 'react';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
 type Purchase = {
   id: string;
@@ -22,7 +26,10 @@ type DownloadLinksProps = {
 /**
  * Download Links Component
  */
-export default function DownloadLinks({ purchases, resultId }: DownloadLinksProps) {
+export default function DownloadLinks({ purchases: initialPurchases, resultId }: DownloadLinksProps) {
+  const [purchases, setPurchases] = useState<Purchase[]>(initialPurchases);
+  const [pollingActive, setPollingActive] = useState(false);
+
   /**
    * Check if meditation access was purchased
    */
@@ -31,6 +38,65 @@ export default function DownloadLinks({ purchases, resultId }: DownloadLinksProp
       p.product_id === 'prod_chakra_meditations' ||
       p.product_id === 'prod_full_harmony_bundle'
   );
+
+  /**
+   * Check if any PDF is still generating (pdf_url is null)
+   */
+  const hasGeneratingPDFs = purchases.some(
+    (p) => p.product_id === 'ai_analysis_pdf' && !p.pdf_url
+  );
+
+  /**
+   * Poll for PDF readiness every 5 seconds
+   */
+  useEffect(() => {
+    if (!hasGeneratingPDFs) {
+      setPollingActive(false);
+      return;
+    }
+
+    setPollingActive(true);
+    console.log('[DOWNLOAD_LINKS] Starting PDF polling...');
+
+    const pollInterval = setInterval(async () => {
+      try {
+        const response = await fetch(`/api/purchases/${resultId}`);
+        const data = await response.json();
+
+        if (data.data && Array.isArray(data.data)) {
+          const updatedPurchases = data.data as Purchase[];
+
+          // Check if all PDFs are now ready
+          const allPDFsReady = updatedPurchases
+            .filter((p) => p.product_id === 'ai_analysis_pdf')
+            .every((p) => p.pdf_url !== null);
+
+          if (allPDFsReady) {
+            console.log('[DOWNLOAD_LINKS] All PDFs ready!');
+            setPurchases(updatedPurchases);
+            setPollingActive(false);
+            clearInterval(pollInterval);
+          } else {
+            console.log('[DOWNLOAD_LINKS] Still generating...');
+          }
+        }
+      } catch (error) {
+        console.error('[DOWNLOAD_LINKS] Polling error:', error);
+      }
+    }, 5000); // Poll every 5 seconds
+
+    // Stop polling after 3 minutes (timeout)
+    const timeoutId = setTimeout(() => {
+      console.log('[DOWNLOAD_LINKS] Polling timeout (3 minutes)');
+      clearInterval(pollInterval);
+      setPollingActive(false);
+    }, 180000);
+
+    return () => {
+      clearInterval(pollInterval);
+      clearTimeout(timeoutId);
+    };
+  }, [hasGeneratingPDFs, resultId]);
 
   return (
     <motion.div
@@ -50,6 +116,8 @@ export default function DownloadLinks({ purchases, resultId }: DownloadLinksProp
           if (purchase.product_id === 'prod_chakra_meditations') {
             return null;
           }
+
+          const isGenerating = purchase.product_id === 'ai_analysis_pdf' && !purchase.pdf_url;
 
           return (
             <motion.div
@@ -81,30 +149,43 @@ export default function DownloadLinks({ purchases, resultId }: DownloadLinksProp
                     <p className="text-sm text-gray-500">PDF formátum</p>
                   </div>
                 </div>
-                <motion.button
-                  onClick={() => {
-                    // In real implementation, this would trigger actual download
-                    alert('PDF generálása folyamatban... (még nincs implementálva)');
-                  }}
-                  className="bg-purple-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-purple-700 transition-colors flex items-center gap-2"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+
+                {isGenerating ? (
+                  // LOADING STATE: PDF is being generated
+                  <div className="flex flex-col items-end gap-2">
+                    <div className="flex items-center gap-2 text-purple-600">
+                      <LoadingSpinner size="sm" />
+                      <span className="text-sm font-medium">Generálás folyamatban...</span>
+                    </div>
+                    <p className="text-xs text-gray-500 text-right max-w-xs">
+                      Dolgozunk az elemzéseden, néhány pillanatot várj. Maximum 1-2 percet vesz igénybe.
+                    </p>
+                  </div>
+                ) : (
+                  // READY STATE: PDF is ready for download
+                  <motion.a
+                    href={purchase.pdf_url || '#'}
+                    download
+                    className="bg-purple-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-purple-700 transition-colors flex items-center gap-2"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-                    />
-                  </svg>
-                  Letöltés
-                </motion.button>
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                      />
+                    </svg>
+                    Letöltés
+                  </motion.a>
+                )}
               </div>
             </motion.div>
           );

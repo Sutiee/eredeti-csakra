@@ -53,31 +53,68 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
       expand: ['data.price.product'],
     });
 
+    // Import PRODUCTS for fallback
+    const { PRODUCTS } = await import('@/lib/stripe/products');
+
     // Create purchase records for each line item
     for (const item of lineItems.data) {
       const product = item.price?.product as Stripe.Product | undefined;
       const productId = product?.metadata?.product_id || product?.id || 'unknown';
 
+      // Get local product definition as fallback
+      const localProduct = PRODUCTS[productId as keyof typeof PRODUCTS];
+
       // FIX: item.description is NULL for dynamic products created with price_data
-      // Fallback chain: description → product.name → product.id → 'Unknown Product'
+      // Fallback chain: Stripe data → Local product definition → Default
       const productName =
         item.description ||
         product?.name ||
         product?.metadata?.name ||
+        localProduct?.name ||
         'Unknown Product';
 
-      const amount = item.amount_total || 0;
-      const currency = item.currency || 'huf';
+      const rawAmount = item.amount_total || 0;
+
+      // CRITICAL FIX: Use local product price if Stripe amount is 0 or invalid
+      const amount = rawAmount > 0
+        ? rawAmount / 100  // Convert from cents to HUF
+        : (localProduct?.price || 0);  // Fallback to local product price
+
+      const currency = item.currency?.toUpperCase() || localProduct?.currency || 'HUF';
 
       // DEBUG: Log extracted data
       console.log('[WEBHOOK] Processing line item:', {
         productId,
         productName,
-        amount: amount / 100,
+        amount,
         currency,
+        source: rawAmount > 0 ? 'stripe' : 'local_fallback',
+        raw_stripe_amount: item.amount_total,
         raw_description: item.description,
         raw_product_name: product?.name,
+        local_product_found: !!localProduct,
       });
+
+      // VALIDATION: Skip invalid purchases
+      if (amount <= 0) {
+        console.error('[WEBHOOK] Skipping line item with invalid amount:', {
+          productId,
+          productName,
+          amount,
+          raw_stripe_amount: item.amount_total,
+        });
+        continue; // Skip this item
+      }
+
+      if (!productName || productName === 'Unknown Product') {
+        console.error('[WEBHOOK] Skipping line item with unknown product:', {
+          productId,
+          amount,
+          raw_description: item.description,
+          raw_product_name: product?.name,
+        });
+        continue; // Skip this item
+      }
 
       // Insert purchase record
       const { error: purchaseError } = await supabase.from('purchases').insert({
@@ -85,7 +122,7 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
         email,
         product_id: productId,
         product_name: productName,
-        amount: amount / 100, // Convert from cents
+        amount: amount, // Already converted to HUF at line 79-81
         currency: currency.toUpperCase(),
         stripe_session_id: session.id,
         stripe_payment_intent_id: session.payment_intent as string,
@@ -96,6 +133,21 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
       if (purchaseError) {
         console.error('Error creating purchase record:', purchaseError);
         continue;
+      }
+
+      // If AI analysis PDF was purchased, trigger PDF generation in background
+      if (productId === 'ai_analysis_pdf') {
+        console.log('[WEBHOOK] Triggering PDF generation for result:', resultId);
+
+        // Fire-and-forget: trigger PDF generation without awaiting
+        fetch(`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/generate-detailed-report-gpt5`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ result_id: resultId }),
+        }).catch((error) => {
+          console.error('[WEBHOOK] Failed to trigger PDF generation:', error);
+          // Don't throw - webhook should succeed even if background job fails
+        });
       }
 
       // If meditation access was purchased, create access token

@@ -6,6 +6,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseClient } from '@/lib/supabase/client';
 
+// Disable caching for this endpoint
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export async function GET(
   request: NextRequest,
   { params }: { params: { 'result-id': string } }
@@ -42,10 +46,19 @@ export async function GET(
 
     console.log('[GET /api/purchases] Found', purchases?.length || 0, 'purchases');
 
-    return NextResponse.json({
-      data: purchases || [],
-      error: null,
-    });
+    return NextResponse.json(
+      {
+        data: purchases || [],
+        error: null,
+      },
+      {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+          'Pragma': 'no-cache',
+          'Expires': '0',
+        },
+      }
+    );
   } catch (error) {
     console.error('[GET /api/purchases] Unexpected error:', error);
     return NextResponse.json(

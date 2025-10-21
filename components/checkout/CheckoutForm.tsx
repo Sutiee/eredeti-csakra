@@ -41,7 +41,7 @@ export default function CheckoutForm({ resultId, email }: CheckoutFormProps) {
     if (preselectedProduct && PRODUCTS[preselectedProduct]) {
       return [preselectedProduct];
     }
-    // Default to new AI Analysis product (v2.0)
+    // Default to new Personalized Analysis product (v2.0)
     return ['ai_analysis_pdf'];
   };
 

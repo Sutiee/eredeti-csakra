@@ -125,7 +125,7 @@ export default function ChakraSilhouette({
   };
 
   return (
-    <div className="relative w-full max-w-md mx-auto">
+    <div className="relative w-full max-w-[280px] md:max-w-md mx-auto">
       <svg
         viewBox={`0 0 ${svgWidth} ${svgHeight}`}
         className="w-full h-auto"

@@ -44,9 +44,10 @@ export default function SuccessPage() {
   const { trackEvent } = useAnalytics();
 
   /**
-   * Fetch purchase data from API
+   * Fetch purchase data from API with intelligent polling
+   * Retries until purchases are found or max attempts reached
    */
-  const fetchPurchases = async () => {
+  const fetchPurchases = async (retryCount = 0, maxRetries = 10): Promise<boolean> => {
     try {
       setLoading(true);
       setError(null);
@@ -59,38 +60,67 @@ export default function SuccessPage() {
         throw new Error(data.error || 'Failed to fetch purchases');
       }
 
-      setPurchases(data.data || []);
+      const fetchedPurchases = data.data || [];
+      const purchaseCount = fetchedPurchases.length;
 
       // DEBUG: Log fetched purchases
       console.log('[SUCCESS PAGE] Fetched purchases:', {
-        count: data.data?.length || 0,
-        purchases: data.data,
+        count: purchaseCount,
+        purchases: fetchedPurchases,
         resultId,
         sessionId,
+        retryCount,
       });
 
-      // Track purchase completion (only on initial load with no existing purchases)
-      if (data.data && data.data.length > 0 && purchases.length === 0) {
-        trackEvent('page_view', {
-          page_path: `/success/${resultId}`,
-          page_name: 'success',
-        });
-        trackEvent('purchase_completed', {
-          result_id: resultId,
-          session_id: sessionId,
-          products: data.data.map((p: Purchase) => p.product_id),
-          total_amount: data.data.reduce((sum: number, p: Purchase) => sum + p.amount, 0),
-        });
-        trackEvent('email_sent', {
-          result_id: resultId,
-          email_type: 'purchase_confirmation',
-        });
+      // If we have purchases, update state and track event
+      if (purchaseCount > 0) {
+        setPurchases(fetchedPurchases);
+
+        // Track purchase completion (only on initial load with no existing purchases)
+        if (purchases.length === 0) {
+          trackEvent('page_view', {
+            page_path: `/success/${resultId}`,
+            page_name: 'success',
+          });
+          trackEvent('purchase_completed', {
+            result_id: resultId,
+            session_id: sessionId,
+            products: fetchedPurchases.map((p: Purchase) => p.product_id),
+            total_amount: fetchedPurchases.reduce((sum: number, p: Purchase) => sum + p.amount, 0),
+          });
+          trackEvent('email_sent', {
+            result_id: resultId,
+            email_type: 'purchase_confirmation',
+          });
+        }
+
+        setLoading(false);
+        return true; // Success
       }
-    } catch (err) {
-      console.error('Error fetching purchases:', err);
-      setError('Hiba történt a vásárlás adatainak betöltésekor');
-    } finally {
+
+      // No purchases found - retry if we haven't exceeded max attempts
+      if (retryCount < maxRetries) {
+        console.log(`[SUCCESS PAGE] No purchases found, retrying in 1s (${retryCount + 1}/${maxRetries})...`);
+        setLoading(true); // Keep loading state
+
+        // Wait 1 second before retrying
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+
+        // Recursive retry
+        return fetchPurchases(retryCount + 1, maxRetries);
+      }
+
+      // Max retries exceeded - show error
+      console.error('[SUCCESS PAGE] Max retries exceeded, no purchases found');
+      setError('A vásárlás feldolgozása folyamatban van. Kérlek frissítsd az oldalt 1-2 perc múlva.');
       setLoading(false);
+      return false;
+
+    } catch (err) {
+      console.error('[SUCCESS PAGE] Error fetching purchases:', err);
+      setError('Hiba történt a vásárlás adatainak betöltésekor');
+      setLoading(false);
+      return false;
     }
   };
 
@@ -129,26 +159,46 @@ export default function SuccessPage() {
 
   /**
    * Handle upsell purchase success
-   * FIX: Add proper error handling and debugging
+   * Uses intelligent polling to wait for purchase to appear in database
    */
   const handleUpsellSuccess = async () => {
     try {
-      console.log('[UPSELL SUCCESS] Starting purchase refresh...');
+      console.log('[UPSELL SUCCESS] Starting purchase refresh with polling...');
 
-      // Small delay to ensure database write completes
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      // Poll for new purchase with up to 10 retries (10 seconds total)
+      const expectedPurchaseCount = purchases.length + 1;
 
-      // Refresh purchases to show the newly purchased item
-      await fetchPurchases();
+      for (let attempt = 0; attempt < 10; attempt++) {
+        // Wait 1 second between attempts
+        await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      console.log('[UPSELL SUCCESS] Purchase refresh completed successfully');
+        // Fetch purchases
+        const response = await fetch(`/api/purchases/${resultId}`);
+        const data = await response.json();
 
-      // Close modal only after successful refresh
-      setShowUpsell(false);
+        if (data.data && data.data.length >= expectedPurchaseCount) {
+          // New purchase found!
+          console.log('[UPSELL SUCCESS] New purchase found:', {
+            expected: expectedPurchaseCount,
+            actual: data.data.length,
+            attempt: attempt + 1,
+          });
+
+          setPurchases(data.data);
+          setShowUpsell(false);
+          return;
+        }
+
+        console.log(`[UPSELL SUCCESS] Waiting for new purchase (${attempt + 1}/10)...`);
+      }
+
+      // Max retries exceeded
+      console.error('[UPSELL SUCCESS] Failed to find new purchase after polling');
+      alert('A vásárlás sikeres volt, de az oldal frissítése szükséges. Kérlek töltsd újra az oldalt!');
+
     } catch (error) {
-      console.error('[UPSELL SUCCESS] Failed to refresh purchases:', error);
-      // Don't close modal on error - let user see what happened
-      // They can manually refresh the page
+      console.error('[UPSELL SUCCESS] Error during purchase refresh:', error);
+      alert('Hiba történt a vásárlás frissítésekor. Kérlek töltsd újra az oldalt!');
     }
   };
 
@@ -171,7 +221,15 @@ export default function SuccessPage() {
   if (loading) {
     return (
       <main className="min-h-screen bg-gradient-to-br from-green-50/80 via-emerald-50/60 to-white flex items-center justify-center px-4">
-        <LoadingSpinner size="lg" message="Vásárlás megerősítése..." />
+        <div className="max-w-md w-full text-center">
+          <LoadingSpinner size="lg" message="Vásárlás feldolgozása..." />
+          <p className="mt-4 text-sm text-gray-600">
+            A fizetés sikeresen megtörtént. Néhány másodperc múlva betöltjük a vásárolt termékeket...
+          </p>
+          <p className="mt-2 text-xs text-gray-500">
+            (Ez általában 5-10 másodpercet vesz igénybe)
+          </p>
+        </div>
       </main>
     );
   }
