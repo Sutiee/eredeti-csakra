@@ -246,10 +246,8 @@ hr {
 
       browser = await puppeteer.launch({
         args: chromium.args,
-        defaultViewport: chromium.defaultViewport,
         executablePath: await chromium.executablePath('/tmp'),
-        headless: chromium.headless,
-        ignoreHTTPSErrors: true,
+        headless: true,
       });
     } else {
       console.log('[STYLED_MARKDOWN_TO_PDF] Launching Puppeteer with local Chrome');
