@@ -41,9 +41,8 @@ export async function generateStyledMarkdownReport(
       model: MODEL,
       input: fullInput,
       max_output_tokens: 16000,
-      text: {
-        format: 'json',
-      },
+      // GPT-5 Responses API doesn't support text.format like Chat Completions
+      // We'll parse JSON from the response manually
     });
 
     const responseText = response.text;
