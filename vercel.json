@@ -1,8 +1,0 @@
-{
-  "functions": {
-    "app/api/generate-detailed-report-markdown-styled/route.ts": {
-      "maxDuration": 300,
-      "memory": 2048
-    }
-  }
-}

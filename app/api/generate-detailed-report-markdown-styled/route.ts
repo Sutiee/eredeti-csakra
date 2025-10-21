@@ -6,15 +6,15 @@
  *
  * Features:
  * - GPT-5-mini Responses API for detailed chakra analysis
- * - jsPDF for reliable serverless PDF generation (no Chromium needed)
- * - 20-25 pages of detailed analysis
+ * - jsPDF for reliable serverless PDF generation (no Chromium needed!)
+ * - 18-20 pages of detailed analysis
  * - Uploads to Supabase Storage with 30-day signed URLs
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { generateStyledMarkdownReport } from "@/lib/openai/report-generator-markdown-styled";
-import { convertStyledMarkdownToPDF } from "@/lib/pdf/markdown-to-pdf-styled";
+import { generateGPT5Report } from "@/lib/openai/report-generator-gpt5";
+import { generateReportPDF } from "@/lib/pdf/report-template-gpt5";
 import type { QuizResult } from "@/types";
 
 // Vercel serverless function configuration
@@ -94,27 +94,28 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const result = resultData as QuizResult;
     console.log("[MARKDOWN_STYLED_REPORT] Quiz result fetched:", result.name);
 
-    // LAYER 3: Generate Styled Markdown Report with GPT-5
-    console.log("[MARKDOWN_STYLED_REPORT] Generating styled markdown report with GPT-5...");
+    // LAYER 3: Generate Complete Report with GPT-5-mini
+    console.log("[GPT5_JSPDF_REPORT] Generating complete report with GPT-5-mini...");
 
-    const { markdown } = await generateStyledMarkdownReport(
+    const report = await generateGPT5Report(
       result.chakra_scores,
+      result.answers,
       result.name
     );
 
-    console.log("[MARKDOWN_STYLED_REPORT] Markdown generated, length:", markdown.length);
+    console.log("[GPT5_JSPDF_REPORT] GPT-5 report generated successfully");
 
-    // LAYER 4: Convert Markdown to PDF with Puppeteer
-    console.log("[MARKDOWN_STYLED_REPORT] Converting markdown to styled PDF...");
+    // LAYER 4: Convert to PDF with jsPDF
+    console.log("[GPT5_JSPDF_REPORT] Converting to PDF with jsPDF...");
 
-    const pdfBuffer = await convertStyledMarkdownToPDF(
-      markdown,
+    const pdfBuffer = await generateReportPDF(
+      report,
       result.chakra_scores,
       result.name,
       result.email
     );
 
-    console.log("[MARKDOWN_STYLED_REPORT] PDF generated, size:", pdfBuffer.length, "bytes");
+    console.log("[GPT5_JSPDF_REPORT] PDF generated, size:", pdfBuffer.length, "bytes");
 
     // LAYER 5: Upload to Supabase Storage
     const timestamp = Date.now();
@@ -203,8 +204,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       pdf_url: signedUrlData.signedUrl,
       file_name: fileName,
       size_bytes: pdfBuffer.length,
-      markdown_length: markdown.length,
-      generator: "GPT-5-mini + Puppeteer",
+      generator: "GPT-5-mini + jsPDF",
     });
 
   } catch (error) {
