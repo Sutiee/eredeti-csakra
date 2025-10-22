@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 
 interface UpsellBoxPersonalizedReportProps {
   resultId: string;
+  email: string;
   onCtaClick?: () => void;
 }
 
@@ -18,10 +19,11 @@ interface UpsellBoxPersonalizedReportProps {
  * - Strikethrough pricing (7,990 Ft → 990 Ft)
  * - Prominent CTA with fire emoji
  * - Purple gradient background for brand consistency
- * - Navigates to checkout with ai_analysis_pdf product query param
+ * - Direct Stripe checkout (bypasses cart/checkout page)
  */
 export default function UpsellBoxPersonalizedReport({
   resultId,
+  email,
   onCtaClick,
 }: UpsellBoxPersonalizedReportProps): JSX.Element {
   const router = useRouter();
@@ -39,16 +41,22 @@ export default function UpsellBoxPersonalizedReport({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          result_id: resultId,
-          product_ids: ['ai_analysis_pdf'], // 2990 Ft AI Analysis
+          resultId: resultId,
+          email: email,
+          items: [
+            {
+              productId: 'ai_analysis_pdf',
+              quantity: 1,
+            },
+          ],
         }),
       });
 
       const data = await response.json();
 
-      if (data.url) {
+      if (data.data?.url) {
         // Redirect to Stripe Checkout
-        window.location.href = data.url;
+        window.location.href = data.data.url;
       } else {
         console.error('[UpsellBox] Failed to create checkout session:', data);
         // Fallback to checkout page if API fails

@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 interface StickyCtaProps {
   blockedChakrasCount: number;
   resultId: string;
+  email: string;
   onCtaClick?: (copyVariant: string) => void;
 }
 
@@ -20,12 +21,14 @@ interface StickyCtaProps {
  * - Slide-up animation with Framer Motion
  * - Pre-header with benefit ("✨ + meditációk ma")
  * - Analytics tracking on click
+ * - Direct Stripe checkout (bypasses cart/checkout page)
  *
  * v2.1 Feature: Conversion Booster (+27% lift expected)
  */
 export default function StickyCTA({
   blockedChakrasCount,
   resultId,
+  email,
   onCtaClick,
 }: StickyCtaProps) {
   const router = useRouter();
@@ -100,16 +103,22 @@ export default function StickyCTA({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          result_id: resultId,
-          product_ids: ['ai_analysis_pdf'], // 990 Ft AI Analysis
+          resultId: resultId,
+          email: email,
+          items: [
+            {
+              productId: 'ai_analysis_pdf',
+              quantity: 1,
+            },
+          ],
         }),
       });
 
       const data = await response.json();
 
-      if (data.url) {
+      if (data.data?.url) {
         // Redirect to Stripe Checkout
-        window.location.href = data.url;
+        window.location.href = data.data.url;
       } else {
         console.error('[StickyCTA] Failed to create checkout session:', data);
         // Fallback to checkout page if API fails

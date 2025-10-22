@@ -227,6 +227,7 @@ export default function ResultPage(): JSX.Element {
           <div className="mt-16 mb-16">
             <UpsellBoxPersonalizedReport
               resultId={id}
+              email={result.email}
               onCtaClick={handleUpsellClick}
             />
           </div>
@@ -256,6 +257,7 @@ export default function ResultPage(): JSX.Element {
           result.interpretations.filter((c) => c.level === 'blocked').length
         }
         resultId={id}
+        email={result.email}
         onCtaClick={(copyVariant) => {
           trackAnalyticsEvent(id, 'sticky_click', {
             copy_variant: copyVariant,
