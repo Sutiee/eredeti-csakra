@@ -159,13 +159,37 @@ export function validateWorkbookDay(day: unknown): WorkbookDay {
 }
 
 /**
- * Validates a 15-day GPT-5 response
+ * Validates a 15-day GPT-5 response with automatic default injection for missing fields
  *
  * @param response - Raw GPT-5 response
  * @returns Validated WorkbookDaysResponse or throws ZodError
  */
 export function validateWorkbookDaysResponse(response: unknown): WorkbookDaysResponse {
-  return WorkbookDaysResponseSchema.parse(response);
+  // First, check if response has days array
+  if (typeof response !== 'object' || response === null || !('days' in response)) {
+    throw new Error('Response must have a "days" array');
+  }
+
+  const responseObj = response as { days: unknown[] };
+
+  // Fill missing journaling_kerdesek with defaults
+  const normalizedDays = responseObj.days.map((day: any) => {
+    if (!day.journaling_kerdesek || !Array.isArray(day.journaling_kerdesek) || day.journaling_kerdesek.length === 0) {
+      console.warn(`[Validation] Missing journaling_kerdesek for day ${day.day_number}, using defaults`);
+      return {
+        ...day,
+        journaling_kerdesek: [
+          "Mit tanultam ma a csakrámról?",
+          "Hogyan éreztem magam a mai gyakorlat során?",
+          "Mi változott bennem?"
+        ]
+      };
+    }
+    return day;
+  });
+
+  // Now validate with normalized data
+  return WorkbookDaysResponseSchema.parse({ days: normalizedDays });
 }
 
 /**
