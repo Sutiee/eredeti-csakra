@@ -86,15 +86,40 @@ export default function StickyCTA({
     localStorage.setItem("dismissed_sticky_cta_v21", Date.now().toString());
   };
 
-  // Handle CTA click
-  const handleCtaClick = () => {
+  // Handle CTA click - DIRECT STRIPE CHECKOUT
+  const handleCtaClick = async () => {
     // Analytics tracking
     if (onCtaClick) {
       onCtaClick(ctaCopy);
     }
 
-    // Navigate to checkout with default product (bundle)
-    router.push(`/checkout/${resultId}?product=bundle_complete`);
+    // DIRECT STRIPE CHECKOUT - Bypass checkout/cart page
+    // Create Stripe Checkout Session and redirect immediately
+    try {
+      const response = await fetch('/api/create-checkout-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          result_id: resultId,
+          product_ids: ['ai_analysis_pdf'], // 990 Ft AI Analysis
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.url) {
+        // Redirect to Stripe Checkout
+        window.location.href = data.url;
+      } else {
+        console.error('[StickyCTA] Failed to create checkout session:', data);
+        // Fallback to checkout page if API fails
+        router.push(`/checkout/${resultId}?product=ai_analysis_pdf`);
+      }
+    } catch (error) {
+      console.error('[StickyCTA] Error creating checkout session:', error);
+      // Fallback to checkout page if request fails
+      router.push(`/checkout/${resultId}?product=ai_analysis_pdf`);
+    }
   };
 
   // Don't render if dismissed
