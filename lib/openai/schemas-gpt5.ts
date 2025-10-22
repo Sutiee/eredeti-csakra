@@ -31,32 +31,52 @@ export type MasterAnalysis = z.infer<typeof MasterAnalysisSchema>;
  * CRITICAL: NO elsosegely_terv field
  * This is analysis only - no solution keys
  */
+// Manifestations schema (supports both spellings: with and without Hungarian accent)
+const ManifestationsSchema = z.object({
+  fizikai: z.array(z.string())
+    .min(1, "Must have at least 1 physical manifestation")
+    .max(6, "Must not exceed 6 physical manifestations")
+    .default(['Nincs megadva']),
+  erzelmi: z.array(z.string())
+    .min(1, "Must have at least 1 emotional manifestation")
+    .max(6, "Must not exceed 6 emotional manifestations")
+    .default(['Nincs megadva']),
+  mentalis: z.array(z.string())
+    .min(1, "Must have at least 1 mental manifestation")
+    .max(6, "Must not exceed 6 mental manifestations")
+    .default(['Nincs megadva']),
+});
+
 export const ChakraAnalysisSchema = z.object({
   nev: z.string()
     .min(1, "Chakra name is required"),
   reszletes_elemzes: z.string()
     .min(100, "Detailed analysis must be at least 100 characters")
     .max(1000, "Detailed analysis must not exceed 1000 characters"),
-  megnyilvánulasok: z.object({
-    fizikai: z.array(z.string())
-      .min(1, "Must have at least 1 physical manifestation")
-      .max(6, "Must not exceed 6 physical manifestations")
-      .default(['Nincs megadva']),
-    erzelmi: z.array(z.string())
-      .min(1, "Must have at least 1 emotional manifestation")
-      .max(6, "Must not exceed 6 emotional manifestations")
-      .default(['Nincs megadva']),
-    mentalis: z.array(z.string())
-      .min(1, "Must have at least 1 mental manifestation")
-      .max(6, "Must not exceed 6 mental manifestations")
-      .default(['Nincs megadva']),
-  }).optional().default({ fizikai: ['Nincs megadva'], erzelmi: ['Nincs megadva'], mentalis: ['Nincs megadva'] }),
+  // Accept BOTH spellings: "megnyilvánulasok" (with accent) OR "megnyilvanulasok" (without accent)
+  megnyilvánulasok: ManifestationsSchema.optional(),
+  megnyilvanulasok: ManifestationsSchema.optional(),
   gyokerok: z.string()
     .min(50, "Root causes must be at least 50 characters")
     .max(600, "Root causes must not exceed 600 characters"),
   megerosito_mondatok: z.array(z.string())
     .min(3, "Must have at least 3 affirmations")
     .max(7, "Must not exceed 7 affirmations"),
+}).transform((data) => {
+  // Normalize: use whichever field GPT-5 provided, prefer the correct spelling
+  const manifestations = data.megnyilvánulasok || data.megnyilvanulasok || {
+    fizikai: ['Nincs megadva'],
+    erzelmi: ['Nincs megadva'],
+    mentalis: ['Nincs megadva'],
+  };
+
+  return {
+    nev: data.nev,
+    reszletes_elemzes: data.reszletes_elemzes,
+    megnyilvánulasok: manifestations,
+    gyokerok: data.gyokerok,
+    megerosito_mondatok: data.megerosito_mondatok,
+  };
 });
 
 export type ChakraAnalysis = z.infer<typeof ChakraAnalysisSchema>;
