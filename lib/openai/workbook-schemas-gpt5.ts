@@ -38,28 +38,28 @@ export const WorkbookDaySchema = z.object({
     .min(1, "Chakra name is required"),
 
   napi_szandek: z.string()
-    .min(50, "Daily intention must be at least 50 characters")
-    .max(150, "Daily intention must not exceed 150 characters"),
+    .min(20, "Daily intention must be at least 20 characters")
+    .max(200, "Daily intention must not exceed 200 characters"),
 
   elmelet: z.string()
-    .min(200, "Theoretical background must be at least 200 characters")
-    .max(400, "Theoretical background must not exceed 400 characters"),
+    .min(100, "Theoretical background must be at least 100 characters")
+    .max(500, "Theoretical background must not exceed 500 characters"),
 
   gyakorlat_leiras: z.string()
-    .min(400, "Practice description must be at least 400 characters")
-    .max(800, "Practice description must not exceed 800 characters"),
+    .min(200, "Practice description must be at least 200 characters")
+    .max(1000, "Practice description must not exceed 1000 characters"),
 
   journaling_kerdesek: z.array(z.string())
     .min(3, "Must have at least 3 journaling questions")
     .max(5, "Must not exceed 5 journaling questions"),
 
   affirmacio: z.string()
-    .min(60, "Affirmation must be at least 60 characters")
-    .max(150, "Affirmation must not exceed 150 characters"),
+    .min(30, "Affirmation must be at least 30 characters")
+    .max(200, "Affirmation must not exceed 200 characters"),
 
   motivacio: z.string()
-    .min(80, "Motivation must be at least 80 characters")
-    .max(200, "Motivation must not exceed 200 characters"),
+    .min(40, "Motivation must be at least 40 characters")
+    .max(300, "Motivation must not exceed 300 characters"),
 });
 
 /**
