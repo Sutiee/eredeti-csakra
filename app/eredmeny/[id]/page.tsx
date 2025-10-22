@@ -127,8 +127,8 @@ export default function ResultPage(): JSX.Element {
   const handleUpsellClick = (): void => {
     trackAnalyticsEvent(id, 'softupsell_click', {
       position: 'main_upsell_box',
-      price: 2990,
-      original_price: 12990,
+      price: 990,
+      original_price: 7990,
     });
   };
 

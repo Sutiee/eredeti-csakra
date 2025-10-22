@@ -90,7 +90,7 @@ export const PRODUCTS: Record<ProductId, ProductMetadata> = {
     stripePriceId: STRIPE_PRICE_IDS.AI_ANALYSIS,
     name: 'Személyre Szabott Csakra Elemzés PDF',
     description: '20+ oldalas személyre szabott csakra jelentés a 7 csakra részletes diagnosztikájával és konkrét gyakorlatokkal.',
-    price: 2990,
+    price: 990,
     currency: 'HUF',
     metadata: {
       product_type: 'personalized_pdf',

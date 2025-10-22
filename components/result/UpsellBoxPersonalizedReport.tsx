@@ -128,15 +128,15 @@ export default function UpsellBoxPersonalizedReport({
       <div className="text-center mb-6">
         <div className="flex items-center justify-center gap-4 mb-2">
           <span className="text-2xl md:text-3xl font-bold line-through opacity-70">
-            12,990 Ft
+            7,990 Ft
           </span>
           <span className="text-3xl md:text-4xl font-black">→</span>
           <span className="text-3xl md:text-4xl font-black">
-            Most csak 2,990 Ft
+            Most csak 990 Ft
           </span>
         </div>
         <p className="text-sm opacity-90">
-          77% kedvezmény - csak most, a teszteredményed megtekintésekor
+          87% kedvezmény - csak most, a teszteredményed megtekintésekor
         </p>
       </div>
 
