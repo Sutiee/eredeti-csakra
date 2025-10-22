@@ -127,7 +127,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       introduction: generationResult.introduction || '',
     });
 
-    console.log('[API /api/generate-workbook] PDF generated, size:', pdfBuffer.byteLength, 'bytes');
+    console.log('[API /api/generate-workbook] PDF generated, size:', pdfBuffer.length, 'bytes');
 
     // Step 4: Upload PDF to Supabase Storage
     console.log('[API /api/generate-workbook] Uploading PDF to Supabase Storage...');

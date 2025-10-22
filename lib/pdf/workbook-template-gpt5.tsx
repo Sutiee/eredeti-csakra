@@ -10,7 +10,7 @@
  */
 
 import React from 'react';
-import ReactPDF, {
+import {
   Document,
   Page,
   Text,
@@ -26,19 +26,16 @@ import { MEDITATION_SCRIPTS } from '@/data/meditation-scripts';
 // FONT REGISTRATION (Hungarian character support)
 // ============================================================================
 
+// Use Roboto font (TTF format) from GitHub - same as personalized report
 Font.register({
-  family: 'Inter',
+  family: 'Roboto',
   fonts: [
     {
-      src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfAZ9hiA.woff2',
+      src: 'https://github.com/google/roboto/raw/main/src/hinted/Roboto-Regular.ttf',
       fontWeight: 400,
     },
     {
-      src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuGKYAZ9hiA.woff2',
-      fontWeight: 600,
-    },
-    {
-      src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuI6fAZ9hiA.woff2',
+      src: 'https://github.com/google/roboto/raw/main/src/hinted/Roboto-Bold.ttf',
       fontWeight: 700,
     },
   ],
@@ -65,7 +62,7 @@ const CHAKRA_COLORS: Record<string, string> = {
 const styles = StyleSheet.create({
   // Page layout
   page: {
-    fontFamily: 'Inter',
+    fontFamily: 'Roboto',
     padding: 40,
     backgroundColor: '#FFFFFF',
   },
@@ -485,35 +482,21 @@ const WorkbookPDFDocument: React.FC<WorkbookPDFProps> = ({
  * Generates 30-day workbook PDF buffer
  *
  * @param props - Workbook data (days, scores, user info, introduction)
- * @returns PDF buffer (Uint8Array)
+ * @returns PDF buffer
  */
 export async function generateWorkbookPDF(
   props: WorkbookPDFProps
-): Promise<Uint8Array> {
+): Promise<Buffer> {
   console.log('[WorkbookPDF] Starting PDF generation...');
   console.log('[WorkbookPDF] Days count:', props.days.length);
 
-  const pdfStream = await ReactPDF.renderToStream(
+  const { renderToBuffer } = await import('@react-pdf/renderer');
+
+  const pdfBuffer = await renderToBuffer(
     <WorkbookPDFDocument {...props} />
   );
 
-  // Convert stream to buffer
-  const chunks: Uint8Array[] = [];
+  console.log('[WorkbookPDF] PDF generated, size:', pdfBuffer.length, 'bytes');
 
-  return new Promise<Uint8Array>((resolve, reject) => {
-    pdfStream.on('data', (chunk: Uint8Array) => {
-      chunks.push(chunk);
-    });
-
-    pdfStream.on('end', () => {
-      const buffer = Buffer.concat(chunks);
-      console.log('[WorkbookPDF] PDF generated, size:', buffer.byteLength, 'bytes');
-      resolve(buffer);
-    });
-
-    pdfStream.on('error', (error: Error) => {
-      console.error('[WorkbookPDF] PDF generation error:', error);
-      reject(error);
-    });
-  });
+  return pdfBuffer;
 }
