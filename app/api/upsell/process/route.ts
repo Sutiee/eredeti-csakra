@@ -192,8 +192,19 @@ export async function POST(request: NextRequest) {
       purchase_id: purchase.id,
     });
 
-    // 8. TODO: Trigger PDF generation (queue job)
-    // For now, we'll handle this manually or in a separate webhook
+    // 8. Trigger workbook generation in background (fire-and-forget)
+    if (upsellProductId === 'workbook_30day') {
+      console.log('[UPSELL] Triggering 30-day workbook generation for result:', resultId);
+
+      fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/api/generate-workbook`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ result_id: resultId }),
+      }).catch((error) => {
+        console.error('[UPSELL] Failed to trigger workbook generation:', error);
+        // Don't throw - upsell should succeed even if background job fails
+      });
+    }
 
     // 9. Return success response
     return NextResponse.json({
