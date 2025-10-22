@@ -196,8 +196,9 @@ export async function POST(request: NextRequest) {
     if (upsellProductId === 'workbook_30day') {
       console.log('[UPSELL] Triggering 30-day workbook generation for result:', resultId);
 
-      // Use Promise to ensure fetch executes immediately (not fire-and-forget)
-      Promise.resolve().then(async () => {
+      // CRITICAL: Use waitUntil() to guarantee background task execution
+      // Without this, Vercel terminates the function before the fetch completes
+      const triggerWorkbookGeneration = async () => {
         try {
           const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://eredeti-csakra-xi.vercel.app';
           console.log('[UPSELL] Calling workbook generation API:', `${siteUrl}/api/generate-workbook`);
@@ -221,7 +222,17 @@ export async function POST(request: NextRequest) {
         } catch (error) {
           console.error('[UPSELL] Exception while triggering workbook generation:', error);
         }
-      });
+      };
+
+      // Use Vercel's waitUntil to ensure the background task completes
+      // Note: waitUntil is a Vercel-specific extension, not in NextRequest types
+      const waitUntil = (request as any).waitUntil;
+      if (waitUntil && typeof waitUntil === 'function') {
+        waitUntil(triggerWorkbookGeneration());
+      } else {
+        // Fallback for local development (no waitUntil available)
+        triggerWorkbookGeneration().catch(console.error);
+      }
     }
 
     // 9. Return success response
