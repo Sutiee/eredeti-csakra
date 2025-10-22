@@ -192,17 +192,35 @@ export async function POST(request: NextRequest) {
       purchase_id: purchase.id,
     });
 
-    // 8. Trigger workbook generation in background (fire-and-forget)
+    // 8. Trigger workbook generation in background
     if (upsellProductId === 'workbook_30day') {
       console.log('[UPSELL] Triggering 30-day workbook generation for result:', resultId);
 
-      fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/api/generate-workbook`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ result_id: resultId }),
-      }).catch((error) => {
-        console.error('[UPSELL] Failed to trigger workbook generation:', error);
-        // Don't throw - upsell should succeed even if background job fails
+      // Use Promise to ensure fetch executes immediately (not fire-and-forget)
+      Promise.resolve().then(async () => {
+        try {
+          const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://eredeti-csakra-xi.vercel.app';
+          console.log('[UPSELL] Calling workbook generation API:', `${siteUrl}/api/generate-workbook`);
+
+          const response = await fetch(`${siteUrl}/api/generate-workbook`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ result_id: resultId }),
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            console.error('[UPSELL] Workbook generation API failed:', {
+              status: response.status,
+              error: errorData,
+            });
+          } else {
+            const successData = await response.json();
+            console.log('[UPSELL] Workbook generation triggered successfully:', successData);
+          }
+        } catch (error) {
+          console.error('[UPSELL] Exception while triggering workbook generation:', error);
+        }
       });
     }
 
