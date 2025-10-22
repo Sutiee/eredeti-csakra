@@ -24,16 +24,16 @@ import type { ChakraScores } from '@/types';
 import { CHAKRAS } from '@/lib/quiz/chakras';
 import { getExercisesForBlockedChakras } from '@/data/chakra-exercises';
 
-// Register Google Fonts for Hungarian character support
+// Register Google Fonts for Hungarian character support (TTF format)
 Font.register({
   family: 'Roboto',
   fonts: [
     {
-      src: 'https://fonts.gstatic.com/s/roboto/v30/KFOmCnqEu92Fr1Mu4mxK.woff',
+      src: 'https://github.com/google/roboto/raw/main/src/hinted/Roboto-Regular.ttf',
       fontWeight: 400,
     },
     {
-      src: 'https://fonts.gstatic.com/s/roboto/v30/KFOlCnqEu92Fr1MmWUlfBBc4.woff',
+      src: 'https://github.com/google/roboto/raw/main/src/hinted/Roboto-Bold.ttf',
       fontWeight: 700,
     },
   ],
