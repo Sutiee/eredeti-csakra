@@ -9,7 +9,6 @@
  * @module lib/openai/workbook-generator-gpt5
  */
 
-import OpenAI from 'openai';
 import type { ChakraScores } from '@/types';
 import {
   validateWorkbookDaysResponse,
@@ -22,18 +21,18 @@ import {
   calculateDaysPerChakra,
   buildWorkbookIntroduction,
 } from './workbook-prompts-gpt5';
+import { openaiClient, GPT5_CONFIG } from './client-gpt5';
 
 // ============================================================================
-// OPENAI CLIENT INITIALIZATION
+// OPENAI CLIENT INITIALIZATION (Responses API)
 // ============================================================================
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
-const MODEL = 'gpt-4o-mini'; // GPT-5-mini model
-const MAX_TOKENS = 8000; // Output token limit per request
-const TEMPERATURE = 0.7; // Balance creativity and consistency
+// Uses gpt-5-mini with Responses API (same as personalized report)
+// Config imported from client-gpt5.ts:
+// - model: 'gpt-5-mini'
+// - reasoning: { effort: 'minimal' }
+// - text: { verbosity: 'medium' }
+// - max_output_tokens: 8000
 
 // ============================================================================
 // WORKBOOK GENERATION RESULT
@@ -71,27 +70,15 @@ async function generateWorkbookDays1to15(
 ): Promise<{ response: WorkbookDaysResponse; usage: { input: number; output: number } }> {
   const prompt = buildWorkbookPrompt(chakraScores, userName, '1-15', distribution);
 
-  console.log('[WorkbookGenerator] Generating Days 1-15...');
+  console.log('[WorkbookGenerator] Generating Days 1-15 with gpt-5-mini Responses API...');
 
-  const completion = await openai.chat.completions.create({
-    model: MODEL,
-    messages: [
-      {
-        role: 'system',
-        content:
-          'Te egy tapasztalt csakra terapeuta vagy. Mindig valid JSON formátumban válaszolsz, semmi mást nem írsz.',
-      },
-      {
-        role: 'user',
-        content: prompt,
-      },
-    ],
-    max_tokens: MAX_TOKENS,
-    temperature: TEMPERATURE,
-    response_format: { type: 'json_object' },
+  // Use Responses API (same as personalized report)
+  const response = await openaiClient.responses.create({
+    ...GPT5_CONFIG,
+    input: prompt,  // Single string input (not messages array)
   });
 
-  const rawResponse = completion.choices[0]?.message?.content;
+  const rawResponse = response.output_text;
   if (!rawResponse) {
     throw new Error('GPT-5 response is empty');
   }
@@ -108,8 +95,8 @@ async function generateWorkbookDays1to15(
   const validatedResponse = validateWorkbookDaysResponse(parsedResponse);
 
   const usage = {
-    input: completion.usage?.prompt_tokens || 0,
-    output: completion.usage?.completion_tokens || 0,
+    input: response.usage?.input_tokens || 0,
+    output: response.usage?.output_tokens || 0,
   };
 
   console.log('[WorkbookGenerator] Days 1-15 generated successfully');
@@ -133,27 +120,15 @@ async function generateWorkbookDays16to30(
 ): Promise<{ response: WorkbookDaysResponse; usage: { input: number; output: number } }> {
   const prompt = buildWorkbookPrompt(chakraScores, userName, '16-30', distribution);
 
-  console.log('[WorkbookGenerator] Generating Days 16-30...');
+  console.log('[WorkbookGenerator] Generating Days 16-30 with gpt-5-mini Responses API...');
 
-  const completion = await openai.chat.completions.create({
-    model: MODEL,
-    messages: [
-      {
-        role: 'system',
-        content:
-          'Te egy tapasztalt csakra terapeuta vagy. Mindig valid JSON formátumban válaszolsz, semmi mást nem írsz.',
-      },
-      {
-        role: 'user',
-        content: prompt,
-      },
-    ],
-    max_tokens: MAX_TOKENS,
-    temperature: TEMPERATURE,
-    response_format: { type: 'json_object' },
+  // Use Responses API (same as personalized report)
+  const response = await openaiClient.responses.create({
+    ...GPT5_CONFIG,
+    input: prompt,  // Single string input (not messages array)
   });
 
-  const rawResponse = completion.choices[0]?.message?.content;
+  const rawResponse = response.output_text;
   if (!rawResponse) {
     throw new Error('GPT-5 response is empty');
   }
@@ -170,8 +145,8 @@ async function generateWorkbookDays16to30(
   const validatedResponse = validateWorkbookDaysResponse(parsedResponse);
 
   const usage = {
-    input: completion.usage?.prompt_tokens || 0,
-    output: completion.usage?.completion_tokens || 0,
+    input: response.usage?.input_tokens || 0,
+    output: response.usage?.output_tokens || 0,
   };
 
   console.log('[WorkbookGenerator] Days 16-30 generated successfully');
