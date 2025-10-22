@@ -43,7 +43,7 @@ export default function DownloadLinks({ purchases: initialPurchases, resultId }:
    * Check if any PDF is still generating (pdf_url is null)
    */
   const hasGeneratingPDFs = purchases.some(
-    (p) => p.product_id === 'ai_analysis_pdf' && !p.pdf_url
+    (p) => (p.product_id === 'ai_analysis_pdf' || p.product_id === 'workbook_30day') && !p.pdf_url
   );
 
   /**
@@ -68,7 +68,7 @@ export default function DownloadLinks({ purchases: initialPurchases, resultId }:
 
           // Check if all PDFs are now ready
           const allPDFsReady = updatedPurchases
-            .filter((p) => p.product_id === 'ai_analysis_pdf')
+            .filter((p) => p.product_id === 'ai_analysis_pdf' || p.product_id === 'workbook_30day')
             .every((p) => p.pdf_url !== null);
 
           if (allPDFsReady) {
@@ -117,7 +117,7 @@ export default function DownloadLinks({ purchases: initialPurchases, resultId }:
             return null;
           }
 
-          const isGenerating = purchase.product_id === 'ai_analysis_pdf' && !purchase.pdf_url;
+          const isGenerating = (purchase.product_id === 'ai_analysis_pdf' || purchase.product_id === 'workbook_30day') && !purchase.pdf_url;
 
           return (
             <motion.div
@@ -158,7 +158,9 @@ export default function DownloadLinks({ purchases: initialPurchases, resultId }:
                       <span className="text-sm font-medium">Generálás folyamatban...</span>
                     </div>
                     <p className="text-xs text-gray-500 text-right max-w-xs">
-                      Dolgozunk az elemzéseden, néhány pillanatot várj. Maximum 1-2 percet vesz igénybe.
+                      {purchase.product_id === 'workbook_30day'
+                        ? 'Személyre szabott munkafüzeted elkészítése 30-60 másodpercet vesz igénybe.'
+                        : 'Dolgozunk az elemzéseden, néhány pillanatot várj. Maximum 1-2 percet vesz igénybe.'}
                     </p>
                   </div>
                 ) : (

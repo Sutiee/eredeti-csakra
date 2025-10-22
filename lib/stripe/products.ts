@@ -54,7 +54,7 @@ export type ProductMetadata = {
 const STRIPE_PRODUCT_IDS = {
   // v2.0 Upsell Products
   AI_ANALYSIS: process.env.STRIPE_PRODUCT_ID_AI_ANALYSIS || 'prod_REPLACE_ME',
-  WORKBOOK: process.env.STRIPE_PRODUCT_ID_WORKBOOK || 'prod_REPLACE_ME',
+  WORKBOOK: process.env.STRIPE_PRODUCT_ID_WORKBOOK || 'prod_THbfA6Ig4B28Yo',
   // v1.x Products
   DETAILED_PDF: process.env.STRIPE_PRODUCT_ID_DETAILED_PDF || 'prod_REPLACE_ME',
   MEDITATIONS: process.env.STRIPE_PRODUCT_ID_MEDITATIONS || 'prod_REPLACE_ME',
@@ -69,7 +69,7 @@ const STRIPE_PRODUCT_IDS = {
 const STRIPE_PRICE_IDS = {
   // v2.0 Upsell Products
   AI_ANALYSIS: process.env.STRIPE_PRICE_ID_AI_ANALYSIS || 'price_REPLACE_ME',
-  WORKBOOK: process.env.STRIPE_PRICE_ID_WORKBOOK || 'price_REPLACE_ME',
+  WORKBOOK: process.env.STRIPE_PRICE_ID_WORKBOOK || 'price_1SL2VD4g26nclPGfGaC7efg7',
   // v1.x Products
   DETAILED_PDF: process.env.STRIPE_PRICE_ID_DETAILED_PDF || 'price_REPLACE_ME',
   MEDITATIONS: process.env.STRIPE_PRICE_ID_MEDITATIONS || 'price_REPLACE_ME',

@@ -150,6 +150,21 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
         });
       }
 
+      // If 30-day workbook was purchased, trigger workbook generation in background
+      if (productId === 'workbook_30day') {
+        console.log('[WEBHOOK] Triggering 30-day workbook generation for result:', resultId);
+
+        // Fire-and-forget: trigger workbook generation without awaiting
+        fetch(`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/generate-workbook`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ result_id: resultId }),
+        }).catch((error) => {
+          console.error('[WEBHOOK] Failed to trigger workbook generation:', error);
+          // Don't throw - webhook should succeed even if background job fails
+        });
+      }
+
       // If meditation access was purchased, create access token
       if (
         productId === 'prod_chakra_meditations' ||
