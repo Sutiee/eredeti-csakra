@@ -138,9 +138,13 @@ export default function SuccessPage() {
 
   /**
    * Show upsell modal after 5 seconds (only once)
+   * IMPORTANT: Check if workbook was already purchased to prevent showing again
    */
   useEffect(() => {
-    if (!hasSeenUpsell && sessionId && !loading && !error) {
+    // Check if workbook_30day was already purchased
+    const hasWorkbook = purchases.some(p => p.product_id === 'workbook_30day');
+
+    if (!hasSeenUpsell && sessionId && !loading && !error && !hasWorkbook) {
       const timer = setTimeout(() => {
         setShowUpsell(true);
         setHasSeenUpsell(true);
@@ -155,7 +159,7 @@ export default function SuccessPage() {
 
       return () => clearTimeout(timer);
     }
-  }, [hasSeenUpsell, sessionId, loading, error, resultId, trackEvent]);
+  }, [hasSeenUpsell, sessionId, loading, error, purchases, resultId, trackEvent]);
 
   /**
    * Handle upsell purchase success

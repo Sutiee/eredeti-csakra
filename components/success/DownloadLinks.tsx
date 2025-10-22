@@ -66,6 +66,9 @@ export default function DownloadLinks({ purchases: initialPurchases, resultId }:
         if (data.data && Array.isArray(data.data)) {
           const updatedPurchases = data.data as Purchase[];
 
+          // ALWAYS update purchases to show new products immediately
+          setPurchases(updatedPurchases);
+
           // Check if all PDFs are now ready
           const allPDFsReady = updatedPurchases
             .filter((p) => p.product_id === 'ai_analysis_pdf' || p.product_id === 'workbook_30day')
@@ -73,11 +76,12 @@ export default function DownloadLinks({ purchases: initialPurchases, resultId }:
 
           if (allPDFsReady) {
             console.log('[DOWNLOAD_LINKS] All PDFs ready!');
-            setPurchases(updatedPurchases);
             setPollingActive(false);
             clearInterval(pollInterval);
           } else {
-            console.log('[DOWNLOAD_LINKS] Still generating...');
+            console.log('[DOWNLOAD_LINKS] Still generating, PDFs found:',
+              updatedPurchases.filter(p => p.product_id === 'ai_analysis_pdf' || p.product_id === 'workbook_30day').length
+            );
           }
         }
       } catch (error) {
