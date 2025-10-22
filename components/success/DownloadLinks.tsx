@@ -56,9 +56,16 @@ export default function DownloadLinks({ purchases: initialPurchases, resultId }:
     }
 
     setPollingActive(true);
-    console.log('[DOWNLOAD_LINKS] Starting PDF polling...');
+    console.log('[DOWNLOAD_LINKS] Starting PDF polling with exponential backoff...');
 
-    const pollInterval = setInterval(async () => {
+    let pollCount = 0;
+    let currentInterval = 5000; // Start with 5 seconds
+    let timeoutHandle: NodeJS.Timeout | null = null;
+    let stopPolling = false;
+
+    const pollForPDFs = async () => {
+      if (stopPolling) return;
+
       try {
         const response = await fetch(`/api/purchases/${resultId}`);
         const data = await response.json();
@@ -77,7 +84,8 @@ export default function DownloadLinks({ purchases: initialPurchases, resultId }:
           if (allPDFsReady) {
             console.log('[DOWNLOAD_LINKS] All PDFs ready!');
             setPollingActive(false);
-            clearInterval(pollInterval);
+            stopPolling = true;
+            return;
           } else {
             console.log('[DOWNLOAD_LINKS] Still generating, PDFs found:',
               updatedPurchases.filter(p => p.product_id === 'ai_analysis_pdf' || p.product_id === 'workbook_30day').length
@@ -87,17 +95,38 @@ export default function DownloadLinks({ purchases: initialPurchases, resultId }:
       } catch (error) {
         console.error('[DOWNLOAD_LINKS] Polling error:', error);
       }
-    }, 5000); // Poll every 5 seconds
 
-    // Stop polling after 3 minutes (timeout)
+      // Exponential backoff:
+      // 0-60s: 5s interval (12 polls)
+      // 60-180s: 10s interval (12 polls)
+      // 180-300s: 15s interval (8 polls)
+      pollCount++;
+      if (pollCount <= 12) {
+        currentInterval = 5000; // First minute: 5s
+      } else if (pollCount <= 24) {
+        currentInterval = 10000; // 1-3 minutes: 10s
+      } else {
+        currentInterval = 15000; // 3-5 minutes: 15s
+      }
+
+      console.log(`[DOWNLOAD_LINKS] Next poll in ${currentInterval / 1000}s (poll #${pollCount})`);
+      timeoutHandle = setTimeout(pollForPDFs, currentInterval);
+    };
+
+    // Start first poll immediately
+    pollForPDFs();
+
+    // Stop polling after 5 minutes (timeout) - increased from 3 minutes
     const timeoutId = setTimeout(() => {
-      console.log('[DOWNLOAD_LINKS] Polling timeout (3 minutes)');
-      clearInterval(pollInterval);
+      console.log('[DOWNLOAD_LINKS] Polling timeout (5 minutes)');
+      stopPolling = true;
       setPollingActive(false);
-    }, 180000);
+      if (timeoutHandle) clearTimeout(timeoutHandle);
+    }, 300000); // 5 minutes
 
     return () => {
-      clearInterval(pollInterval);
+      stopPolling = true;
+      if (timeoutHandle) clearTimeout(timeoutHandle);
       clearTimeout(timeoutId);
     };
   }, [hasGeneratingPDFs, resultId]);
@@ -163,7 +192,7 @@ export default function DownloadLinks({ purchases: initialPurchases, resultId }:
                     </div>
                     <p className="text-xs text-gray-500 text-right max-w-xs">
                       {purchase.product_id === 'workbook_30day'
-                        ? 'Személyre szabott munkafüzeted elkészítése 30-60 másodpercet vesz igénybe.'
+                        ? 'Munkafüzeted készítése folyamatban... Ez 3-4 percet vesz igénybe. Az oldal automatikusan frissül, amikor elkészült.'
                         : 'Dolgozunk az elemzéseden, néhány pillanatot várj. Maximum 1-2 percet vesz igénybe.'}
                     </p>
                   </div>
