@@ -26,14 +26,39 @@ export default function UpsellBoxPersonalizedReport({
 }: UpsellBoxPersonalizedReportProps): JSX.Element {
   const router = useRouter();
 
-  const handleCtaClick = (): void => {
+  const handleCtaClick = async (): Promise<void> => {
     // Call analytics callback if provided
     if (onCtaClick) {
       onCtaClick();
     }
 
-    // Navigate to checkout with AI analysis product
-    router.push(`/checkout/${resultId}?product=ai_analysis_pdf`);
+    // DIRECT STRIPE CHECKOUT - Bypass checkout/cart page
+    // Create Stripe Checkout Session and redirect immediately
+    try {
+      const response = await fetch('/api/create-checkout-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          result_id: resultId,
+          product_ids: ['ai_analysis_pdf'], // 2990 Ft AI Analysis
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.url) {
+        // Redirect to Stripe Checkout
+        window.location.href = data.url;
+      } else {
+        console.error('[UpsellBox] Failed to create checkout session:', data);
+        // Fallback to checkout page if API fails
+        router.push(`/checkout/${resultId}?product=ai_analysis_pdf`);
+      }
+    } catch (error) {
+      console.error('[UpsellBox] Error creating checkout session:', error);
+      // Fallback to checkout page if request fails
+      router.push(`/checkout/${resultId}?product=ai_analysis_pdf`);
+    }
   };
 
   return (
@@ -103,15 +128,15 @@ export default function UpsellBoxPersonalizedReport({
       <div className="text-center mb-6">
         <div className="flex items-center justify-center gap-4 mb-2">
           <span className="text-2xl md:text-3xl font-bold line-through opacity-70">
-            7,990 Ft
+            12,990 Ft
           </span>
           <span className="text-3xl md:text-4xl font-black">→</span>
           <span className="text-3xl md:text-4xl font-black">
-            Most csak 990 Ft
+            Most csak 2,990 Ft
           </span>
         </div>
         <p className="text-sm opacity-90">
-          87% kedvezmény - csak most, a teszteredményed megtekintésekor
+          77% kedvezmény - csak most, a teszteredményed megtekintésekor
         </p>
       </div>
 
