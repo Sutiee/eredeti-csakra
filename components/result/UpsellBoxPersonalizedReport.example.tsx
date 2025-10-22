@@ -14,10 +14,10 @@ import UpsellBoxPersonalizedReport from './UpsellBoxPersonalizedReport';
  *
  * The simplest way to use the component - just pass the result ID.
  */
-export function BasicExample({ resultId }: { resultId: string }) {
+export function BasicExample({ resultId, email }: { resultId: string; email: string }) {
   return (
     <div className="container mx-auto px-4 py-8">
-      <UpsellBoxPersonalizedReport resultId={resultId} />
+      <UpsellBoxPersonalizedReport resultId={resultId} email={email} />
     </div>
   );
 }
@@ -28,7 +28,7 @@ export function BasicExample({ resultId }: { resultId: string }) {
  * Add custom analytics callback to track when users click the CTA.
  * Useful for Google Analytics, Facebook Pixel, or custom tracking.
  */
-export function WithAnalyticsExample({ resultId }: { resultId: string }) {
+export function WithAnalyticsExample({ resultId, email }: { resultId: string; email: string }) {
   const handleUpsellClick = () => {
     // Google Analytics 4 Event
     if (typeof window !== 'undefined' && window.gtag) {
@@ -62,6 +62,7 @@ export function WithAnalyticsExample({ resultId }: { resultId: string }) {
     <div className="container mx-auto px-4 py-8">
       <UpsellBoxPersonalizedReport
         resultId={resultId}
+        email={email}
         onCtaClick={handleUpsellClick}
       />
     </div>
@@ -76,9 +77,11 @@ export function WithAnalyticsExample({ resultId }: { resultId: string }) {
  */
 export function FullResultPageExample({
   resultId,
+  email,
   chakraCards
 }: {
   resultId: string;
+  email: string;
   chakraCards: React.ReactNode;
 }) {
   const handleUpsellClick = () => {
@@ -106,6 +109,7 @@ export function FullResultPageExample({
         <section className="mb-12">
           <UpsellBoxPersonalizedReport
             resultId={resultId}
+            email={email}
             onCtaClick={handleUpsellClick}
           />
         </section>
@@ -130,9 +134,11 @@ export function FullResultPageExample({
  * Integration with a custom analytics service or tracking library.
  */
 export function WithCustomTrackingExample({
-  resultId
+  resultId,
+  email
 }: {
-  resultId: string
+  resultId: string;
+  email: string;
 }) {
   const trackUpsellInteraction = () => {
     // Custom tracking service
@@ -162,6 +168,7 @@ export function WithCustomTrackingExample({
   return (
     <UpsellBoxPersonalizedReport
       resultId={resultId}
+      email={email}
       onCtaClick={trackUpsellInteraction}
     />
   );
