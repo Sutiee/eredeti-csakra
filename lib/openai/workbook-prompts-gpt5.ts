@@ -91,19 +91,32 @@ export function calculateDaysPerChakra(
   const remaining = 30 - totalDays;
 
   if (remaining > 0) {
-    // Add remaining days to blocked chakras first, then imbalanced
-    const priorityChakras = [...blocked, ...imbalanced];
-    for (let i = 0; i < remaining && i < priorityChakras.length; i++) {
-      distribution[priorityChakras[i]] += 1;
+    // Add remaining days to blocked chakras first, then imbalanced, then healthy
+    const priorityChakras = [...blocked, ...imbalanced, ...healthy];
+    let daysAdded = 0;
+    let index = 0;
+
+    while (daysAdded < remaining && index < priorityChakras.length * 3) {
+      const chakraIndex = index % priorityChakras.length;
+      const chakra = priorityChakras[chakraIndex];
+      distribution[chakra] += 1;
+      daysAdded += 1;
+      index += 1;
     }
   } else if (remaining < 0) {
     // Remove days from healthy chakras first, then imbalanced
     const deprioritizeChakras = [...healthy, ...imbalanced];
     let toRemove = Math.abs(remaining);
-    for (let i = 0; i < toRemove && i < deprioritizeChakras.length; i++) {
-      if (distribution[deprioritizeChakras[i]] > 1) {
-        distribution[deprioritizeChakras[i]] -= 1;
+    let index = 0;
+
+    while (toRemove > 0 && index < deprioritizeChakras.length * 3) {
+      const chakraIndex = index % deprioritizeChakras.length;
+      const chakra = deprioritizeChakras[chakraIndex];
+      if (distribution[chakra] > 1) {
+        distribution[chakra] -= 1;
+        toRemove -= 1;
       }
+      index += 1;
     }
   }
 
