@@ -35,18 +35,8 @@ export default function StickyCTA({
   const [showSticky, setShowSticky] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
 
-  // Dynamic CTA copy based on blocked chakra count
-  const getCtaCopy = (): string => {
-    if (blockedChakrasCount >= 3) {
-      return "Egyensúlyt kérek";
-    } else if (blockedChakrasCount >= 1) {
-      return "Tervet kérek";
-    } else {
-      return "Harmónia őrzése";
-    }
-  };
-
-  const ctaCopy = getCtaCopy();
+  // CTA copy - simple and clear call-to-action
+  const ctaCopy = "Megrendelem az elemzést";
 
   // Check localStorage for dismissed state on mount
   useEffect(() => {
@@ -151,44 +141,50 @@ export default function StickyCTA({
               <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
                 {/* Left: Pre-header + CTA */}
                 <div className="flex-1 text-center sm:text-left">
-                  {/* Pre-header */}
+                  {/* Pre-header - Dynamic blocked chakra count */}
                   <div className="flex items-center justify-center sm:justify-start gap-2 mb-2">
                     <span className="text-xl" aria-hidden="true">
-                      ✨
+                      💡
                     </span>
                     <span className="text-sm text-gray-600 font-medium">
-                      + meditációk ma
+                      {blockedChakrasCount} csakrád segítségre szorul
                     </span>
                   </div>
 
-                  {/* CTA Text */}
+                  {/* CTA Text - Value-focused personalized message */}
                   <p className="text-base text-gray-700">
-                    Készen állsz a változásra?
+                    Kapj személyre szabott elsősegély csomagot minden blokkolt csakrádhoz
                   </p>
                 </div>
 
-                {/* Center/Right: CTA Button */}
+                {/* Center/Right: CTA Button + Price */}
                 <div className="flex items-center gap-3">
-                  <motion.button
-                    onClick={handleCtaClick}
-                    whileHover={{ scale: 1.03 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-spiritual-purple-600 to-spiritual-rose-600 text-white font-bold text-base rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
-                    style={{
-                      boxShadow:
-                        "0 4px 20px rgba(139, 92, 246, 0.3), 0 2px 8px rgba(236, 72, 153, 0.2)",
-                    }}
-                  >
-                    <span>{ctaCopy}</span>
-                    <motion.span
-                      className="text-xl"
-                      animate={{ x: [0, 3, 0] }}
-                      transition={{ duration: 1.5, repeat: Infinity }}
-                      aria-hidden="true"
+                  <div className="flex flex-col items-center gap-1">
+                    <motion.button
+                      onClick={handleCtaClick}
+                      whileHover={{ scale: 1.03 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-spiritual-purple-600 to-spiritual-rose-600 text-white font-bold text-base rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
+                      style={{
+                        boxShadow:
+                          "0 4px 20px rgba(139, 92, 246, 0.3), 0 2px 8px rgba(236, 72, 153, 0.2)",
+                      }}
                     >
-                      →
-                    </motion.span>
-                  </motion.button>
+                      <span>{ctaCopy}</span>
+                      <motion.span
+                        className="text-xl"
+                        animate={{ x: [0, 3, 0] }}
+                        transition={{ duration: 1.5, repeat: Infinity }}
+                        aria-hidden="true"
+                      >
+                        →
+                      </motion.span>
+                    </motion.button>
+                    {/* Price below button */}
+                    <span className="text-sm text-gray-600 font-semibold">
+                      Csak 990 Ft
+                    </span>
+                  </div>
 
                   {/* Dismiss Button */}
                   <button
@@ -203,10 +199,10 @@ export default function StickyCTA({
                 </div>
               </div>
 
-              {/* Trust micro-signal */}
+              {/* Trust micro-signal - Emphasize instant download */}
               <div className="text-center mt-2">
                 <p className="text-xs text-gray-500">
-                  ✓ 14 napos pénzvisszafizetési garancia
+                  ✓ Azonnal letölthető · 14 napos pénzvisszafizetés
                 </p>
               </div>
             </div>
