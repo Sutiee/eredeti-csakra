@@ -36,7 +36,10 @@ function getSupabaseAdmin() {
 /**
  * Handle successful checkout session
  */
-async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
+async function handleCheckoutSessionCompleted(
+  session: Stripe.Checkout.Session,
+  request: NextRequest
+) {
   const supabase = getSupabaseAdmin();
 
   try {
@@ -139,30 +142,69 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
       if (productId === 'ai_analysis_pdf') {
         console.log('[WEBHOOK] Triggering Markdown-styled PDF generation for result:', resultId);
 
-        // Fire-and-forget: trigger PDF generation without awaiting
-        fetch(`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/generate-detailed-report-markdown-styled`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ result_id: resultId }),
-        }).catch((error) => {
-          console.error('[WEBHOOK] Failed to trigger PDF generation:', error);
-          // Don't throw - webhook should succeed even if background job fails
-        });
+        const triggerAIPDFGeneration = async () => {
+          try {
+            const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+            const response = await fetch(`${siteUrl}/api/generate-detailed-report-markdown-styled`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ result_id: resultId }),
+            });
+
+            if (!response.ok) {
+              const errorText = await response.text();
+              console.error('[WEBHOOK] AI PDF generation failed:', errorText);
+            } else {
+              console.log('[WEBHOOK] AI PDF generation triggered successfully');
+            }
+          } catch (error) {
+            console.error('[WEBHOOK] Exception triggering AI PDF generation:', error);
+          }
+        };
+
+        // Use Vercel waitUntil API to ensure background task completes
+        const waitUntil = (request as any).waitUntil;
+        if (waitUntil && typeof waitUntil === 'function') {
+          waitUntil(triggerAIPDFGeneration());
+        } else {
+          // Fallback for local development
+          triggerAIPDFGeneration().catch(console.error);
+        }
       }
 
       // If 30-day workbook was purchased, trigger workbook generation in background
       if (productId === 'workbook_30day') {
         console.log('[WEBHOOK] Triggering 30-day workbook generation for result:', resultId);
 
-        // Fire-and-forget: trigger workbook generation without awaiting
-        fetch(`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/generate-workbook`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ result_id: resultId }),
-        }).catch((error) => {
-          console.error('[WEBHOOK] Failed to trigger workbook generation:', error);
-          // Don't throw - webhook should succeed even if background job fails
-        });
+        const triggerWorkbookGeneration = async () => {
+          try {
+            const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+            const response = await fetch(`${siteUrl}/api/generate-workbook`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ result_id: resultId }),
+            });
+
+            if (!response.ok) {
+              const errorText = await response.text();
+              console.error('[WEBHOOK] Workbook generation failed:', errorText);
+            } else {
+              console.log('[WEBHOOK] Workbook generation triggered successfully');
+            }
+          } catch (error) {
+            console.error('[WEBHOOK] Exception triggering workbook generation:', error);
+          }
+        };
+
+        // Use Vercel waitUntil API to ensure background task completes
+        // (same pattern as upsell route)
+        const waitUntil = (request as any).waitUntil;
+        if (waitUntil && typeof waitUntil === 'function') {
+          waitUntil(triggerWorkbookGeneration());
+        } else {
+          // Fallback for local development (no waitUntil available)
+          triggerWorkbookGeneration().catch(console.error);
+        }
       }
 
       // If meditation access was purchased, create access token
@@ -237,7 +279,7 @@ export async function POST(request: NextRequest) {
   try {
     switch (event.type) {
       case 'checkout.session.completed':
-        await handleCheckoutSessionCompleted(event.data.object as Stripe.Checkout.Session);
+        await handleCheckoutSessionCompleted(event.data.object as Stripe.Checkout.Session, request);
         break;
 
       case 'payment_intent.succeeded':

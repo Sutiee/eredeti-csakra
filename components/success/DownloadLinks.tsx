@@ -116,13 +116,15 @@ export default function DownloadLinks({ purchases: initialPurchases, resultId }:
     // Start first poll immediately
     pollForPDFs();
 
-    // Stop polling after 5 minutes (timeout) - increased from 3 minutes
+    // Stop polling after 7 minutes (timeout)
+    // Extended to provide buffer for 232-second workbook generation time
+    // (previously 5 minutes, which was too close to generation time)
     const timeoutId = setTimeout(() => {
-      console.log('[DOWNLOAD_LINKS] Polling timeout (5 minutes)');
+      console.log('[DOWNLOAD_LINKS] Polling timeout (7 minutes)');
       stopPolling = true;
       setPollingActive(false);
       if (timeoutHandle) clearTimeout(timeoutHandle);
-    }, 300000); // 5 minutes
+    }, 420000); // 7 minutes (gives 4-minute buffer for 232s generation)
 
     return () => {
       stopPolling = true;

@@ -23,6 +23,20 @@ import { generateWorkbookPDF } from '@/lib/pdf/workbook-template-gpt5';
 import type { ChakraScores } from '@/types';
 
 // ============================================================================
+// VERCEL FUNCTION CONFIGURATION
+// ============================================================================
+
+// Extend timeout to 5 minutes for dual GPT-5 API calls + PDF rendering
+// Workbook generation takes ~232 seconds (3 min 52 sec):
+// - GPT-5 Call #1 (Days 1-15): ~60s
+// - 2-second delay (rate limit): 2s
+// - GPT-5 Call #2 (Days 16-30): ~60s
+// - PDF rendering: ~90s
+// - Supabase upload: ~20s
+export const maxDuration = 300; // 5 minutes (Vercel Pro plan required)
+export const dynamic = 'force-dynamic'; // Prevent caching
+
+// ============================================================================
 // SUPABASE CLIENT
 // ============================================================================
 
