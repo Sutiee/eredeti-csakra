@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 
 interface StickyCtaProps {
   blockedChakrasCount: number;
+  imbalancedChakrasCount: number;
   resultId: string;
   email: string;
   onCtaClick?: (copyVariant: string) => void;
@@ -27,6 +28,7 @@ interface StickyCtaProps {
  */
 export default function StickyCTA({
   blockedChakrasCount,
+  imbalancedChakrasCount,
   resultId,
   email,
   onCtaClick,
@@ -34,6 +36,30 @@ export default function StickyCTA({
   const router = useRouter();
   const [showSticky, setShowSticky] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
+
+  // Calculate total problematic chakras (blocked + imbalanced)
+  const problematicChakrasCount = blockedChakrasCount + imbalancedChakrasCount;
+
+  // Dynamic pre-header and main text based on problematic count
+  const getPreHeaderText = (): string => {
+    if (problematicChakrasCount >= 1) {
+      return `${problematicChakrasCount} csakrád segítségre szorul`;
+    } else {
+      return "Csakráid kiegyensúlyozottak";
+    }
+  };
+
+  const getMainText = (): string => {
+    if (problematicChakrasCount >= 1) {
+      return "Kapj személyre szabott elsősegély csomagot minden blokkolt csakrádhoz";
+    } else {
+      return "Kapd meg részletes elemzésed a harmónia megőrzéséhez";
+    }
+  };
+
+  const getPreHeaderEmoji = (): string => {
+    return problematicChakrasCount >= 1 ? "💡" : "✨";
+  };
 
   // CTA copy - simple and clear call-to-action
   const ctaCopy = "Megrendelem az elemzést";
@@ -141,19 +167,19 @@ export default function StickyCTA({
               <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
                 {/* Left: Pre-header + CTA */}
                 <div className="flex-1 text-center sm:text-left">
-                  {/* Pre-header - Dynamic blocked chakra count */}
+                  {/* Pre-header - Dynamic problematic chakra count (blocked + imbalanced) */}
                   <div className="flex items-center justify-center sm:justify-start gap-2 mb-2">
                     <span className="text-xl" aria-hidden="true">
-                      💡
+                      {getPreHeaderEmoji()}
                     </span>
                     <span className="text-sm text-gray-600 font-medium">
-                      {blockedChakrasCount} csakrád segítségre szorul
+                      {getPreHeaderText()}
                     </span>
                   </div>
 
-                  {/* CTA Text - Value-focused personalized message */}
+                  {/* CTA Text - Dynamic value-focused message */}
                   <p className="text-base text-gray-700">
-                    Kapj személyre szabott elsősegély csomagot minden blokkolt csakrádhoz
+                    {getMainText()}
                   </p>
                 </div>
 

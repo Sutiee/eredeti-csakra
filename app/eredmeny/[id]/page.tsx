@@ -256,6 +256,9 @@ export default function ResultPage(): JSX.Element {
         blockedChakrasCount={
           result.interpretations.filter((c) => c.level === 'blocked').length
         }
+        imbalancedChakrasCount={
+          result.interpretations.filter((c) => c.level === 'imbalanced').length
+        }
         resultId={id}
         email={result.email}
         onCtaClick={(copyVariant) => {
@@ -263,6 +266,9 @@ export default function ResultPage(): JSX.Element {
             copy_variant: copyVariant,
             blocked_count: result.interpretations.filter(
               (c) => c.level === 'blocked'
+            ).length,
+            imbalanced_count: result.interpretations.filter(
+              (c) => c.level === 'imbalanced'
             ).length,
           });
         }}
