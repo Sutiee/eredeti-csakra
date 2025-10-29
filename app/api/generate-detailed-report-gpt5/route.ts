@@ -273,6 +273,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     try {
       logger.info("[GPT5_REPORT] Sending email with PDF link", { result_id });
 
+      // Fetch purchase data for product metadata
+      const { data: purchase } = await supabase
+        .from('purchases')
+        .select('product_name')
+        .eq('result_id', result_id)
+        .eq('product_id', 'ai_analysis_pdf')
+        .single();
+
       const emailResponse = await fetch(
         `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/api/send-purchase-email`,
         {
@@ -283,6 +291,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
             email: quizResult.email,
             downloadUrl: signedUrlData.signedUrl,
             resultId: result_id,
+            productName: purchase?.product_name,
+            productType: 'ai_analysis_pdf',
           }),
         }
       );

@@ -32,7 +32,9 @@ const resend = new Resend(process.env.RESEND_API_KEY);
  *   name: string,
  *   email: string,
  *   downloadUrl: string,
- *   resultId: string
+ *   resultId: string,
+ *   productName?: string,
+ *   productType?: 'ai_analysis_pdf' | 'workbook_30day'
  * }
  *
  * Response:
@@ -45,7 +47,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     // Parse request body
     const body = await request.json();
-    const { name, email, downloadUrl, resultId } = body;
+    const { name, email, downloadUrl, resultId, productName, productType } = body;
 
     // Validate inputs
     if (!name || !email || !downloadUrl || !resultId) {
@@ -77,6 +79,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       name,
       email,
       resultId,
+      productType,
     });
 
     // Generate email HTML and text
@@ -84,24 +87,34 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       name,
       downloadUrl,
       resultId,
+      productName,
+      productType,
     });
 
     const emailText = generatePurchaseConfirmationEmailText({
       name,
       downloadUrl,
       resultId,
+      productName,
+      productType,
     });
+
+    // Dynamic subject line based on product type
+    const subject = productType === 'workbook_30day'
+      ? "Készen áll a 30 Napos Csakra Munkafüzeted! 📖"
+      : "Köszönjük a vásárlásod! - Személyre Szabott Csakra Elemzésed";
 
     // Send email with Resend
     const { data, error } = await resend.emails.send({
       from: `Eredeti Csakra <${process.env.RESEND_FROM_EMAIL}>`,
       to: [email],
-      subject: "Köszönjük a vásárlásod! - Személyre Szabott Csakra Elemzésed",
+      subject,
       html: emailHtml,
       text: emailText,
       tags: [
         { name: "type", value: "purchase-confirmation" },
         { name: "result_id", value: resultId },
+        { name: "product_type", value: productType || "ai_analysis_pdf" },
       ],
     });
 

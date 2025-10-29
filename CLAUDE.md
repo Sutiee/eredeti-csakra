@@ -30,6 +30,15 @@ npm run type-check                   # TypeScript validation (tsc --noEmit)
 # Content Generation Scripts (Backend)
 npm run generate-meditation-scripts  # Generate meditation text scripts (OpenAI)
 npm run generate-meditation-audio    # Generate audio files from scripts (ElevenLabs)
+
+# Utility Scripts
+npx tsx scripts/retry-failed-workbooks.ts       # Regenerate failed workbook purchases
+npx tsx scripts/investigate-workbook-purchases.ts  # Analyze workbook purchase issues
+npx tsx scripts/profile-workbook-generation.ts [result-id]  # Profile workbook generation performance
+
+# Email Testing Scripts
+npx tsx scripts/test-email-direct.ts            # Test email templates via Resend API (works without domain verification)
+npx tsx scripts/test-email.ts                   # Test full email flow via Next.js API (requires domain verification)
 ```
 
 ## 4. Core Architecture Patterns
@@ -59,14 +68,18 @@ All API routes follow consistent patterns:
 - **Error handling**: Try-catch with 500 responses
 - **Response format**: `{ data: {...}, error: null }` or `{ data: null, error: {...} }`
 - **Supabase integration**: Server-side client for database operations
+- **Vercel timeout configuration**: Use `export const maxDuration = 300` for long-running operations (requires Vercel Pro)
+- **Background processing**: Use `waitUntil()` API for fire-and-forget tasks in webhook handlers
 
 Key endpoints:
 - `POST /api/submit-quiz` - Save quiz results, return chakra scores
 - `GET /api/result/[id]` - Fetch result with interpretations
 - `POST /api/create-checkout-session` - Create Stripe checkout
-- `POST /api/stripe/webhook` - Handle payment events
-- `POST /api/generate-detailed-report` - OpenAI report generation
+- `POST /api/stripe/webhook` - Handle payment events (uses waitUntil() for background processing)
+- `POST /api/generate-detailed-report-gpt5` - AI Analysis PDF generation (includes email notification)
+- `POST /api/generate-workbook` - 30-Day Workbook generation (maxDuration=300 for 232s processing, includes email notification)
 - `POST /api/generate-meditation-audio` - ElevenLabs audio synthesis
+- `POST /api/send-purchase-email` - Resend email notification (product-specific templates)
 
 ### Monetization System
 **Products** (defined in `lib/stripe/products.ts`):
@@ -80,9 +93,20 @@ Key endpoints:
 2. Stripe Checkout Session created with metadata (result_id, email)
 3. Webhook receives `checkout.session.completed` event
 4. Purchase record created in `purchases` table
-5. PDF generated (OpenAI + jsPDF) → uploaded to Supabase Storage
-6. Email sent (Resend) with download links
-7. Meditation access tokens created if applicable
+5. PDF generation triggered in background (waitUntil API)
+   - AI Analysis PDF: ~60-90 seconds
+   - 30-Day Workbook: ~232 seconds (~4 minutes)
+6. PDF uploaded to Supabase Storage
+7. Purchase record updated with `pdf_url`
+8. **Email notification sent (Resend)** with download link
+9. Meditation access tokens created if applicable
+
+**Email Notification System**:
+- Resend API integration for product delivery emails
+- Product-specific templates (AI Analysis PDF vs Workbook)
+- Emails sent immediately after PDF upload completes
+- Non-blocking: Email failures don't affect product generation
+- Test domain: `onboarding@resend.dev` (production requires `eredeticsakra.hu` domain verification)
 
 ### Content Generation Architecture
 **AI-Generated Content**:
@@ -193,9 +217,9 @@ OPENAI_API_KEY=sk-proj-xxx
 OPENAI_MODEL=gpt-4o-mini
 
 # Resend (Email Delivery)
-RESEND_API_KEY=re_xxx
-RESEND_AUDIENCE_ID=xxx
-RESEND_FROM_EMAIL=hello@eredeticsakra.hu
+RESEND_API_KEY=re_xxx                           # API key from Resend Dashboard
+RESEND_AUDIENCE_ID=xxx                          # Optional: for contact management
+RESEND_FROM_EMAIL=hello@eredeticsakra.hu        # Verified sender email (domain must be verified for production)
 
 # ElevenLabs (AI Voice Synthesis)
 ELEVENLABS_API_KEY=xxx
@@ -262,6 +286,8 @@ const [error, setError] = useState<string | null>(null);
 - **Hydration Errors**: Client/Server state mismatch - check `"use client"` placement
 - **Stripe Webhook Failures**: Verify webhook secret in `.env.local`
 - **Supabase Errors**: Check RLS policies and connection credentials
+- **Vercel Function Timeouts**: For long-running operations (>60s), add `export const maxDuration = 300` (requires Vercel Pro plan)
+- **Background Task Interruption**: Use `waitUntil()` API in webhooks to prevent premature termination of async operations
 
 ## 11. Deployment (Vercel)
 
@@ -277,6 +303,8 @@ const [error, setError] = useState<string | null>(null);
 - Verify Stripe webhook endpoint (check Vercel function logs)
 - Test email delivery
 - Verify Supabase Storage access (PDFs, meditation audio)
+- Monitor workbook generation completion (check for 232s processing time in logs)
+- Verify Vercel Pro plan is active (required for maxDuration=300)
 
 ## 12. Content & Translation
 

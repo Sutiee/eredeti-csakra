@@ -221,6 +221,45 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     console.log('[API /api/generate-workbook] Purchase updated:', updateData);
 
+    // Step 7: Send email notification
+    console.log('[API /api/generate-workbook] Sending product ready email...');
+    try {
+      // Fetch purchase data for email
+      const { data: purchase } = await supabase
+        .from('purchases')
+        .select('email, product_name')
+        .eq('result_id', result_id)
+        .eq('product_id', 'workbook_30day')
+        .single();
+
+      if (purchase) {
+        const emailResponse = await fetch(
+          `${process.env.NEXT_PUBLIC_SITE_URL}/api/send-purchase-email`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              name: userName,
+              email: purchase.email,
+              downloadUrl: pdfUrl,
+              resultId: result_id,
+              productName: purchase.product_name,
+              productType: 'workbook_30day',
+            }),
+          }
+        );
+
+        if (emailResponse.ok) {
+          console.log('[API /api/generate-workbook] Email sent successfully to:', purchase.email);
+        } else {
+          console.warn('[API /api/generate-workbook] Email sending failed (non-critical):', await emailResponse.text());
+        }
+      }
+    } catch (emailError) {
+      // Don't fail workbook generation if email fails
+      console.error('[API /api/generate-workbook] Email error:', emailError);
+    }
+
     // Success!
     console.log('[API /api/generate-workbook] ✅ Workbook generation complete!');
 

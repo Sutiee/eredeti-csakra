@@ -10,6 +10,8 @@ export type PurchaseEmailData = {
   name: string;
   downloadUrl: string;
   resultId: string;
+  productName?: string;
+  productType?: 'ai_analysis_pdf' | 'workbook_30day';
 };
 
 /**
@@ -21,6 +23,26 @@ export type PurchaseEmailData = {
 export function generatePurchaseConfirmationEmail(
   data: PurchaseEmailData
 ): string {
+  // Determine product-specific content
+  const isWorkbook = data.productType === 'workbook_30day';
+  const productName = data.productName || 'Személyre Szabott Csakra Elsősegély Csomag';
+  const emoji = isWorkbook ? '📖' : '✨';
+  const buttonText = isWorkbook ? 'Munkafüzet Letöltése (PDF)' : 'Elemzés Letöltése (PDF)';
+
+  const features = isWorkbook ? `
+    <li><strong>Személyre Szabott 30 Napos Program</strong> - Blokkolt csakráidra több napot szánva</li>
+    <li><strong>Napi Gyakorlatok</strong> - Részletes lépésenkénti útmutatók minden napra</li>
+    <li><strong>Journaling Kérdések</strong> - 3-5 önreflexiós kérdés naponta</li>
+    <li><strong>Affirmációk és Meditációk</strong> - Csakra-specifikus gyakorlatok</li>
+    <li><strong>Heti Értékelő Lapok</strong> - Haladásod nyomon követése</li>
+  ` : `
+    <li><strong>Átfogó Összefoglaló</strong> - Általános energetikai mintázatod és fő prioritások</li>
+    <li><strong>7 Részletes Csakra Elemzés</strong> - Minden csakrád mélyreható vizsgálata (blokkolt/egészséges)</li>
+    <li><strong>Kialakulási Okok</strong> - Milyen életmintázatok vezethettek ehhez az állapothoz</li>
+    <li><strong>Személyre Szabott Tartalom</strong> - Kizárólag a TE válaszaid alapján, AI-generált</li>
+    <li><strong>20+ Oldal PDF</strong> - Letölthető, kinyomtatható elemzés</li>
+  `;
+
   return `
 <!DOCTYPE html>
 <html lang="hu">
@@ -150,7 +172,7 @@ export function generatePurchaseConfirmationEmail(
   <div class="container">
     <!-- Header -->
     <div class="header">
-      <div class="emoji">✨</div>
+      <div class="emoji">${emoji}</div>
       <h1>Köszönjük a vásárlásod!</h1>
     </div>
 
@@ -159,24 +181,20 @@ export function generatePurchaseConfirmationEmail(
       <p class="greeting">Kedves ${data.name}!</p>
 
       <p>
-        Sikeresen megvásároltad a <strong>Személyre Szabott Csakra Elsősegély Csomagot</strong>.
-        Örömmel értesítünk, hogy a részletes elemzésed elkészült és már letölthető!
+        Sikeresen megvásároltad a <strong>${productName}</strong>.
+        Örömmel értesítünk, hogy a ${isWorkbook ? 'munkafüzeted' : 'részletes elemzésed'} elkészült és már letölthető!
       </p>
 
       <div class="button-container">
         <a href="${data.downloadUrl}" class="button">
-          Elemzés Letöltése (PDF)
+          ${buttonText}
         </a>
       </div>
 
       <div class="features">
         <h3>A PDF tartalma:</h3>
         <ul>
-          <li><strong>7 Részletes Csakra Elemzés</strong> - Minden csakrád mélyreható vizsgálata</li>
-          <li><strong>Összefüggések Térképe</strong> - Miért van ez az állapot és hogyan kapcsolódik más csakrákhoz</li>
-          <li><strong>3 Lépéses Elsősegély Terv</strong> - Konkrét, kivitelezhető gyakorlatok minden csakrára</li>
-          <li><strong>Heti Gyakorlati Cselekvési Terv</strong> - 7 napos program a gyógyuláshoz</li>
-          <li><strong>Személyre Szabott Meditációs Ajánlások</strong> - Reggeli és esti meditációk</li>
+          ${features}
         </ul>
       </div>
 
@@ -224,24 +242,35 @@ export function generatePurchaseConfirmationEmail(
 export function generatePurchaseConfirmationEmailText(
   data: PurchaseEmailData
 ): string {
+  const isWorkbook = data.productType === 'workbook_30day';
+  const productName = data.productName || 'Személyre Szabott Csakra Elsősegély Csomag';
+
+  const features = isWorkbook
+    ? `- Személyre Szabott 30 Napos Program - Blokkolt csakráidra több napot szánva
+- Napi Gyakorlatok - Részletes lépésenkénti útmutatók minden napra
+- Journaling Kérdések - 3-5 önreflexiós kérdés naponta
+- Affirmációk és Meditációk - Csakra-specifikus gyakorlatok
+- Heti Értékelő Lapok - Haladásod nyomon követése`
+    : `- Átfogó Összefoglaló - Általános energetikai mintázatod és fő prioritások
+- 7 Részletes Csakra Elemzés - Minden csakrád mélyreható vizsgálata (blokkolt/egészséges)
+- Kialakulási Okok - Milyen életmintázatok vezethettek ehhez az állapothoz
+- Személyre Szabott Tartalom - Kizárólag a TE válaszaid alapján, AI-generált
+- 20+ Oldal PDF - Letölthető, kinyomtatható elemzés`;
+
   return `
 Köszönjük a vásárlásod!
 
 Kedves ${data.name}!
 
-Sikeresen megvásároltad a Személyre Szabott Csakra Elsősegély Csomagot.
+Sikeresen megvásároltad a ${productName}.
 
-A részletes elemzésed elkészült és letölthető az alábbi linken:
+A ${isWorkbook ? 'munkafüzeted' : 'részletes elemzésed'} elkészült és letölthető az alábbi linken:
 ${data.downloadUrl}
 
 A PDF tartalma:
-- Mind a 7 csakrád részletes állapota
-- Összefüggések térképe (miért van ez az állapot)
-- 3 lépéses Elsősegély Terv minden csakrára
-- Heti Gyakorlati Cselekvési Terv (7 nap)
-- Személyre Szabott Meditációs Ajánlások
+${features}
 
-Az elemzésed egyedi és személyre szabott, kizárólag a Te válaszaid alapján készült.
+Az ${isWorkbook ? 'munkafüzeted' : 'elemzésed'} egyedi és személyre szabott, kizárólag a Te válaszaid alapján készült.
 
 Ha bármilyen kérdésed van, írj nekünk: hello@eredeticsakra.hu
 

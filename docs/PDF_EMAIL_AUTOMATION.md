@@ -1,35 +1,42 @@
 # PDF & Email Automation System
 
-Automated detailed report generation and email delivery system for Eredeti Csakra using GPT-4o-mini, jsPDF, and Resend.
+Automated report generation and email delivery system for Eredeti Csakra using GPT-5-mini, @react-pdf/renderer, and Resend.
 
 ## Overview
 
-This system automatically generates personalized chakra analysis PDFs and sends them via email after a user purchases the "Személyre Szabott Csakra Elsősegély Csomag" (2990 Ft).
+This system automatically generates personalized chakra PDFs and sends email notifications when products are ready:
+- **AI Analysis PDF** (990 Ft) - 20+ page personalized chakra analysis
+- **30-Day Workbook** (3,990 Ft) - 80+ page personalized workbook with daily exercises
 
 ## Architecture
 
 ```
 Purchase Complete (Stripe Webhook)
   ↓
-1. Generate Detailed Report (/api/generate-detailed-report)
-  → Call GPT-4o-mini (OpenAI) to generate personalized content
-  → Generate PDF with jsPDF
-  → Upload to Supabase Storage
-  → Return signed download URL
+Background Task (waitUntil API)
   ↓
-2. Send Purchase Email (/api/send-purchase-email)
-  → Generate HTML email from template
-  → Send via Resend API
-  → Include download link
+Generate Product PDF
+  ├─ AI Analysis: /api/generate-detailed-report-gpt5 (~60-90s)
+  └─ Workbook: /api/generate-workbook (~232s / 4 min)
+     ↓
+  1. Call GPT-5-mini to generate personalized content
+  2. Render PDF with @react-pdf/renderer
+  3. Upload to Supabase Storage
+  4. Update purchase record with pdf_url
+  5. Send Email Notification (/api/send-purchase-email)
+     → Product-specific template (AI Analysis vs Workbook)
+     → Send via Resend API
+     → Include download link
 ```
 
 ## Technologies
 
-- **OpenAI GPT-4o-mini**: Generates personalized chakra analysis text
-- **jsPDF**: Creates PDF documents with custom layouts
-- **Resend**: Email delivery service
-- **Supabase Storage**: Stores generated PDF files
-- **Next.js API Routes**: Backend endpoints
+- **OpenAI GPT-5-mini** (gpt-4o-mini): Generates personalized chakra content
+- **@react-pdf/renderer**: Creates React-based PDF documents
+- **Resend**: Email delivery service with product-specific templates
+- **Supabase Storage**: Stores generated PDF files (private buckets)
+- **Next.js API Routes**: Server-side PDF generation with 5-minute timeout (Vercel Pro)
+- **Vercel waitUntil()**: Background processing without blocking webhook responses
 
 ## Environment Variables
 
@@ -91,7 +98,7 @@ Generates a personalized PDF report using GPT-4o-mini and uploads to Supabase St
 
 ### 2. POST /api/send-purchase-email
 
-Sends purchase confirmation email with PDF download link using Resend.
+Sends product-ready notification email with PDF download link using Resend.
 
 **Request:**
 ```json
@@ -99,7 +106,9 @@ Sends purchase confirmation email with PDF download link using Resend.
   "name": "User Name",
   "email": "user@example.com",
   "downloadUrl": "https://...",
-  "resultId": "uuid"
+  "resultId": "uuid",
+  "productName": "Személyre Szabott Csakra Elemzés PDF",
+  "productType": "ai_analysis_pdf" | "workbook_30day"
 }
 ```
 
@@ -114,11 +123,18 @@ Sends purchase confirmation email with PDF download link using Resend.
 }
 ```
 
-**Email Template:**
-- HTML email with gradient header
-- Clear download button
-- Lists PDF contents
-- Professional footer
+**Email Templates:**
+Product-specific HTML emails with:
+- **AI Analysis PDF**:
+  - Subject: "Köszönjük a vásárlásod! - Személyre Szabott Csakra Elemzésed"
+  - Emoji: ✨
+  - Content: 7 részletes csakra elemzés, összefüggések térképe, személyre szabott tartalom
+- **Workbook**:
+  - Subject: "Készen áll a 30 Napos Csakra Munkafüzeted! 📖"
+  - Emoji: 📖
+  - Content: 30 napos program, napi gyakorlatok, journaling kérdések, affirmációk
+- Gradient header, clear download button, product-specific feature list, professional footer
+- **Test domain**: `onboarding@resend.dev` (production requires `eredeticsakra.hu` domain verification)
 
 ## PDF Structure
 
@@ -349,16 +365,45 @@ logger.error("Failed to generate report", { error });
 
 ## Testing
 
-### Manual Testing
+### Email Testing Scripts
 
-1. **Test Report Generation:**
+Two dedicated test scripts are available:
+
+**1. Direct Resend API Test (Recommended for testing):**
 ```bash
-curl -X POST http://localhost:3000/api/generate-detailed-report \
+npx tsx scripts/test-email-direct.ts
+```
+- Tests email templates via Resend API directly
+- Works without domain verification (uses `onboarding@resend.dev`)
+- Sends test emails for both products (AI Analysis + Workbook)
+- Returns Resend email IDs for tracking
+
+**2. Full Next.js API Test (For production verification):**
+```bash
+npx tsx scripts/test-email.ts
+```
+- Tests complete email flow via Next.js API routes
+- Requires `npm run dev` server running
+- Requires `eredeticsakra.hu` domain verification in Resend
+- Tests full integration path
+
+### Manual API Testing
+
+1. **Test AI Analysis PDF Generation:**
+```bash
+curl -X POST http://localhost:3000/api/generate-detailed-report-gpt5 \
   -H "Content-Type: application/json" \
-  -d '{"resultId":"your-test-result-id"}'
+  -d '{"result_id":"your-test-result-id"}'
 ```
 
-2. **Test Email Sending:**
+2. **Test Workbook Generation:**
+```bash
+curl -X POST http://localhost:3000/api/generate-workbook \
+  -H "Content-Type: application/json" \
+  -d '{"result_id":"your-test-result-id"}'
+```
+
+3. **Test Email Sending:**
 ```bash
 curl -X POST http://localhost:3000/api/send-purchase-email \
   -H "Content-Type: application/json" \
@@ -366,18 +411,24 @@ curl -X POST http://localhost:3000/api/send-purchase-email \
     "name":"Test User",
     "email":"test@example.com",
     "downloadUrl":"https://...",
-    "resultId":"test-id"
+    "resultId":"test-id",
+    "productType":"ai_analysis_pdf"
   }'
 ```
 
-### Integration Testing
+### Integration Testing Checklist
 
-Create a test quiz result and verify:
-1. PDF generates successfully
-2. PDF contains all expected pages
-3. GPT-4o-mini content is coherent and personalized
-4. Email is delivered with correct template
-5. Download link works and expires correctly
+For each product (AI Analysis PDF and Workbook):
+1. [ ] PDF generates successfully within timeout (AI: <2min, Workbook: <5min)
+2. [ ] PDF contains all expected pages with correct content
+3. [ ] GPT-5-mini content is coherent and personalized (not generic)
+4. [ ] PDF uploads to Supabase Storage successfully
+5. [ ] Purchase record updates with `pdf_url`
+6. [ ] Email is sent with product-specific template
+7. [ ] Email arrives with correct subject line and content
+8. [ ] Download link works and PDF is accessible
+9. [ ] Signed URL expires after 30 days
+10. [ ] Error handling works (email failure doesn't block PDF generation)
 
 ## Security Considerations
 
@@ -425,41 +476,80 @@ Create a test quiz result and verify:
 ```
 lib/
 ├── openai/
-│   ├── client.ts           # OpenAI client setup
-│   └── report-generator.ts # GPT-4o-mini prompt & logic
+│   ├── prompts-gpt5.ts              # GPT-5-mini prompts for AI Analysis
+│   ├── workbook-prompts-gpt5.ts     # GPT-5-mini prompts for Workbook
+│   ├── workbook-generator-gpt5.ts   # Workbook content generation logic
+│   └── report-generator-gpt5.ts     # Report content generation logic
 ├── pdf/
-│   └── report-template.ts  # jsPDF PDF generation
+│   ├── report-template-gpt5.tsx     # React PDF template for AI Analysis
+│   └── workbook-template-gpt5.tsx   # React PDF template for Workbook
 └── email/
-    └── templates.ts        # HTML email templates
+    └── templates.ts                 # Product-specific HTML email templates
 
 app/api/
-├── generate-detailed-report/
-│   └── route.ts           # PDF generation endpoint
-└── send-purchase-email/
-    └── route.ts           # Email sending endpoint
+├── generate-detailed-report-gpt5/
+│   └── route.ts                     # AI Analysis PDF generation + email
+├── generate-workbook/
+│   └── route.ts                     # Workbook PDF generation + email
+├── send-purchase-email/
+│   └── route.ts                     # Email notification endpoint
+└── stripe/webhook/
+    └── route.ts                     # Triggers background PDF generation
+
+scripts/
+├── test-email-direct.ts             # Direct Resend API email test
+├── test-email.ts                    # Full Next.js API email test
+└── retry-failed-workbooks.ts        # Regenerate failed workbooks
 ```
 
 ## Dependencies
 
 ```json
 {
-  "openai": "^6.3.0",
-  "jspdf": "^3.0.3",
+  "openai": "^4.73.0",
+  "@react-pdf/renderer": "^4.1.7",
   "resend": "^6.1.3",
-  "@supabase/supabase-js": "^2.45.4"
+  "@supabase/supabase-js": "^2.48.1",
+  "zod": "^3.24.1"
 }
 ```
 
+**Key Libraries:**
+- **openai**: GPT-5-mini API client for content generation
+- **@react-pdf/renderer**: React-based PDF rendering engine
+- **resend**: Email delivery API with template support
+- **@supabase/supabase-js**: Database and storage client
+- **zod**: Request validation schemas
+
 ## Success Criteria
 
-- [x] GPT-4o-mini generates coherent, personalized content
-- [x] PDF contains all required pages (11 pages)
-- [x] Supabase Storage upload works with signed URLs
-- [x] Resend email delivery works with HTML template
+### AI Analysis PDF (990 Ft)
+- [x] GPT-5-mini generates coherent, personalized content
+- [x] PDF contains all required pages (20+ pages)
+- [x] Supabase Storage upload works with signed URLs (30-day expiry)
+- [x] Email notification sent with product-specific template
+- [x] Generation completes within 2 minutes
+- [x] Email includes accurate product features list
+- [x] Non-blocking email errors (PDF generation succeeds even if email fails)
+
+### 30-Day Workbook (3,990 Ft)
+- [x] GPT-5-mini generates personalized 30-day content (dual API calls)
+- [x] PDF renders 80+ pages with @react-pdf/renderer
+- [x] Supabase Storage upload works with retry logic
+- [x] Email notification sent with workbook-specific template
+- [x] Generation completes within 5 minutes (maxDuration=300)
+- [x] Day distribution personalized based on chakra scores (blocked = more days)
+- [x] Email includes journaling, exercises, and affirmations in feature list
+
+### Email System
+- [x] Resend integration works with product-specific templates
+- [x] Dynamic subject lines based on product type
+- [x] Test scripts available for both direct API and full flow testing
+- [x] Works with test domain `onboarding@resend.dev` (production ready for domain verification)
 - [x] TypeScript type checking passes
 - [x] All error cases handled gracefully
-- [x] Logging implemented for debugging
-- [x] Documentation complete
+- [x] Comprehensive logging for debugging
+- [x] Documentation updated
 
 ## Support
 
