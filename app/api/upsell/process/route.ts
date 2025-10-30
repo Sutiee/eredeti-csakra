@@ -12,6 +12,8 @@ import Stripe from 'stripe';
 import { createSupabaseClient } from '@/lib/supabase/client';
 import { PRODUCTS } from '@/lib/stripe/products';
 import { logEvent } from '@/lib/admin/tracking/server';
+import { setupGiftRedemption } from '@/lib/stripe/gift-coupons';
+import type { ProductId } from '@/lib/pricing/variants';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2025-09-30.clover',
@@ -19,11 +21,14 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
 
 /**
  * Request validation schema
+ * Now supports workbook and gift products
  */
 const UpsellRequestSchema = z.object({
   sessionId: z.string().startsWith('cs_'), // Stripe Checkout Session ID
   resultId: z.string().uuid(),
-  upsellProductId: z.literal('workbook_30day'), // Only workbook can be upsell
+  upsellProductId: z.enum(['workbook_30day', 'gift_bundle_full', 'gift_ai_only']),
+  recipientEmail: z.string().email().optional(), // Optional: for gift recipient
+  giftMessage: z.string().max(500).optional(), // Optional: personal message
 });
 
 /**
@@ -47,9 +52,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { sessionId, resultId, upsellProductId } = validation.data;
+    const { sessionId, resultId, upsellProductId, recipientEmail, giftMessage } = validation.data;
 
-    console.log('[UPSELL] Processing upsell:', { sessionId, resultId, upsellProductId });
+    const isGiftProduct = upsellProductId === 'gift_bundle_full' || upsellProductId === 'gift_ai_only';
+
+    console.log('[UPSELL] Processing upsell:', {
+      sessionId,
+      resultId,
+      upsellProductId,
+      isGift: isGiftProduct,
+      hasRecipient: !!recipientEmail,
+    });
 
     // 1. Retrieve the original Stripe session
     const originalSession = await stripe.checkout.sessions.retrieve(sessionId, {
@@ -147,9 +160,85 @@ export async function POST(request: NextRequest) {
 
     console.log('[UPSELL] Payment succeeded:', newPaymentIntent.id);
 
-    // 6. Save purchase to database
+    // 6. Setup gift redemption if this is a gift product
+    let giftSetup: Awaited<ReturnType<typeof setupGiftRedemption>> | null = null;
+
+    if (isGiftProduct) {
+      console.log('[UPSELL] Setting up gift redemption for:', upsellProductId);
+      try {
+        giftSetup = await setupGiftRedemption(
+          upsellProductId as Extract<ProductId, 'gift_bundle_full' | 'gift_ai_only'>
+        );
+        console.log('[UPSELL] Gift setup complete:', {
+          giftCode: giftSetup.giftCode,
+          expiresAt: giftSetup.expiresAt,
+        });
+      } catch (giftError) {
+        console.error('[UPSELL] Gift setup failed:', giftError);
+        return NextResponse.json(
+          { error: 'Az ajándék beállítása sikertelen', code: 'GIFT_SETUP_FAILED' },
+          { status: 500 }
+        );
+      }
+    }
+
+    // 7. Save purchase to database
     const supabase = createSupabaseClient();
 
+    // For gifts, save to gift_purchases table
+    if (isGiftProduct && giftSetup) {
+      const { data: giftPurchase, error: giftDbError } = await (supabase as any)
+        .from('gift_purchases')
+        .insert({
+          buyer_email: originalSession.customer_email || '',
+          buyer_name: originalSession.customer_details?.name || '',
+          recipient_email: recipientEmail || null,
+          gift_message: giftMessage || null,
+          product_id: upsellProductId,
+          stripe_coupon_id: giftSetup.stripeCouponId,
+          stripe_promo_code_id: giftSetup.stripePromoCodeId,
+          gift_code: giftSetup.giftCode,
+          status: 'active',
+          expires_at: giftSetup.expiresAt.toISOString(),
+        })
+        .select()
+        .single();
+
+      if (giftDbError) {
+        console.error('[UPSELL] Gift purchase database error:', giftDbError);
+        return NextResponse.json(
+          { error: 'Adatbázis hiba történt', code: 'DATABASE_ERROR' },
+          { status: 500 }
+        );
+      }
+
+      console.log('[UPSELL] Gift purchase saved:', {
+        id: giftPurchase.id,
+        gift_code: giftPurchase.gift_code,
+        product_id: giftPurchase.product_id,
+      });
+
+      // Track gift purchase event
+      await logEvent('gift_purchased', {
+        result_id: resultId,
+        product_id: upsellProductId,
+        amount: upsellProduct.price,
+        gift_code: giftSetup.giftCode,
+        has_recipient: !!recipientEmail,
+      });
+
+      // Return gift success response
+      return NextResponse.json({
+        success: true,
+        gift_code: giftSetup.giftCode,
+        expires_at: giftSetup.expiresAt.toISOString(),
+        product_name: upsellProduct.name,
+        amount: upsellProduct.price,
+        message: 'Sikeres ajándék vásárlás! Az ajándékkód hamarosan megérkezik emailben.',
+      });
+    }
+
+    // For regular products (workbook), save to purchases table
     const { data: purchase, error: dbError } = await supabase
       .from('purchases')
       .insert({
@@ -183,7 +272,7 @@ export async function POST(request: NextRequest) {
       result_id: purchase.result_id,
     });
 
-    // 7. Track successful upsell event
+    // 8. Track successful upsell event
     await logEvent('upsell_purchased', {
       result_id: resultId,
       product_id: upsellProductId,
@@ -192,7 +281,7 @@ export async function POST(request: NextRequest) {
       purchase_id: purchase.id,
     });
 
-    // 8. Trigger workbook generation in background
+    // 9. Trigger workbook generation in background
     if (upsellProductId === 'workbook_30day') {
       console.log('[UPSELL] Triggering 30-day workbook generation for result:', resultId);
 
@@ -235,7 +324,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 9. Return success response
+    // 10. Return success response
     return NextResponse.json({
       success: true,
       purchase_id: purchase.id,

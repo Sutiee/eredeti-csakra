@@ -12,6 +12,7 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import ThankYouMessage from '@/components/success/ThankYouMessage';
 import DownloadLinks from '@/components/success/DownloadLinks';
 import UpsellModal from '@/components/success/UpsellModal';
+import GiftModal from '@/components/success/GiftModal';
 import { useAnalytics } from '@/lib/admin/tracking/client';
 
 /**
@@ -28,6 +29,12 @@ type Purchase = {
 };
 
 /**
+ * Upsell modal state machine
+ * idle → workbook_modal → gift_modal → completed
+ */
+type UpsellModalState = 'idle' | 'workbook_modal' | 'gift_modal' | 'completed';
+
+/**
  * Success Page Component
  */
 export default function SuccessPage() {
@@ -39,8 +46,8 @@ export default function SuccessPage() {
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showUpsell, setShowUpsell] = useState(false);
-  const [hasSeenUpsell, setHasSeenUpsell] = useState(false);
+  const [upsellState, setUpsellState] = useState<UpsellModalState>('idle');
+  const [workbookPurchased, setWorkbookPurchased] = useState(false);
   const { trackEvent } = useAnalytics();
 
   /**
@@ -137,17 +144,32 @@ export default function SuccessPage() {
   }, [resultId]);
 
   /**
-   * Show upsell modal after 5 seconds (only once)
-   * IMPORTANT: Check if workbook was already purchased to prevent showing again
+   * Upsell State Machine Controller
+   * Timing: idle → (3s) → workbook_modal → (user response) → (2s) → gift_modal → (user response) → completed
+   *
+   * Changed from 5s → 3s for first modal (per Phase 2.2 requirement)
    */
   useEffect(() => {
-    // Check if workbook_30day was already purchased
+    // Only trigger if we have sessionId, purchases loaded, no error, and state is idle
+    if (!sessionId || loading || error || upsellState !== 'idle') {
+      return;
+    }
+
+    // Check if workbook was already purchased (skip workbook modal if so)
     const hasWorkbook = purchases.some(p => p.product_id === 'workbook_30day');
 
-    if (!hasSeenUpsell && sessionId && !loading && !error && !hasWorkbook) {
+    if (hasWorkbook) {
+      // User already has workbook - skip to gift modal
       const timer = setTimeout(() => {
-        setShowUpsell(true);
-        setHasSeenUpsell(true);
+        setWorkbookPurchased(true);
+        setUpsellState('gift_modal');
+      }, 3000); // 3 seconds delay
+
+      return () => clearTimeout(timer);
+    } else {
+      // Show workbook upsell modal first
+      const timer = setTimeout(() => {
+        setUpsellState('workbook_modal');
 
         // Track upsell modal impression
         trackEvent('upsell_viewed', {
@@ -155,19 +177,20 @@ export default function SuccessPage() {
           session_id: sessionId,
           product_id: 'workbook_30day',
         });
-      }, 5000); // 5 seconds delay
+      }, 3000); // 3 seconds delay (changed from 5s)
 
       return () => clearTimeout(timer);
     }
-  }, [hasSeenUpsell, sessionId, loading, error, purchases, resultId, trackEvent]);
+  }, [upsellState, sessionId, loading, error, purchases, resultId, trackEvent]);
 
   /**
-   * Handle upsell purchase success
+   * Handle workbook upsell purchase success
    * Uses intelligent polling to wait for purchase to appear in database
+   * Then transitions to gift modal after 2-second delay
    */
-  const handleUpsellSuccess = async () => {
+  const handleWorkbookUpsellSuccess = async () => {
     try {
-      console.log('[UPSELL SUCCESS] Starting purchase refresh with polling...');
+      console.log('[WORKBOOK UPSELL SUCCESS] Starting purchase refresh with polling...');
 
       // Poll for new purchase with up to 10 retries (10 seconds total)
       const expectedPurchaseCount = purchases.length + 1;
@@ -182,41 +205,125 @@ export default function SuccessPage() {
 
         if (data.data && data.data.length >= expectedPurchaseCount) {
           // New purchase found!
-          console.log('[UPSELL SUCCESS] New purchase found:', {
+          console.log('[WORKBOOK UPSELL SUCCESS] New purchase found:', {
             expected: expectedPurchaseCount,
             actual: data.data.length,
             attempt: attempt + 1,
           });
 
+          // Update purchases
           setPurchases(data.data);
-          setShowUpsell(false);
+
+          // Mark workbook as purchased
+          setWorkbookPurchased(true);
+
+          // Close workbook modal
+          setUpsellState('idle');
+
+          // Wait 2 seconds then show gift modal
+          setTimeout(() => {
+            setUpsellState('gift_modal');
+          }, 2000);
+
           return;
         }
 
-        console.log(`[UPSELL SUCCESS] Waiting for new purchase (${attempt + 1}/10)...`);
+        console.log(`[WORKBOOK UPSELL SUCCESS] Waiting for new purchase (${attempt + 1}/10)...`);
       }
 
       // Max retries exceeded
-      console.error('[UPSELL SUCCESS] Failed to find new purchase after polling');
+      console.error('[WORKBOOK UPSELL SUCCESS] Failed to find new purchase after polling');
       alert('A vásárlás sikeres volt, de az oldal frissítése szükséges. Kérlek töltsd újra az oldalt!');
 
     } catch (error) {
-      console.error('[UPSELL SUCCESS] Error during purchase refresh:', error);
+      console.error('[WORKBOOK UPSELL SUCCESS] Error during purchase refresh:', error);
       alert('Hiba történt a vásárlás frissítésekor. Kérlek töltsd újra az oldalt!');
     }
   };
 
   /**
-   * Handle upsell modal close
+   * Handle workbook upsell modal close (user declined)
+   * Transition to gift modal after 2-second delay
    */
-  const handleUpsellClose = () => {
-    setShowUpsell(false);
-
-    // Track upsell declined
+  const handleWorkbookUpsellClose = () => {
+    // Track workbook upsell declined
     trackEvent('upsell_declined', {
       result_id: resultId,
       session_id: sessionId || '',
+      product_id: 'workbook_30day',
     });
+
+    // Close workbook modal
+    setUpsellState('idle');
+
+    // Wait 2 seconds then show gift modal
+    setTimeout(() => {
+      setUpsellState('gift_modal');
+    }, 2000);
+  };
+
+  /**
+   * Handle gift modal purchase success
+   * Refresh purchases list
+   */
+  const handleGiftPurchaseSuccess = async () => {
+    try {
+      console.log('[GIFT PURCHASE SUCCESS] Starting purchase refresh...');
+
+      // Poll for new purchase with up to 10 retries (10 seconds total)
+      const expectedPurchaseCount = purchases.length + 1;
+
+      for (let attempt = 0; attempt < 10; attempt++) {
+        // Wait 1 second between attempts
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+
+        // Fetch purchases
+        const response = await fetch(`/api/purchases/${resultId}`);
+        const data = await response.json();
+
+        if (data.data && data.data.length >= expectedPurchaseCount) {
+          // New purchase found!
+          console.log('[GIFT PURCHASE SUCCESS] New purchase found:', {
+            expected: expectedPurchaseCount,
+            actual: data.data.length,
+            attempt: attempt + 1,
+          });
+
+          // Update purchases
+          setPurchases(data.data);
+
+          // Close gift modal and mark sequence complete
+          setUpsellState('completed');
+
+          return;
+        }
+
+        console.log(`[GIFT PURCHASE SUCCESS] Waiting for new purchase (${attempt + 1}/10)...`);
+      }
+
+      // Max retries exceeded
+      console.error('[GIFT PURCHASE SUCCESS] Failed to find new purchase after polling');
+      alert('A vásárlás sikeres volt, de az oldal frissítése szükséges. Kérlek töltsd újra az oldalt!');
+
+    } catch (error) {
+      console.error('[GIFT PURCHASE SUCCESS] Error during purchase refresh:', error);
+      alert('Hiba történt a vásárlás frissítésekor. Kérlek töltsd újra az oldalt!');
+    }
+  };
+
+  /**
+   * Handle gift modal close (user declined)
+   * Mark upsell sequence as completed
+   */
+  const handleGiftModalClose = () => {
+    // Track gift modal dismissed
+    trackEvent('gift_modal_dismissed', {
+      result_id: resultId,
+      session_id: sessionId || '',
+    });
+
+    // Close gift modal and complete sequence
+    setUpsellState('completed');
   };
 
   /**
@@ -375,13 +482,24 @@ export default function SuccessPage() {
         </motion.div>
       </div>
 
-      {/* Upsell Modal (only if sessionId exists and user hasn't seen it yet) */}
-      {showUpsell && sessionId && (
+      {/* Workbook Upsell Modal (first modal in sequence) */}
+      {upsellState === 'workbook_modal' && sessionId && (
         <UpsellModal
           sessionId={sessionId}
           resultId={resultId}
-          onClose={handleUpsellClose}
-          onPurchaseSuccess={handleUpsellSuccess}
+          onClose={handleWorkbookUpsellClose}
+          onPurchaseSuccess={handleWorkbookUpsellSuccess}
+        />
+      )}
+
+      {/* Gift Modal (second modal in sequence) */}
+      {upsellState === 'gift_modal' && sessionId && (
+        <GiftModal
+          sessionId={sessionId}
+          resultId={resultId}
+          workbookPurchased={workbookPurchased}
+          onClose={handleGiftModalClose}
+          onPurchaseSuccess={handleGiftPurchaseSuccess}
         />
       )}
     </main>

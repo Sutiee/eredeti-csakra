@@ -15,6 +15,17 @@ export type PurchaseEmailData = {
 };
 
 /**
+ * Gift buyer confirmation email template data
+ */
+export type GiftBuyerEmailData = {
+  buyerName: string;
+  giftCode: string;
+  expiresAt: string; // ISO date string
+  productName: string;
+  recipientEmail?: string;
+};
+
+/**
  * Generate purchase confirmation email HTML
  *
  * @param data - Email template data
@@ -282,5 +293,135 @@ Eredeti Csakra
 Email: hello@eredeticsakra.hu
 
 Ez az email automatikusan lett küldve. A PDF letöltési link 30 napig érvényes.
+  `.trim();
+}
+
+/**
+ * Generate gift buyer confirmation email HTML
+ *
+ * @param data - Gift email template data
+ * @returns HTML string
+ */
+export function generateGiftBuyerEmail(data: GiftBuyerEmailData): string {
+  const expiryDate = new Date(data.expiresAt).toLocaleDateString('hu-HU', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+
+  return `
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ajándékod megerősítése</title>
+  <style>
+    body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f9f9f9; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; }
+    .header { background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%); padding: 40px 20px; text-align: center; }
+    .header h1 { color: #ffffff; margin: 0; font-size: 28px; font-weight: 600; }
+    .header .emoji { font-size: 48px; margin-bottom: 10px; }
+    .content { padding: 40px 30px; }
+    .content p { line-height: 1.6; margin-bottom: 15px; font-size: 16px; }
+    .greeting { font-size: 18px; font-weight: 600; color: #FFA500; margin-bottom: 20px; }
+    .gift-code-box { background: linear-gradient(135deg, #FFF9E6 0%, #FFE8CC 100%); border: 2px dashed #FFA500; border-radius: 12px; padding: 25px; text-align: center; margin: 30px 0; }
+    .gift-code { font-size: 32px; font-weight: bold; color: #FF8C00; letter-spacing: 3px; margin: 10px 0; }
+    .expiry { font-size: 14px; color: #666; margin-top: 10px; }
+    .footer { background-color: #f5f5f5; padding: 30px; text-align: center; font-size: 14px; color: #666; }
+    .footer a { color: #667eea; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="emoji">🎁✨</div>
+      <h1>Ajándékod Elkészült!</h1>
+    </div>
+
+    <div class="content">
+      <p class="greeting">Kedves ${data.buyerName}!</p>
+
+      <p>
+        Köszönjük, hogy <strong>${data.productName}</strong> termékünket ajándékba vásároltad!
+        Az ajándékkód sikeresen létrejött.
+      </p>
+
+      <div class="gift-code-box">
+        <p style="margin: 0; font-size: 16px; color: #666;">Az ajándékkódod:</p>
+        <div class="gift-code">${data.giftCode}</div>
+        <p class="expiry">Érvényes: ${expiryDate}-ig (30 nap)</p>
+      </div>
+
+      ${data.recipientEmail ? `
+      <p>
+        <strong>Címzett email:</strong> ${data.recipientEmail}<br>
+        Hamarosan küldjük neki az értesítést az ajándékról!
+      </p>
+      ` : `
+      <p>
+        <strong>Fontos:</strong> Kérlek add át ezt a kódot az ajándékozottnak!
+        A kód beváltásához az ajándékozott is ki kell töltse a kvízt az eredeticsakra.hu oldalon.
+      </p>
+      `}
+
+      <p>
+        Az ajándékozottnak ezekkel a lépésekkel kell beváltania az ajándékot:
+      </p>
+      <ol>
+        <li>Látogasson el az <strong>eredeticsakra.hu</strong> oldalra</li>
+        <li>Töltse ki a csakra kvízt</li>
+        <li>Az eredmény oldal után add meg neki az ajándékkódot</li>
+        <li>Az ajándék automatikusan aktiválódik!</li>
+      </ol>
+
+      <p style="margin-top: 30px;">
+        Sok szeretettel,<br>
+        <strong>Eredeti Csakra csapata</strong> 💜
+      </p>
+    </div>
+
+    <div class="footer">
+      <p><strong>Eredeti Csakra</strong></p>
+      <p>Kérdésed van? <a href="mailto:hello@eredeticsakra.hu">hello@eredeticsakra.hu</a></p>
+    </div>
+  </div>
+</body>
+</html>
+  `.trim();
+}
+
+/**
+ * Generate plain text version of gift buyer email
+ */
+export function generateGiftBuyerEmailText(data: GiftBuyerEmailData): string {
+  const expiryDate = new Date(data.expiresAt).toLocaleDateString('hu-HU');
+
+  return `
+Ajándékod Elkészült! 🎁
+
+Kedves ${data.buyerName}!
+
+Köszönjük, hogy ${data.productName} termékünket ajándékba vásároltad!
+
+Ajándékkód: ${data.giftCode}
+Érvényes: ${expiryDate}-ig (30 nap)
+
+${data.recipientEmail
+  ? `Címzett: ${data.recipientEmail}\nHamarosan küldjük neki az értesítést!`
+  : `Fontos: Add át ezt a kódot az ajándékozottnak!`
+}
+
+Beváltási lépések:
+1. Látogasson el az eredeticsakra.hu oldalra
+2. Töltse ki a csakra kvízt
+3. Add meg neki az ajándékkódot
+4. Az ajándék automatikusan aktiválódik!
+
+Sok szeretettel,
+Eredeti Csakra csapata 💜
+
+---
+Kérdésed van? hello@eredeticsakra.hu
   `.trim();
 }
