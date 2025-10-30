@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import HeroPersonalized from '@/components/result/HeroPersonalized';
-import FloatingChakraNav from '@/components/result/FloatingChakraNav';
+import InlineChakraNav from '@/components/result/InlineChakraNav';
 import ChakraDetailPanel from '@/components/result/ChakraDetailPanel';
 import UpsellBoxPersonalizedReport from '@/components/result/UpsellBoxPersonalizedReport';
 import TestimonialsGridDynamic from '@/components/result/TestimonialsGridDynamic';
@@ -196,12 +196,17 @@ export default function ResultPage(): JSX.Element {
         <HeroPersonalized name={result.name} />
       </section>
 
-      {/* Floating Chakra Navigation */}
-      <FloatingChakraNav
-        chakras={result.interpretations}
-        activeChakra={activeChakra || mostBlockedChakra.chakra}
-        onTabChange={handleTabChange}
-      />
+      {/* Main Content Area with Inline Navigation */}
+      <section className="container mx-auto px-4">
+        <div className="max-w-5xl mx-auto">
+          {/* Inline Chakra Navigation */}
+          <InlineChakraNav
+            chakras={result.interpretations}
+            activeChakra={activeChakra || mostBlockedChakra.chakra}
+            onTabChange={handleTabChange}
+          />
+        </div>
+      </section>
 
       {/* Main Content Area - Above the Fold */}
       <section className="container mx-auto px-4 pb-16">
