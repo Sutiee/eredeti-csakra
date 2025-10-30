@@ -4,7 +4,8 @@
  */
 
 import { stripe } from './client';
-import { PRODUCTS, ProductId } from './products';
+import { PRODUCTS, ProductId, getProductPrice } from './products';
+import { type VariantId } from '@/lib/pricing/variants';
 import type Stripe from 'stripe';
 
 export type CheckoutLineItem = {
@@ -18,6 +19,7 @@ export type CreateCheckoutSessionParams = {
   items: CheckoutLineItem[];
   successUrl: string;
   cancelUrl: string;
+  variantId?: VariantId; // A/B/C test variant (defaults to 'a')
 };
 
 /**
@@ -26,15 +28,18 @@ export type CreateCheckoutSessionParams = {
 export async function createCheckoutSession(
   params: CreateCheckoutSessionParams
 ): Promise<Stripe.Checkout.Session> {
-  const { resultId, email, items, successUrl, cancelUrl } = params;
+  const { resultId, email, items, successUrl, cancelUrl, variantId = 'a' } = params;
 
-  // Convert items to Stripe line items
+  // Convert items to Stripe line items with variant-aware pricing
   const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = items.map((item) => {
     const product = PRODUCTS[item.productId];
 
     if (!product) {
       throw new Error(`Invalid product ID: ${item.productId}`);
     }
+
+    // Get price based on variant (dynamic for ai_analysis_pdf and workbook_30day)
+    const price = getProductPrice(item.productId, variantId);
 
     return {
       price_data: {
@@ -44,9 +49,10 @@ export async function createCheckoutSession(
           description: product.description,
           metadata: {
             product_id: product.id,
+            variant_id: variantId, // Track variant in Stripe metadata
           },
         },
-        unit_amount: product.price * 100, // Convert to cents (fillér)
+        unit_amount: price * 100, // Convert to cents (fillér)
       },
       quantity: item.quantity,
     };
@@ -76,6 +82,7 @@ export async function createCheckoutSession(
       result_id: resultId,
       email,
       product_ids: items.map((item) => item.productId).join(','),
+      variant_id: variantId, // Store variant for webhook processing
     },
     allow_promotion_codes: true,
     billing_address_collection: 'auto',
@@ -91,13 +98,15 @@ export async function createCheckoutSession(
 }
 
 /**
- * Calculate total price for selected items
+ * Calculate total price for selected items with variant support
+ * @param items - Checkout line items
+ * @param variantId - Optional variant ID for dynamic pricing (defaults to 'a')
+ * @returns Total price in HUF
  */
-export function calculateTotal(items: CheckoutLineItem[]): number {
+export function calculateTotal(items: CheckoutLineItem[], variantId?: VariantId): number {
   return items.reduce((total, item) => {
-    const product = PRODUCTS[item.productId];
-    if (!product) return total;
-    return total + product.price * item.quantity;
+    const price = getProductPrice(item.productId, variantId);
+    return total + price * item.quantity;
   }, 0);
 }
 

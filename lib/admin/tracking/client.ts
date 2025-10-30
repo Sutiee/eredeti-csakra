@@ -7,6 +7,7 @@
 
 import { useCallback } from 'react';
 import type { ClientEventData } from '@/types/admin';
+import { getCurrentVariant, type VariantId } from '@/lib/pricing/variants';
 
 /**
  * Session ID Storage Key
@@ -76,6 +77,23 @@ function getUTMParams(): Record<string, string> {
 }
 
 /**
+ * Get current pricing variant ID
+ * Returns the variant from URL or cookie (a/b/c)
+ * Used for A/B/C testing attribution in analytics
+ */
+function getVariantId(): VariantId {
+  if (typeof window === 'undefined') return 'a';
+
+  try {
+    const params = new URLSearchParams(window.location.search);
+    return getCurrentVariant(params);
+  } catch (error) {
+    console.warn('Failed to get variant ID:', error);
+    return 'a';
+  }
+}
+
+/**
  * Analytics Hook
  * Provides trackEvent function for client-side event tracking
  *
@@ -124,6 +142,7 @@ export function useAnalytics() {
           event_data: {
             ...eventData,
             ...getUTMParams(), // Include UTM parameters if present
+            variant_id: getVariantId(), // Include A/B/C test variant
           },
           session_id: getSessionId(),
           result_id: resultId,
@@ -187,6 +206,7 @@ export function trackPageView(pageTitle?: string): void {
       event_data: {
         page_title: pageTitle || document.title,
         ...getUTMParams(),
+        variant_id: getVariantId(), // Include A/B/C test variant
       },
       session_id: getSessionId(),
       page_path: window.location.pathname,

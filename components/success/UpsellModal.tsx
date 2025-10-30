@@ -9,6 +9,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { useAnalytics } from '@/lib/admin/tracking/client';
+import { getPrice, calculateDiscount, getCurrentVariant } from '@/lib/pricing/variants';
 
 type UpsellModalProps = {
   sessionId: string;
@@ -40,6 +41,12 @@ export default function UpsellModal({
   const [purchased, setPurchased] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { trackEvent } = useAnalytics();
+
+  // Get current variant and dynamic pricing
+  const variant = getCurrentVariant();
+  const workbookPrice = getPrice('workbook_30day', variant);
+  const originalWorkbookPrice = 9990; // Reference price for discount calculation
+  const discountPercent = calculateDiscount(originalWorkbookPrice, workbookPrice);
 
   // Countdown timer
   useEffect(() => {
@@ -85,12 +92,13 @@ export default function UpsellModal({
       // Success!
       setPurchased(true);
 
-      // Track successful purchase
+      // Track successful purchase with dynamic pricing
       trackEvent('upsell_purchased', {
         result_id: resultId,
         session_id: sessionId,
         product_id: 'workbook_30day',
-        amount: 3990,
+        amount: workbookPrice,
+        variant_id: variant,
       });
 
       // Call success callback to refresh purchases
@@ -197,10 +205,14 @@ export default function UpsellModal({
                     </ul>
 
                     <div className="flex items-baseline gap-3 flex-wrap">
-                      <span className="text-3xl font-bold text-purple-600">3990 Ft</span>
-                      <span className="text-xl text-gray-400 line-through">9990 Ft</span>
+                      <span className="text-3xl font-bold text-purple-600">
+                        {workbookPrice.toLocaleString('hu-HU')} Ft
+                      </span>
+                      <span className="text-xl text-gray-400 line-through">
+                        {originalWorkbookPrice.toLocaleString('hu-HU')} Ft
+                      </span>
                       <span className="bg-red-500 text-white px-3 py-1 rounded-full text-sm font-bold">
-                        -60% 🔥
+                        -{discountPercent}% 🔥
                       </span>
                     </div>
                   </div>

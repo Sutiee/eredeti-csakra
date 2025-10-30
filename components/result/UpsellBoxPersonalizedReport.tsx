@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
+import { getPrice, calculateDiscount, getCurrentVariant } from '@/lib/pricing/variants';
 
 interface UpsellBoxPersonalizedReportProps {
   resultId: string;
@@ -27,6 +28,12 @@ export default function UpsellBoxPersonalizedReport({
   onCtaClick,
 }: UpsellBoxPersonalizedReportProps): JSX.Element {
   const router = useRouter();
+
+  // Get current variant and dynamic pricing
+  const variant = getCurrentVariant();
+  const aiAnalysisPrice = getPrice('ai_analysis_pdf', variant);
+  const originalAiPrice = 7990; // Reference price for discount calculation
+  const discountPercent = calculateDiscount(originalAiPrice, aiAnalysisPrice);
 
   const handleCtaClick = async (): Promise<void> => {
     // Call analytics callback if provided
@@ -136,15 +143,15 @@ export default function UpsellBoxPersonalizedReport({
       <div className="text-center mb-6">
         <div className="flex items-center justify-center gap-4 mb-2">
           <span className="text-2xl md:text-3xl font-bold line-through opacity-70">
-            7,990 Ft
+            {originalAiPrice.toLocaleString('hu-HU')} Ft
           </span>
           <span className="text-3xl md:text-4xl font-black">→</span>
           <span className="text-3xl md:text-4xl font-black">
-            Most csak 990 Ft
+            Most csak {aiAnalysisPrice.toLocaleString('hu-HU')} Ft
           </span>
         </div>
         <p className="text-sm opacity-90">
-          87% kedvezmény - csak most, a teszteredményed megtekintésekor
+          {discountPercent}% kedvezmény - csak most, a teszteredményed megtekintésekor
         </p>
       </div>
 

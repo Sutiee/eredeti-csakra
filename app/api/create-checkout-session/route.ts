@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createCheckoutSession, validateCheckoutItems } from '@/lib/stripe/checkout';
 import type { ProductId } from '@/lib/stripe/products';
+import { isValidVariant, type VariantId } from '@/lib/pricing/variants';
 
 /**
  * Request validation schema
@@ -60,16 +61,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Get variant from cookie (set by middleware)
+    const variantCookie = request.cookies.get('__variant')?.value;
+    const variantId: VariantId =
+      variantCookie && isValidVariant(variantCookie) ? variantCookie : 'a';
+
     // Get app URL for success/cancel redirects
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
-    // Create Stripe checkout session
+    // Create Stripe checkout session with variant
     const session = await createCheckoutSession({
       resultId,
       email,
       items,
       successUrl: `${appUrl}/success/${resultId}?session_id={CHECKOUT_SESSION_ID}`,
       cancelUrl: `${appUrl}/checkout/${resultId}?canceled=true`,
+      variantId, // Pass variant for dynamic pricing
     });
 
     return NextResponse.json({

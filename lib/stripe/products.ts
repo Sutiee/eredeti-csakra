@@ -6,7 +6,13 @@
  * 1. Create products in Stripe Dashboard (see docs/STRIPE_PRODUCT_SETUP.md)
  * 2. Replace STRIPE_PRODUCT_IDS placeholder values with actual Product IDs from Stripe
  * 3. Update STRIPE_PRICE_IDS with actual Price IDs from Stripe
+ *
+ * IMPORTANT: Prices for ai_analysis_pdf and workbook_30day are managed through
+ * the pricing variants system (lib/pricing/variants.ts) for A/B/C testing.
+ * Use getProductPrice() to get the current price based on the active variant.
  */
+
+import { getPrice, type VariantId } from '@/lib/pricing/variants';
 
 export type ProductId =
   // v2.0 Upsell Products
@@ -203,6 +209,52 @@ PRODUCTS.prod_full_harmony_bundle = PRODUCTS.bundle;
  */
 export function getProductById(id: ProductId): ProductMetadata | null {
   return PRODUCTS[id] || null;
+}
+
+/**
+ * Get product price with A/B/C variant support
+ * For products in the variants system, returns dynamic price based on variant.
+ * For other products, returns the static price from PRODUCTS.
+ *
+ * @param productId - Product identifier
+ * @param variant - Optional variant ID (defaults to 'a')
+ * @returns Price in HUF
+ */
+export function getProductPrice(productId: ProductId, variant?: VariantId): number {
+  // Products with dynamic pricing (A/B/C testing)
+  if (productId === 'ai_analysis_pdf' || productId === 'workbook_30day') {
+    return getPrice(productId, variant);
+  }
+
+  // Static pricing for legacy products
+  const product = PRODUCTS[productId];
+  return product?.price || 0;
+}
+
+/**
+ * Get product metadata with dynamic price
+ * Returns a ProductMetadata object with the price updated based on the current variant.
+ *
+ * @param productId - Product identifier
+ * @param variant - Optional variant ID (defaults to 'a')
+ * @returns ProductMetadata with dynamic price
+ */
+export function getProductWithVariantPrice(
+  productId: ProductId,
+  variant?: VariantId
+): ProductMetadata | null {
+  const product = getProductById(productId);
+  if (!product) return null;
+
+  // For variant-managed products, update the price
+  if (productId === 'ai_analysis_pdf' || productId === 'workbook_30day') {
+    return {
+      ...product,
+      price: getPrice(productId, variant),
+    };
+  }
+
+  return product;
 }
 
 /**
