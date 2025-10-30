@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
+import { getPrice, getCurrentVariant } from '@/lib/pricing/variants';
 
 interface StickyCtaProps {
   blockedChakrasCount: number;
@@ -36,6 +37,10 @@ export default function StickyCTA({
   const router = useRouter();
   const [showSticky, setShowSticky] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
+
+  // Get current variant and dynamic pricing
+  const variant = getCurrentVariant();
+  const aiAnalysisPrice = getPrice('ai_analysis_pdf', variant);
 
   // Calculate total problematic chakras (blocked + imbalanced)
   const problematicChakrasCount = blockedChakrasCount + imbalancedChakrasCount;
@@ -206,9 +211,9 @@ export default function StickyCTA({
                         →
                       </motion.span>
                     </motion.button>
-                    {/* Price below button */}
+                    {/* Price below button - Dynamic based on variant */}
                     <span className="text-sm text-gray-600 font-semibold">
-                      Csak 990 Ft
+                      Csak {aiAnalysisPrice.toLocaleString('hu-HU')} Ft
                     </span>
                   </div>
 

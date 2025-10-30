@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { inter, playfairDisplay } from "./fonts";
 import StructuredData from "@/components/seo/StructuredData";
+import VariantSwitcher from "@/components/debug/VariantSwitcher";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://eredeticsakra.hu";
 
@@ -100,6 +101,8 @@ export default function RootLayout({
         <main id="main-content">
           {children}
         </main>
+        {/* Debug panel for A/B/C variant switching - auto-shows in dev mode or with ?debug=true */}
+        <VariantSwitcher />
       </body>
     </html>
   );
