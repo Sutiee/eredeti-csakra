@@ -16,8 +16,11 @@ import { getPrice, type VariantId } from '@/lib/pricing/variants';
 
 export type ProductId =
   // v2.0 Upsell Products
-  | 'ai_analysis_pdf'        // NEW: 2990 HUF - Entry product
-  | 'workbook_30day'         // NEW: 3990 HUF - Upsell product
+  | 'ai_analysis_pdf'        // Entry product (variant pricing)
+  | 'workbook_30day'         // Upsell product (variant pricing)
+  // v2.5 Gift Products
+  | 'gift_bundle_full'       // AI + Workbook gift bundle (40% off)
+  | 'gift_ai_only'           // AI only gift (40% off)
   // v1.x Products
   | 'detailed_pdf'
   | 'meditations'
@@ -49,6 +52,7 @@ export type ProductMetadata = {
     downloadable?: boolean;
     is_entry_product?: boolean;  // NEW: Entry-level product
     is_upsell?: boolean;          // NEW: Upsell product
+    is_gift?: boolean;            // NEW: Gift product
     ai_generated?: boolean;       // NEW: AI-generated content
   };
 };
@@ -121,6 +125,48 @@ export const PRODUCTS: Record<ProductId, ProductMetadata> = {
       includes_pdf: true,
       pdf_template: 'workbook_30day',
       is_upsell: true,
+    },
+  },
+
+  // ========================================
+  // v2.5 Gift Products
+  // ========================================
+  gift_bundle_full: {
+    id: 'gift_bundle_full',
+    stripeProductId: process.env.STRIPE_PRODUCT_ID_GIFT_BUNDLE || 'prod_GIFT_BUNDLE_PLACEHOLDER',
+    stripePriceId: process.env.STRIPE_PRICE_ID_GIFT_BUNDLE || 'price_GIFT_BUNDLE_PLACEHOLDER',
+    name: 'Ajándék Csomag - AI Elemzés + 30 Napos Munkafüzet',
+    description: 'Teljes ajándékcsomag: Személyre szabott AI csakra elemzés PDF + 30 napos gyakorlati munkafüzet. 40% kedvezménnyel ajándékba.',
+    price: 2988, // Base price for variant A (overridden by getProductPrice)
+    originalPrice: 4980, // Sum of AI (990) + Workbook (3990)
+    currency: 'HUF',
+    metadata: {
+      product_type: 'gift_bundle',
+      includes_meditation: false,
+      includes_pdf: true,
+      pdf_template: 'gift_bundle',
+      is_gift: true,
+      is_upsell: true,
+      ai_generated: true,
+    },
+  },
+  gift_ai_only: {
+    id: 'gift_ai_only',
+    stripeProductId: process.env.STRIPE_PRODUCT_ID_GIFT_AI || 'prod_GIFT_AI_PLACEHOLDER',
+    stripePriceId: process.env.STRIPE_PRICE_ID_GIFT_AI || 'price_GIFT_AI_PLACEHOLDER',
+    name: 'Ajándék AI Elemzés PDF',
+    description: 'Személyre szabott csakra AI elemzés ajándékba. 40% kedvezménnyel.',
+    price: 594, // Base price for variant A (overridden by getProductPrice)
+    originalPrice: 990, // Original AI analysis price
+    currency: 'HUF',
+    metadata: {
+      product_type: 'gift_ai_analysis',
+      includes_meditation: false,
+      includes_pdf: true,
+      pdf_template: 'personalized_analysis',
+      is_gift: true,
+      is_upsell: true,
+      ai_generated: true,
     },
   },
 
@@ -222,7 +268,12 @@ export function getProductById(id: ProductId): ProductMetadata | null {
  */
 export function getProductPrice(productId: ProductId, variant?: VariantId): number {
   // Products with dynamic pricing (A/B/C testing)
-  if (productId === 'ai_analysis_pdf' || productId === 'workbook_30day') {
+  if (
+    productId === 'ai_analysis_pdf' ||
+    productId === 'workbook_30day' ||
+    productId === 'gift_bundle_full' ||  // NEW: Gift products
+    productId === 'gift_ai_only'         // NEW: Gift products
+  ) {
     return getPrice(productId, variant);
   }
 
@@ -247,7 +298,12 @@ export function getProductWithVariantPrice(
   if (!product) return null;
 
   // For variant-managed products, update the price
-  if (productId === 'ai_analysis_pdf' || productId === 'workbook_30day') {
+  if (
+    productId === 'ai_analysis_pdf' ||
+    productId === 'workbook_30day' ||
+    productId === 'gift_bundle_full' ||  // NEW: Gift products
+    productId === 'gift_ai_only'         // NEW: Gift products
+  ) {
     return {
       ...product,
       price: getPrice(productId, variant),

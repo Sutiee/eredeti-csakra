@@ -18,7 +18,11 @@ export type VariantId = 'a' | 'b' | 'c';
 /**
  * Product identifiers that support variant pricing
  */
-export type ProductId = 'ai_analysis_pdf' | 'workbook_30day';
+export type ProductId =
+  | 'ai_analysis_pdf'
+  | 'workbook_30day'
+  | 'gift_bundle_full'  // AI + Workbook gift bundle (40% off)
+  | 'gift_ai_only';     // AI only gift (40% off)
 
 /**
  * Pricing variant configuration structure
@@ -51,6 +55,9 @@ export const PRICING_VARIANTS: Record<VariantId, PricingVariant> = {
     prices: {
       ai_analysis_pdf: 990,
       workbook_30day: 3990,
+      // Gift products: 40% discount on combined price
+      gift_bundle_full: 2988,  // (990 + 3990) * 0.6 = 2,988 Ft
+      gift_ai_only: 594,       // 990 * 0.6 = 594 Ft
     },
   },
   b: {
@@ -60,6 +67,9 @@ export const PRICING_VARIANTS: Record<VariantId, PricingVariant> = {
     prices: {
       ai_analysis_pdf: 1990,
       workbook_30day: 4990,
+      // Gift products: 40% discount on combined price
+      gift_bundle_full: 4188,  // (1990 + 4990) * 0.6 = 4,188 Ft
+      gift_ai_only: 1194,      // 1990 * 0.6 = 1,194 Ft
     },
   },
   c: {
@@ -69,6 +79,9 @@ export const PRICING_VARIANTS: Record<VariantId, PricingVariant> = {
     prices: {
       ai_analysis_pdf: 2990,
       workbook_30day: 5990,
+      // Gift products: 40% discount on combined price
+      gift_bundle_full: 5388,  // (2990 + 5990) * 0.6 = 5,388 Ft
+      gift_ai_only: 1794,      // 2990 * 0.6 = 1,794 Ft
     },
   },
 };
@@ -252,5 +265,45 @@ export function calculateDiscount(originalPrice: number, currentPrice: number): 
  * @returns True if valid product ID
  */
 export function isValidProductId(productId: any): productId is ProductId {
-  return productId === 'ai_analysis_pdf' || productId === 'workbook_30day';
+  return (
+    productId === 'ai_analysis_pdf' ||
+    productId === 'workbook_30day' ||
+    productId === 'gift_bundle_full' ||
+    productId === 'gift_ai_only'
+  );
+}
+
+/**
+ * Calculate gift product discount percentage
+ * Compares gift price to the sum of individual product prices
+ *
+ * @param giftProductId - Gift product identifier
+ * @param variant - Pricing variant
+ * @returns Discount percentage (rounded to nearest integer)
+ *
+ * @example
+ * ```typescript
+ * calculateGiftDiscount('gift_bundle_full', 'b'); // Returns 40
+ * calculateGiftDiscount('gift_ai_only', 'a'); // Returns 40
+ * ```
+ */
+export function calculateGiftDiscount(
+  giftProductId: Extract<ProductId, 'gift_bundle_full' | 'gift_ai_only'>,
+  variant: VariantId = 'a'
+): number {
+  if (giftProductId === 'gift_bundle_full') {
+    const aiPrice = getPrice('ai_analysis_pdf', variant);
+    const workbookPrice = getPrice('workbook_30day', variant);
+    const originalPrice = aiPrice + workbookPrice;
+    const giftPrice = getPrice('gift_bundle_full', variant);
+    return calculateDiscount(originalPrice, giftPrice);
+  }
+
+  if (giftProductId === 'gift_ai_only') {
+    const originalPrice = getPrice('ai_analysis_pdf', variant);
+    const giftPrice = getPrice('gift_ai_only', variant);
+    return calculateDiscount(originalPrice, giftPrice);
+  }
+
+  return 0;
 }
