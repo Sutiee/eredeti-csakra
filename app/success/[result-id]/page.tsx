@@ -12,7 +12,7 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import ThankYouMessage from '@/components/success/ThankYouMessage';
 import DownloadLinks from '@/components/success/DownloadLinks';
 import UpsellModal from '@/components/success/UpsellModal';
-import GiftModal from '@/components/success/GiftModal';
+import GiftPurchaseSection from '@/components/success/GiftPurchaseSection';
 import { useAnalytics } from '@/lib/admin/tracking/client';
 
 /**
@@ -30,9 +30,9 @@ type Purchase = {
 
 /**
  * Upsell modal state machine
- * idle → workbook_modal → gift_modal → completed
+ * idle → workbook_modal → completed (gift is now inline, not modal)
  */
-type UpsellModalState = 'idle' | 'workbook_modal' | 'gift_modal' | 'completed';
+type UpsellModalState = 'idle' | 'workbook_modal' | 'completed';
 
 /**
  * Success Page Component
@@ -48,6 +48,7 @@ export default function SuccessPage() {
   const [error, setError] = useState<string | null>(null);
   const [upsellState, setUpsellState] = useState<UpsellModalState>('idle');
   const [workbookPurchased, setWorkbookPurchased] = useState(false);
+  const [showGiftSection, setShowGiftSection] = useState(false); // Show inline gift purchase section
   const { trackEvent } = useAnalytics();
 
   /**
@@ -159,10 +160,11 @@ export default function SuccessPage() {
     const hasWorkbook = purchases.some(p => p.product_id === 'workbook_30day');
 
     if (hasWorkbook) {
-      // User already has workbook - skip to gift modal
+      // User already has workbook - skip to inline gift section
       const timer = setTimeout(() => {
         setWorkbookPurchased(true);
-        setUpsellState('gift_modal');
+        setUpsellState('completed');
+        setShowGiftSection(true);
       }, 3000); // 3 seconds delay
 
       return () => clearTimeout(timer);
@@ -218,12 +220,12 @@ export default function SuccessPage() {
           setWorkbookPurchased(true);
 
           // Close workbook modal
-          setUpsellState('idle');
+          setUpsellState('completed');
 
-          // Wait 2 seconds then show gift modal
+          // Show inline gift section after 1 second
           setTimeout(() => {
-            setUpsellState('gift_modal');
-          }, 2000);
+            setShowGiftSection(true);
+          }, 1000);
 
           return;
         }
@@ -243,7 +245,7 @@ export default function SuccessPage() {
 
   /**
    * Handle workbook upsell modal close (user declined)
-   * Transition to gift modal after 2-second delay
+   * Transition to showing inline gift section after delay
    */
   const handleWorkbookUpsellClose = () => {
     // Track workbook upsell declined
@@ -254,41 +256,15 @@ export default function SuccessPage() {
     });
 
     // Close workbook modal
-    setUpsellState('idle');
+    setUpsellState('completed');
 
-    // Wait 2 seconds then show gift modal
+    // Show inline gift section after 1 second
     setTimeout(() => {
-      setUpsellState('gift_modal');
-    }, 2000);
+      setShowGiftSection(true);
+    }, 1000);
   };
 
-  /**
-   * Handle gift modal purchase success
-   * Gift purchases are saved to a separate table (gift_purchases) and don't need polling
-   * Simply close the modal and mark sequence as complete
-   */
-  const handleGiftPurchaseSuccess = async () => {
-    console.log('[GIFT PURCHASE SUCCESS] Gift purchase completed successfully');
-
-    // Close gift modal and mark sequence complete
-    // No need to poll - gift purchases are in a separate table and don't generate PDFs immediately
-    setUpsellState('completed');
-  };
-
-  /**
-   * Handle gift modal close (user declined)
-   * Mark upsell sequence as completed
-   */
-  const handleGiftModalClose = () => {
-    // Track gift modal dismissed
-    trackEvent('gift_modal_dismissed', {
-      result_id: resultId,
-      session_id: sessionId || '',
-    });
-
-    // Close gift modal and complete sequence
-    setUpsellState('completed');
-  };
+  // Gift purchase callbacks removed - now handled inline by GiftPurchaseSection component
 
   /**
    * Loading State
@@ -415,6 +391,15 @@ export default function SuccessPage() {
         {/* Download Links */}
         <DownloadLinks purchases={purchases} resultId={resultId} />
 
+        {/* Gift Purchase Section - Inline (replaces modal) */}
+        {showGiftSection && sessionId && (
+          <GiftPurchaseSection
+            sessionId={sessionId}
+            resultId={resultId}
+            workbookPurchased={workbookPurchased}
+          />
+        )}
+
         {/* Next Steps */}
         <motion.div
           className="mt-12 text-center"
@@ -453,17 +438,6 @@ export default function SuccessPage() {
           resultId={resultId}
           onClose={handleWorkbookUpsellClose}
           onPurchaseSuccess={handleWorkbookUpsellSuccess}
-        />
-      )}
-
-      {/* Gift Modal (second modal in sequence) */}
-      {upsellState === 'gift_modal' && sessionId && (
-        <GiftModal
-          sessionId={sessionId}
-          resultId={resultId}
-          workbookPurchased={workbookPurchased}
-          onClose={handleGiftModalClose}
-          onPurchaseSuccess={handleGiftPurchaseSuccess}
         />
       )}
     </main>
