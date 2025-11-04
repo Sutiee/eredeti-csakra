@@ -97,20 +97,21 @@ export async function createPromotionCode(
 ): Promise<Stripe.PromotionCode> {
   try {
     console.log('[GIFT PROMO] Creating promotion code with params:', {
-      coupon: couponId,
+      promotion_coupon: couponId,
       code: giftCode,
       max_redemptions: 1,
     });
 
-    const promoCode = (await stripe.promotionCodes.create({
-      coupon: couponId,
+    // Stripe API requires promotion.coupon format (not just coupon)
+    const promoCode = await stripe.promotionCodes.create({
+      promotion: couponId, // This is the correct way to link a coupon
       code: giftCode,
       max_redemptions: 1,
       metadata: {
         gift_code: giftCode,
         type: 'gift',
       },
-    } as any)) as Stripe.PromotionCode;
+    } as any);
 
     console.log('[GIFT PROMO] Created successfully:', {
       promo_code_id: promoCode.id,
