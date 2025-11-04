@@ -133,7 +133,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
             </div>
 
             <div style="text-align: center;">
-              <a href="https://eredeticsakra.hu/bevaltas" class="cta-button">
+              <a href="https://eredeticsakra.hu/ajandek/${giftCode}" class="cta-button">
                 🎁 AJÁNDÉK BEVÁLTÁSA
               </a>
             </div>
@@ -143,7 +143,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
               <ol style="margin: 10px 0; padding-left: 20px;">
                 <li style="margin-bottom: 10px;">
                   <strong>Látogass el a beváltási oldalra:</strong><br>
-                  <a href="https://eredeticsakra.hu/bevaltas" style="color: #7c3aed;">eredeticsakra.hu/bevaltas</a>
+                  <a href="https://eredeticsakra.hu/ajandek/${giftCode}" style="color: #7c3aed;">eredeticsakra.hu/ajandek/${giftCode}</a>
                 </li>
                 <li style="margin-bottom: 10px;">
                   <strong>Add meg az ajándék kódot:</strong><br>

@@ -124,7 +124,7 @@ export default function GiftPurchaseSection({
     if (!giftData) return;
 
     try {
-      const textToCopy = `Ajándék kód: ${giftData.giftCode}\n\nBeváltás: https://eredeticsakra.hu/bevaltas\n\nLejárat: ${new Date(giftData.expiresAt).toLocaleDateString('hu-HU')}`;
+      const textToCopy = `Ajándék kód: ${giftData.giftCode}\n\nBeváltás: https://eredeticsakra.hu/ajandek/${giftData.giftCode}\n\nLejárat: ${new Date(giftData.expiresAt).toLocaleDateString('hu-HU')}`;
 
       await navigator.clipboard.writeText(textToCopy);
       setCopied(true);
@@ -149,6 +149,12 @@ export default function GiftPurchaseSection({
       setSendingEmail(true);
       setError(null);
 
+      // Basic email validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(recipientEmail)) {
+        throw new Error('Érvénytelen email cím formátum');
+      }
+
       const response = await fetch('/api/send-gift-code-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -161,15 +167,38 @@ export default function GiftPurchaseSection({
         }),
       });
 
-      if (!response.ok) {
-        throw new Error('Email küldése sikertelen');
+      // Parse response body
+      const data = await response.json();
+
+      // Check both HTTP status and response body
+      if (!response.ok || data.error) {
+        const errorMessage = data.error || 'Email küldése sikertelen';
+        console.error('[GIFT_EMAIL] Send failed:', {
+          status: response.status,
+          error: errorMessage,
+          gift_code: giftData.giftCode,
+        });
+        throw new Error(errorMessage);
       }
+
+      // Verify success field in response
+      if (!data.success) {
+        console.error('[GIFT_EMAIL] Send failed - no success flag:', data);
+        throw new Error('Email küldése sikertelen (no success flag)');
+      }
+
+      console.log('[GIFT_EMAIL] Email sent successfully:', {
+        email_id: data.data?.id,
+        recipient: recipientEmail,
+        gift_code: giftData.giftCode,
+      });
 
       setEmailSent(true);
       trackEvent('gift_email_sent', {
         result_id: resultId,
         gift_code: giftData.giftCode,
         recipient_email: recipientEmail,
+        email_id: data.data?.id,
       });
 
       // Clear input after success
@@ -178,8 +207,22 @@ export default function GiftPurchaseSection({
         setEmailSent(false);
       }, 3000);
     } catch (err) {
-      console.error('Email send error:', err);
-      setError('Email küldése sikertelen. Próbáld újra vagy másold ki a kódot!');
+      const errorMessage = err instanceof Error ? err.message : 'Ismeretlen hiba';
+      console.error('[GIFT_EMAIL] Email send error:', {
+        error: errorMessage,
+        gift_code: giftData?.giftCode,
+        recipient: recipientEmail,
+      });
+
+      // Track failed email send
+      trackEvent('gift_email_failed', {
+        result_id: resultId,
+        gift_code: giftData?.giftCode,
+        recipient_email: recipientEmail,
+        error: errorMessage,
+      });
+
+      setError(`Email küldése sikertelen: ${errorMessage}. Próbáld újra vagy másold ki a kódot!`);
     } finally {
       setSendingEmail(false);
     }
@@ -413,12 +456,12 @@ export default function GiftPurchaseSection({
                   <span>
                     <strong>Beváltás:</strong> A címzett a kódot az{' '}
                     <a
-                      href="https://eredeticsakra.hu/bevaltas"
+                      href={`https://eredeticsakra.hu/ajandek/${giftData.giftCode}`}
                       className="text-purple-600 underline font-semibold"
                       target="_blank"
                       rel="noopener noreferrer"
                     >
-                      eredeticsakra.hu/bevaltas
+                      eredeticsakra.hu/ajandek/{giftData.giftCode}
                     </a>{' '}
                     oldalon tudja beváltani
                   </span>

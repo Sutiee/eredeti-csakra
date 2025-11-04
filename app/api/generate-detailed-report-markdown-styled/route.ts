@@ -197,7 +197,56 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       console.log("[MARKDOWN_STYLED_REPORT] Purchase record updated with PDF URL");
     }
 
-    // LAYER 8: Success Response
+    // LAYER 8: Send Email Notification with PDF Download Link
+    try {
+      console.log("[MARKDOWN_STYLED_REPORT] Sending email with PDF link to:", result.email);
+
+      // Fetch purchase data for product metadata
+      const { data: purchase } = await supabase
+        .from('purchases')
+        .select('product_name')
+        .eq('result_id', result_id)
+        .eq('product_id', 'ai_analysis_pdf')
+        .single();
+
+      const emailResponse = await fetch(
+        `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/api/send-purchase-email`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: result.name,
+            email: result.email,
+            downloadUrl: signedUrlData.signedUrl,
+            resultId: result_id,
+            productName: purchase?.product_name || 'Személyre Szabott Csakra Elemzés',
+            productType: 'ai_analysis_pdf',
+          }),
+        }
+      );
+
+      if (!emailResponse.ok) {
+        const errorText = await emailResponse.text();
+        console.warn("[MARKDOWN_STYLED_REPORT] Email sending failed", {
+          status: emailResponse.status,
+          error: errorText,
+        });
+      } else {
+        const emailData = await emailResponse.json();
+        console.log("[MARKDOWN_STYLED_REPORT] Email sent successfully", {
+          email_id: emailData.data?.emailId,
+          recipient: result.email,
+        });
+      }
+    } catch (emailError) {
+      // Don't fail the request if email fails - PDF is already generated
+      console.error("[MARKDOWN_STYLED_REPORT] Email sending error:", {
+        error: emailError instanceof Error ? emailError.message : String(emailError),
+        result_id,
+      });
+    }
+
+    // LAYER 9: Success Response
     console.log("[MARKDOWN_STYLED_REPORT] Report generation complete!");
 
     return NextResponse.json({
