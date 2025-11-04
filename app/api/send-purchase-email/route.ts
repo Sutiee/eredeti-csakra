@@ -13,16 +13,12 @@ import {
   generatePurchaseConfirmationEmailText,
 } from "@/lib/email/templates";
 
+// Resend client with fallback API key handling
 if (!process.env.RESEND_API_KEY) {
-  throw new Error("Missing RESEND_API_KEY environment variable");
+  console.warn("[SEND_PURCHASE_EMAIL] Missing RESEND_API_KEY environment variable");
 }
 
-if (!process.env.RESEND_FROM_EMAIL) {
-  throw new Error("Missing RESEND_FROM_EMAIL environment variable");
-}
-
-// Resend client
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = new Resend(process.env.RESEND_API_KEY || '');
 
 /**
  * POST /api/send-purchase-email
@@ -104,9 +100,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       ? "Készen áll a 30 Napos Csakra Munkafüzeted! 📖"
       : "Köszönjük a vásárlásod! - Személyre Szabott Csakra Elemzésed";
 
-    // Send email with Resend
+    // Send email with Resend (with fallback sender for testing)
+    const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
     const { data, error } = await resend.emails.send({
-      from: `Eredeti Csakra <${process.env.RESEND_FROM_EMAIL}>`,
+      from: `Eredeti Csakra <${fromEmail}>`,
       to: [email],
       subject,
       html: emailHtml,

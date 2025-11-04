@@ -34,6 +34,19 @@ function getSupabaseAdmin() {
 }
 
 /**
+ * Get product display name from product ID
+ */
+function getProductName(productId: string): string {
+  const productNames: Record<string, string> = {
+    'ai_analysis_pdf': 'Személyre Szabott Csakra Elemzés',
+    'workbook_30day': '30 Napos Csakra Munkafüzet',
+    'prod_chakra_meditations': 'Csakra Aktivizáló Meditációk',
+    'prod_full_harmony_bundle': 'Teljes Csakra Harmónia Csomag',
+  };
+  return productNames[productId] || 'Termék';
+}
+
+/**
  * Handle successful checkout session
  */
 async function handleCheckoutSessionCompleted(
@@ -186,6 +199,43 @@ async function handleCheckoutSessionCompleted(
       if (purchaseError) {
         console.error('Error creating purchase record:', purchaseError);
         continue;
+      }
+
+      // Send immediate purchase confirmation email (non-blocking)
+      console.log('[WEBHOOK] Sending immediate purchase confirmation email to:', email);
+      const sendPurchaseConfirmationEmail = async () => {
+        try {
+          const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://eredeticsakra.hu';
+          const emailResponse = await fetch(`${siteUrl}/api/send-purchase-confirmation-immediate`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              name: session.metadata?.name || 'Vásárló',
+              email,
+              resultId,
+              productName: getProductName(productId),
+              productId,
+            }),
+          });
+
+          if (!emailResponse.ok) {
+            const errorText = await emailResponse.text();
+            console.error('[WEBHOOK] Purchase confirmation email failed:', errorText);
+          } else {
+            console.log('[WEBHOOK] Purchase confirmation email sent successfully');
+          }
+        } catch (error) {
+          console.error('[WEBHOOK] Exception sending purchase confirmation email:', error);
+        }
+      };
+
+      // Use Vercel waitUntil API to ensure background task completes
+      const waitUntil = (request as any).waitUntil;
+      if (waitUntil && typeof waitUntil === 'function') {
+        waitUntil(sendPurchaseConfirmationEmail());
+      } else {
+        // Fallback for local development
+        sendPurchaseConfirmationEmail().catch(console.error);
       }
 
       // If AI analysis PDF was purchased, trigger PDF generation in background
