@@ -232,7 +232,7 @@ export default function FAQAccordion(): JSX.Element {
             További kérdésed van?
           </p>
           <a
-            href="mailto:hello@eredeticsakra.hu"
+            href="mailto:info@eredeticsakra.hu"
             className="
               inline-flex items-center gap-2
               px-6 py-3

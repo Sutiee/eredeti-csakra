@@ -243,7 +243,7 @@ export function generatePurchaseConfirmationEmail(
       <p><strong>Eredeti Csakra</strong></p>
       <p>
         Kérdésed van? Írj nekünk:
-        <a href="mailto:hello@eredeticsakra.hu">hello@eredeticsakra.hu</a>
+        <a href="mailto:info@eredeticsakra.hu">info@eredeticsakra.hu</a>
       </p>
       <p style="margin-top: 15px; font-size: 12px; color: #999;">
         Ez az email automatikusan lett küldve. A PDF letöltési link 30 napig érvényes.
@@ -295,14 +295,14 @@ ${features}
 
 Az ${isWorkbook ? 'munkafüzeted' : 'elemzésed'} egyedi és személyre szabott, kizárólag a Te válaszaid alapján készült.
 
-Ha bármilyen kérdésed van, írj nekünk: hello@eredeticsakra.hu
+Ha bármilyen kérdésed van, írj nekünk: info@eredeticsakra.hu
 
 Sok szeretettel,
 Eredeti Csakra csapata 💜
 
 ---
 Eredeti Csakra
-Email: hello@eredeticsakra.hu
+Email: info@eredeticsakra.hu
 
 Ez az email automatikusan lett küldve. A PDF letöltési link 30 napig érvényes.
   `.trim();
@@ -395,7 +395,7 @@ export function generateGiftBuyerEmail(data: GiftBuyerEmailData): string {
 
     <div class="footer">
       <p><strong>Eredeti Csakra</strong></p>
-      <p>Kérdésed van? <a href="mailto:hello@eredeticsakra.hu">hello@eredeticsakra.hu</a></p>
+      <p>Kérdésed van? <a href="mailto:info@eredeticsakra.hu">info@eredeticsakra.hu</a></p>
     </div>
   </div>
 </body>
@@ -434,7 +434,7 @@ Sok szeretettel,
 Eredeti Csakra csapata 💜
 
 ---
-Kérdésed van? hello@eredeticsakra.hu
+Kérdésed van? info@eredeticsakra.hu
   `.trim();
 }
 
@@ -534,7 +534,7 @@ export function generateGiftRecipientEmail(data: GiftRecipientEmailData): string
 
     <div class="footer">
       <p><strong>Eredeti Csakra</strong></p>
-      <p>Kérdésed van? <a href="mailto:hello@eredeticsakra.hu">hello@eredeticsakra.hu</a></p>
+      <p>Kérdésed van? <a href="mailto:info@eredeticsakra.hu">info@eredeticsakra.hu</a></p>
       <p style="margin-top: 10px; font-size: 12px; color: #999;">
         Az ajándékkód 30 napig érvényes. Ne feledd beváltani időben! ⏰
       </p>
@@ -576,7 +576,7 @@ Sok szeretettel,
 Eredeti Csakra csapata 💜
 
 ---
-Kérdésed van? hello@eredeticsakra.hu
+Kérdésed van? info@eredeticsakra.hu
 Az ajándékkód 30 napig érvényes!
   `.trim();
 }

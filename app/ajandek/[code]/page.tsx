@@ -340,10 +340,10 @@ export default function GiftRedemptionPage() {
           <p className="text-sm text-gray-600">
             Kérdésed van? Írj nekünk:{' '}
             <a
-              href="mailto:hello@eredeticsakra.hu"
+              href="mailto:info@eredeticsakra.hu"
               className="text-purple-600 hover:underline"
             >
-              hello@eredeticsakra.hu
+              info@eredeticsakra.hu
             </a>
           </p>
         </div>

@@ -255,7 +255,7 @@ export async function POST(request: NextRequest) {
       // Send gift buyer confirmation email in background
       const triggerGiftBuyerEmail = async () => {
         try {
-          const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+          const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://eredeticsakra.hu';
           const response = await fetch(`${siteUrl}/api/send-gift-buyer-email`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -349,7 +349,7 @@ export async function POST(request: NextRequest) {
       // Without this, Vercel terminates the function before the fetch completes
       const triggerWorkbookGeneration = async () => {
         try {
-          const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://eredeti-csakra-xi.vercel.app';
+          const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://eredeticsakra.hu';
           console.log('[UPSELL] Calling workbook generation API:', `${siteUrl}/api/generate-workbook`);
 
           const response = await fetch(`${siteUrl}/api/generate-workbook`, {

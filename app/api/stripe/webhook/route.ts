@@ -74,7 +74,7 @@ async function handleCheckoutSessionCompleted(
         // Send gift buyer notification email about redemption
         const triggerGiftRedemptionEmail = async () => {
           try {
-            const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+            const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://eredeticsakra.hu';
             const response = await fetch(`${siteUrl}/api/send-gift-redemption-notification`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -194,7 +194,7 @@ async function handleCheckoutSessionCompleted(
 
         const triggerAIPDFGeneration = async () => {
           try {
-            const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+            const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://eredeticsakra.hu';
             const response = await fetch(`${siteUrl}/api/generate-detailed-report-markdown-styled`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -228,7 +228,7 @@ async function handleCheckoutSessionCompleted(
 
         const triggerWorkbookGeneration = async () => {
           try {
-            const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+            const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://eredeticsakra.hu';
             const response = await fetch(`${siteUrl}/api/generate-workbook`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },

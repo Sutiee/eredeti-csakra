@@ -219,7 +219,7 @@ OPENAI_MODEL=gpt-4o-mini
 # Resend (Email Delivery)
 RESEND_API_KEY=re_xxx                           # API key from Resend Dashboard
 RESEND_AUDIENCE_ID=xxx                          # Optional: for contact management
-RESEND_FROM_EMAIL=hello@eredeticsakra.hu        # Verified sender email (domain must be verified for production)
+RESEND_FROM_EMAIL=info@eredeticsakra.hu        # Verified sender email (domain must be verified for production)
 
 # ElevenLabs (AI Voice Synthesis)
 ELEVENLABS_API_KEY=xxx

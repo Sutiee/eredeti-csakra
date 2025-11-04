@@ -188,7 +188,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     // Send email via Resend
     const { data, error } = await resend.emails.send({
-      from: process.env.RESEND_FROM_EMAIL || 'hello@eredeticsakra.hu',
+      from: process.env.RESEND_FROM_EMAIL || 'info@eredeticsakra.hu',
       to: recipientEmail,
       subject: `🎁 Ajándék az Eredeti Csakrától - ${productName}`,
       html: emailHtml,

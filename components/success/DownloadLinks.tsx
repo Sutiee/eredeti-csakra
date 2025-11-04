@@ -302,10 +302,10 @@ export default function DownloadLinks({ purchases: initialPurchases, resultId }:
         <p className="text-sm text-gray-600">
           <strong>Segítségre van szükséged?</strong> Írj nekünk a{' '}
           <a
-            href="mailto:hello@eredeticsakra.hu"
+            href="mailto:info@eredeticsakra.hu"
             className="text-purple-600 hover:underline"
           >
-            hello@eredeticsakra.hu
+            info@eredeticsakra.hu
           </a>{' '}
           címre, és 24 órán belül válaszolunk!
         </p>
