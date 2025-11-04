@@ -210,6 +210,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({
       success: true,
       message: 'Email sikeresen elküldve',
+      data: {
+        id: data?.id,
+      },
     });
   } catch (error) {
     console.error('[GIFT EMAIL] Unexpected error:', error);
