@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
       variantCookie && isValidVariant(variantCookie) ? variantCookie : 'a';
 
     // Get app URL for success/cancel redirects
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const appUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://eredeticsakra.hu';
 
     // Create Stripe checkout session with variant
     const session = await createCheckoutSession({
