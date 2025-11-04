@@ -45,10 +45,60 @@ async function handleCheckoutSessionCompleted(
   try {
     const resultId = session.metadata?.result_id;
     const email = session.customer_email || session.metadata?.email;
+    const isGiftRedemption = session.metadata?.is_gift_redemption === 'true';
+    const giftCode = session.metadata?.gift_code;
 
     if (!resultId || !email) {
       console.error('Missing result_id or email in session metadata');
       return;
+    }
+
+    // If this is a gift redemption, update gift_purchases status
+    if (isGiftRedemption && giftCode) {
+      console.log('[WEBHOOK] Processing gift redemption:', giftCode);
+
+      const { error: giftUpdateError } = await (supabase as any)
+        .from('gift_purchases')
+        .update({
+          status: 'redeemed',
+          redeemed_at: new Date().toISOString(),
+          recipient_email: email,
+        })
+        .eq('gift_code', giftCode);
+
+      if (giftUpdateError) {
+        console.error('[WEBHOOK] Failed to update gift status:', giftUpdateError);
+      } else {
+        console.log('[WEBHOOK] Gift redemption completed:', giftCode);
+
+        // Send gift buyer notification email about redemption
+        const triggerGiftRedemptionEmail = async () => {
+          try {
+            const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+            const response = await fetch(`${siteUrl}/api/send-gift-redemption-notification`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ gift_code: giftCode }),
+            });
+
+            if (!response.ok) {
+              console.error('[WEBHOOK] Gift redemption email failed');
+            } else {
+              console.log('[WEBHOOK] Gift redemption email sent');
+            }
+          } catch (error) {
+            console.error('[WEBHOOK] Gift redemption email error:', error);
+          }
+        };
+
+        // Use waitUntil for email sending
+        const waitUntil = (request as any).waitUntil;
+        if (waitUntil && typeof waitUntil === 'function') {
+          waitUntil(triggerGiftRedemptionEmail());
+        } else {
+          triggerGiftRedemptionEmail().catch(console.error);
+        }
+      }
     }
 
     // Extract line items

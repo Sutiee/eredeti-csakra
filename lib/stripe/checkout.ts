@@ -20,6 +20,8 @@ export type CreateCheckoutSessionParams = {
   successUrl: string;
   cancelUrl: string;
   variantId?: VariantId; // A/B/C test variant (defaults to 'a')
+  promotionCodeId?: string; // Optional Stripe promotion code ID for gifts
+  metadata?: Record<string, string>; // Additional metadata
 };
 
 /**
@@ -28,7 +30,16 @@ export type CreateCheckoutSessionParams = {
 export async function createCheckoutSession(
   params: CreateCheckoutSessionParams
 ): Promise<Stripe.Checkout.Session> {
-  const { resultId, email, items, successUrl, cancelUrl, variantId = 'a' } = params;
+  const {
+    resultId,
+    email,
+    items,
+    successUrl,
+    cancelUrl,
+    variantId = 'a',
+    promotionCodeId,
+    metadata: additionalMetadata = {},
+  } = params;
 
   // Convert items to Stripe line items with variant-aware pricing
   const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = items.map((item) => {
@@ -59,7 +70,7 @@ export async function createCheckoutSession(
   });
 
   // Create checkout session
-  const session = await stripe.checkout.sessions.create({
+  const sessionConfig: Stripe.Checkout.SessionCreateParams = {
     payment_method_types: ['card'],
     line_items: lineItems,
     mode: 'payment',
@@ -83,6 +94,7 @@ export async function createCheckoutSession(
       email,
       product_ids: items.map((item) => item.productId).join(','),
       variant_id: variantId, // Store variant for webhook processing
+      ...additionalMetadata, // Merge additional metadata (e.g., gift_code)
     },
     allow_promotion_codes: true,
     billing_address_collection: 'auto',
@@ -92,7 +104,14 @@ export async function createCheckoutSession(
     // consent_collection: {
     //   terms_of_service: 'required',
     // },
-  });
+  };
+
+  // Add promotion code if provided (for gift redemption)
+  if (promotionCodeId) {
+    sessionConfig.discounts = [{ promotion_code: promotionCodeId }];
+  }
+
+  const session = await stripe.checkout.sessions.create(sessionConfig);
 
   return session;
 }

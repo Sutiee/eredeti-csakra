@@ -227,6 +227,41 @@ export async function POST(request: NextRequest) {
         has_recipient: !!recipientEmail,
       });
 
+      // Send gift buyer confirmation email in background
+      const triggerGiftBuyerEmail = async () => {
+        try {
+          const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+          const response = await fetch(`${siteUrl}/api/send-gift-buyer-email`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              buyerName: originalSession.customer_details?.name || 'Vásárló',
+              buyerEmail: originalSession.customer_email || '',
+              giftCode: giftSetup.giftCode,
+              expiresAt: giftSetup.expiresAt.toISOString(),
+              productName: upsellProduct.name,
+              recipientEmail: recipientEmail || null,
+            }),
+          });
+
+          if (!response.ok) {
+            console.error('[UPSELL] Gift buyer email failed');
+          } else {
+            console.log('[UPSELL] Gift buyer email sent successfully');
+          }
+        } catch (error) {
+          console.error('[UPSELL] Gift buyer email error:', error);
+        }
+      };
+
+      // Use waitUntil for email sending
+      const waitUntil = (request as any).waitUntil;
+      if (waitUntil && typeof waitUntil === 'function') {
+        waitUntil(triggerGiftBuyerEmail());
+      } else {
+        triggerGiftBuyerEmail().catch(console.error);
+      }
+
       // Return gift success response
       return NextResponse.json({
         success: true,
