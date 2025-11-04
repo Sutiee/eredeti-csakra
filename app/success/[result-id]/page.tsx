@@ -264,51 +264,15 @@ export default function SuccessPage() {
 
   /**
    * Handle gift modal purchase success
-   * Refresh purchases list
+   * Gift purchases are saved to a separate table (gift_purchases) and don't need polling
+   * Simply close the modal and mark sequence as complete
    */
   const handleGiftPurchaseSuccess = async () => {
-    try {
-      console.log('[GIFT PURCHASE SUCCESS] Starting purchase refresh...');
+    console.log('[GIFT PURCHASE SUCCESS] Gift purchase completed successfully');
 
-      // Poll for new purchase with up to 10 retries (10 seconds total)
-      const expectedPurchaseCount = purchases.length + 1;
-
-      for (let attempt = 0; attempt < 10; attempt++) {
-        // Wait 1 second between attempts
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-
-        // Fetch purchases
-        const response = await fetch(`/api/purchases/${resultId}`);
-        const data = await response.json();
-
-        if (data.data && data.data.length >= expectedPurchaseCount) {
-          // New purchase found!
-          console.log('[GIFT PURCHASE SUCCESS] New purchase found:', {
-            expected: expectedPurchaseCount,
-            actual: data.data.length,
-            attempt: attempt + 1,
-          });
-
-          // Update purchases
-          setPurchases(data.data);
-
-          // Close gift modal and mark sequence complete
-          setUpsellState('completed');
-
-          return;
-        }
-
-        console.log(`[GIFT PURCHASE SUCCESS] Waiting for new purchase (${attempt + 1}/10)...`);
-      }
-
-      // Max retries exceeded
-      console.error('[GIFT PURCHASE SUCCESS] Failed to find new purchase after polling');
-      alert('A vásárlás sikeres volt, de az oldal frissítése szükséges. Kérlek töltsd újra az oldalt!');
-
-    } catch (error) {
-      console.error('[GIFT PURCHASE SUCCESS] Error during purchase refresh:', error);
-      alert('Hiba történt a vásárlás frissítésekor. Kérlek töltsd újra az oldalt!');
-    }
+    // Close gift modal and mark sequence complete
+    // No need to poll - gift purchases are in a separate table and don't generate PDFs immediately
+    setUpsellState('completed');
   };
 
   /**
