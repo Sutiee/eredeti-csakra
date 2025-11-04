@@ -41,6 +41,16 @@ export async function createGiftCoupon(
   expiresAt: number
 ): Promise<Stripe.Coupon> {
   try {
+    console.log('[GIFT COUPON] Creating coupon with params:', {
+      percent_off: 100,
+      duration: 'once',
+      max_redemptions: 1,
+      redeem_by: expiresAt,
+      name: `Gift: ${productId} (${giftCode})`,
+      gift_code: giftCode,
+      product_id: productId,
+    });
+
     const coupon = await stripe.coupons.create({
       percent_off: 100,
       duration: 'once',
@@ -54,7 +64,7 @@ export async function createGiftCoupon(
       },
     });
 
-    console.log('[GIFT COUPON] Created:', {
+    console.log('[GIFT COUPON] Created successfully:', {
       coupon_id: coupon.id,
       gift_code: giftCode,
       product_id: productId,
@@ -62,9 +72,15 @@ export async function createGiftCoupon(
     });
 
     return coupon;
-  } catch (error) {
-    console.error('[GIFT COUPON] Error creating coupon:', error);
-    throw new Error('Failed to create gift coupon');
+  } catch (error: any) {
+    console.error('[GIFT COUPON] Error creating coupon:', {
+      error_message: error.message,
+      error_type: error.type,
+      error_code: error.code,
+      error_decline_code: error.decline_code,
+      full_error: error,
+    });
+    throw new Error(`Failed to create gift coupon: ${error.message || 'Unknown error'}`);
   }
 }
 
@@ -80,6 +96,12 @@ export async function createPromotionCode(
   giftCode: string
 ): Promise<Stripe.PromotionCode> {
   try {
+    console.log('[GIFT PROMO] Creating promotion code with params:', {
+      coupon: couponId,
+      code: giftCode,
+      max_redemptions: 1,
+    });
+
     const promoCode = (await stripe.promotionCodes.create({
       coupon: couponId,
       code: giftCode,
@@ -90,16 +112,21 @@ export async function createPromotionCode(
       },
     } as any)) as Stripe.PromotionCode;
 
-    console.log('[GIFT PROMO] Created:', {
+    console.log('[GIFT PROMO] Created successfully:', {
       promo_code_id: promoCode.id,
       code: giftCode,
       coupon_id: couponId,
     });
 
     return promoCode;
-  } catch (error) {
-    console.error('[GIFT PROMO] Error creating promotion code:', error);
-    throw new Error('Failed to create promotion code');
+  } catch (error: any) {
+    console.error('[GIFT PROMO] Error creating promotion code:', {
+      error_message: error.message,
+      error_type: error.type,
+      error_code: error.code,
+      full_error: error,
+    });
+    throw new Error(`Failed to create promotion code: ${error.message || 'Unknown error'}`);
   }
 }
 
@@ -120,17 +147,27 @@ export async function setupGiftRedemption(
   try {
     // Generate unique gift code
     const giftCode = generateGiftCode();
+    console.log('[GIFT SETUP] Starting setup for product:', productId, 'with code:', giftCode);
 
     // Set expiration to 30 days from now
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 30);
     const expiresAtUnix = Math.floor(expiresAt.getTime() / 1000);
 
+    console.log('[GIFT SETUP] Expiration set to:', {
+      date: expiresAt.toISOString(),
+      unix: expiresAtUnix,
+    });
+
     // Create Stripe coupon (100% off, single-use, 30-day expiration)
+    console.log('[GIFT SETUP] Step 1: Creating coupon...');
     const coupon = await createGiftCoupon(giftCode, productId, expiresAtUnix);
+    console.log('[GIFT SETUP] Step 1 complete: Coupon created:', coupon.id);
 
     // Create Stripe promotion code (linked to coupon)
+    console.log('[GIFT SETUP] Step 2: Creating promotion code...');
     const promoCode = await createPromotionCode(coupon.id, giftCode);
+    console.log('[GIFT SETUP] Step 2 complete: Promo code created:', promoCode.id);
 
     console.log('[GIFT SETUP] Complete:', {
       gift_code: giftCode,
@@ -145,9 +182,14 @@ export async function setupGiftRedemption(
       stripePromoCodeId: promoCode.id,
       expiresAt,
     };
-  } catch (error) {
-    console.error('[GIFT SETUP] Failed:', error);
-    throw new Error('Failed to setup gift redemption');
+  } catch (error: any) {
+    console.error('[GIFT SETUP] Failed with error:', {
+      error_message: error.message,
+      error_stack: error.stack,
+      error_type: error.type,
+      product_id: productId,
+    });
+    throw new Error(`Failed to setup gift redemption: ${error.message || 'Unknown error'}`);
   }
 }
 

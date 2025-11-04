@@ -10,10 +10,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import Stripe from 'stripe';
 import { createSupabaseClient } from '@/lib/supabase/client';
-import { PRODUCTS } from '@/lib/stripe/products';
+import { PRODUCTS, getProductPrice } from '@/lib/stripe/products';
 import { logEvent } from '@/lib/admin/tracking/server';
 import { setupGiftRedemption } from '@/lib/stripe/gift-coupons';
 import type { ProductId } from '@/lib/pricing/variants';
+import { type VariantId, isValidVariant } from '@/lib/pricing/variants';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2025-09-30.clover',
@@ -118,11 +119,30 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Get variant from original checkout session metadata (for consistent pricing)
+    const variantFromSession = originalSession.metadata?.variant_id;
+    const variant: VariantId = variantFromSession && isValidVariant(variantFromSession) ? variantFromSession : 'a';
+
+    console.log('[UPSELL] Variant from original session:', {
+      session_variant: variantFromSession,
+      resolved_variant: variant,
+    });
+
+    // Get variant-aware price (important for gift products with A/B/C testing)
+    const productPrice = getProductPrice(upsellProductId as any, variant);
+
+    console.log('[UPSELL] Product pricing:', {
+      product_id: upsellProductId,
+      variant: variant,
+      price: productPrice,
+      is_gift: isGiftProduct,
+    });
+
     // 4. Create a new Payment Intent (charge the saved card)
-    console.log('[UPSELL] Creating payment intent for:', upsellProduct.price, 'HUF');
+    console.log('[UPSELL] Creating payment intent for:', productPrice, 'HUF');
 
     const newPaymentIntent = await stripe.paymentIntents.create({
-      amount: upsellProduct.price * 100, // HUF in fillér (cents)
+      amount: productPrice * 100, // HUF in fillér (cents)
       currency: 'huf',
       customer: customerId,
       payment_method: paymentMethodId,
@@ -222,7 +242,7 @@ export async function POST(request: NextRequest) {
       await logEvent('gift_purchased', {
         result_id: resultId,
         product_id: upsellProductId,
-        amount: upsellProduct.price,
+        amount: productPrice,
         gift_code: giftSetup.giftCode,
         has_recipient: !!recipientEmail,
       });
@@ -268,7 +288,7 @@ export async function POST(request: NextRequest) {
         gift_code: giftSetup.giftCode,
         expires_at: giftSetup.expiresAt.toISOString(),
         product_name: upsellProduct.name,
-        amount: upsellProduct.price,
+        amount: productPrice,
         message: 'Sikeres ajándék vásárlás! Az ajándékkód hamarosan megérkezik emailben.',
       });
     }
@@ -283,7 +303,7 @@ export async function POST(request: NextRequest) {
         product_name: upsellProduct.name,
         stripe_session_id: null, // No new session for upsell
         stripe_payment_intent_id: newPaymentIntent.id,
-        amount: upsellProduct.price,
+        amount: productPrice,
         currency: 'HUF',
         status: 'completed',
       })
@@ -311,7 +331,7 @@ export async function POST(request: NextRequest) {
     await logEvent('upsell_purchased', {
       result_id: resultId,
       product_id: upsellProductId,
-      amount: upsellProduct.price,
+      amount: productPrice,
       original_session_id: sessionId,
       purchase_id: purchase.id,
     });
@@ -364,7 +384,7 @@ export async function POST(request: NextRequest) {
       success: true,
       purchase_id: purchase.id,
       product_name: upsellProduct.name,
-      amount: upsellProduct.price,
+      amount: productPrice,
       message: 'Sikeres vásárlás! Hamarosan megkapod emailben a munkafüzetet.',
     });
   } catch (error: any) {
