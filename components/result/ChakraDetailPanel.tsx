@@ -192,14 +192,14 @@ export default function ChakraDetailPanel({
 
                   {/* Warning Badge */}
                   <div
-                    className="inline-flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full font-semibold text-sm sm:text-base shadow-md"
+                    className="inline-flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full font-semibold text-xs sm:text-sm md:text-base shadow-md max-w-full"
                     style={{
                       backgroundColor: warningStyles.color,
                       color: 'white',
                       boxShadow: `0 4px 12px ${warningStyles.color}40`
                     }}
                   >
-                    <span className="text-base sm:text-lg" aria-hidden="true">
+                    <span className="text-sm sm:text-base flex-shrink-0" aria-hidden="true">
                       {warningStyles.icon}
                     </span>
                     <span className="truncate">{chakraSymbol} {name} - {warningStyles.text}</span>

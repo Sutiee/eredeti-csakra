@@ -126,14 +126,14 @@ export default function UpsellModal({
   return (
     <AnimatePresence>
       <motion.div
-        className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+        className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4 overflow-y-auto"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         onClick={onClose} // Close on backdrop click
       >
         <motion.div
-          className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl shadow-2xl max-w-2xl w-full p-8 relative"
+          className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl shadow-2xl max-w-2xl w-full p-4 sm:p-6 md:p-8 relative my-4 max-h-[95vh] overflow-y-auto"
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.9, opacity: 0 }}
@@ -153,9 +153,9 @@ export default function UpsellModal({
           {!purchased ? (
             <>
               {/* Header */}
-              <div className="text-center mb-6">
+              <div className="text-center mb-4 sm:mb-6">
                 <motion.h2
-                  className="text-3xl font-serif font-bold text-purple-900 mb-2"
+                  className="text-xl sm:text-2xl md:text-3xl font-serif font-bold text-purple-900 mb-2"
                   initial={{ y: -20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ delay: 0.1 }}
@@ -163,7 +163,7 @@ export default function UpsellModal({
                   🎉 Gratulálunk a vásárlásodhoz!
                 </motion.h2>
                 <motion.p
-                  className="text-purple-700 text-lg"
+                  className="text-purple-700 text-sm sm:text-base md:text-lg"
                   initial={{ y: -10, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ delay: 0.2 }}
@@ -174,44 +174,44 @@ export default function UpsellModal({
 
               {/* Product showcase */}
               <motion.div
-                className="bg-white rounded-xl p-6 mb-6 shadow-md"
+                className="bg-white rounded-xl p-4 sm:p-6 mb-4 sm:mb-6 shadow-md"
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.3 }}
               >
-                <div className="flex items-start gap-4">
-                  <div className="text-5xl">📘</div>
-                  <div className="flex-1">
-                    <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                <div className="flex items-start gap-3 sm:gap-4">
+                  <div className="text-3xl sm:text-4xl md:text-5xl flex-shrink-0">📘</div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 mb-2">
                       30 Napos Csakra Munkafüzet
                     </h3>
-                    <ul className="space-y-2 text-gray-700 mb-4">
+                    <ul className="space-y-1.5 sm:space-y-2 text-gray-700 mb-4 text-sm sm:text-base">
                       <li className="flex items-start gap-2">
-                        <span className="text-purple-600">✨</span>
+                        <span className="text-purple-600 flex-shrink-0">✨</span>
                         <span>Napi 10-15 perces gyakorlatok minden csakrára</span>
                       </li>
                       <li className="flex items-start gap-2">
-                        <span className="text-purple-600">🧘</span>
+                        <span className="text-purple-600 flex-shrink-0">🧘</span>
                         <span>Személyre szabott meditációs scriptek</span>
                       </li>
                       <li className="flex items-start gap-2">
-                        <span className="text-purple-600">📝</span>
+                        <span className="text-purple-600 flex-shrink-0">📝</span>
                         <span>Journaling kérdések önreflexióhoz</span>
                       </li>
                       <li className="flex items-start gap-2">
-                        <span className="text-purple-600">📊</span>
+                        <span className="text-purple-600 flex-shrink-0">📊</span>
                         <span>Heti értékelő lapok és haladás követés</span>
                       </li>
                     </ul>
 
-                    <div className="flex items-baseline gap-3 flex-wrap">
-                      <span className="text-3xl font-bold text-purple-600">
+                    <div className="flex items-baseline gap-2 sm:gap-3 flex-wrap">
+                      <span className="text-xl sm:text-2xl md:text-3xl font-bold text-purple-600">
                         {workbookPrice.toLocaleString('hu-HU')} Ft
                       </span>
-                      <span className="text-xl text-gray-400 line-through">
+                      <span className="text-base sm:text-lg md:text-xl text-gray-400 line-through">
                         {originalWorkbookPrice.toLocaleString('hu-HU')} Ft
                       </span>
-                      <span className="bg-red-500 text-white px-3 py-1 rounded-full text-sm font-bold">
+                      <span className="bg-red-500 text-white px-2 py-0.5 sm:px-3 sm:py-1 rounded-full text-xs sm:text-sm font-bold whitespace-nowrap">
                         -{discountPercent}% 🔥
                       </span>
                     </div>
@@ -223,16 +223,16 @@ export default function UpsellModal({
               <motion.div
                 className={`${
                   isUrgent ? 'bg-red-50 border-red-200' : 'bg-orange-50 border-orange-200'
-                } border-2 rounded-lg p-4 mb-6 text-center`}
+                } border-2 rounded-lg p-3 sm:p-4 mb-4 sm:mb-6 text-center`}
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ delay: 0.4 }}
               >
-                <p className={`${isUrgent ? 'text-red-800' : 'text-orange-800'} font-semibold mb-1`}>
+                <p className={`${isUrgent ? 'text-red-800' : 'text-orange-800'} font-semibold mb-1 text-sm sm:text-base`}>
                   ⏰ Ez az ajánlat hamarosan lejár!
                 </p>
                 <motion.p
-                  className={`text-3xl font-bold ${isUrgent ? 'text-red-600' : 'text-orange-600'}`}
+                  className={`text-2xl sm:text-3xl font-bold ${isUrgent ? 'text-red-600' : 'text-orange-600'}`}
                   animate={isUrgent ? { scale: [1, 1.05, 1] } : {}}
                   transition={isUrgent ? { duration: 1, repeat: Infinity } : {}}
                 >
@@ -259,7 +259,7 @@ export default function UpsellModal({
 
               {/* CTA buttons */}
               <motion.div
-                className="flex flex-col sm:flex-row gap-4"
+                className="flex flex-col sm:flex-row gap-3 sm:gap-4"
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.5 }}
@@ -267,12 +267,12 @@ export default function UpsellModal({
                 <button
                   onClick={handlePurchase}
                   disabled={loading}
-                  className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 text-white py-4 px-6 rounded-xl font-bold text-lg hover:from-purple-700 hover:to-pink-700 transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 sm:py-4 px-4 sm:px-6 rounded-xl font-bold text-base sm:text-lg hover:from-purple-700 hover:to-pink-700 transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {loading ? (
                     <>
                       <LoadingSpinner size="sm" />
-                      <span>Feldolgozás...</span>
+                      <span className="text-sm sm:text-base">Feldolgozás...</span>
                     </>
                   ) : (
                     <>
@@ -284,7 +284,7 @@ export default function UpsellModal({
                 <button
                   onClick={onClose}
                   disabled={loading}
-                  className="px-6 py-4 text-gray-600 hover:text-gray-800 font-semibold hover:bg-gray-100 rounded-xl transition-colors disabled:opacity-50"
+                  className="px-4 sm:px-6 py-3 sm:py-4 text-gray-600 hover:text-gray-800 font-semibold hover:bg-gray-100 rounded-xl transition-colors disabled:opacity-50 text-sm sm:text-base"
                 >
                   Nem, köszönöm
                 </button>
