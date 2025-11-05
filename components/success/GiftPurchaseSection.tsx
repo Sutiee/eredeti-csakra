@@ -6,7 +6,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { useAnalytics } from '@/lib/admin/tracking/client';
@@ -38,7 +38,29 @@ export default function GiftPurchaseSection({
   const [sendingEmail, setSendingEmail] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [buyerName, setBuyerName] = useState<string>('Ajándékozó');
   const { trackEvent } = useAnalytics();
+
+  // Fetch buyer name from quiz results
+  useEffect(() => {
+    const fetchBuyerName = async () => {
+      try {
+        const response = await fetch(`/api/result/${resultId}`);
+        const data = await response.json();
+
+        if (response.ok && data.data?.name) {
+          setBuyerName(data.data.name);
+        }
+      } catch (error) {
+        console.error('[GIFT] Failed to fetch buyer name:', error);
+        // Keep default 'Ajándékozó'
+      }
+    };
+
+    if (resultId) {
+      fetchBuyerName();
+    }
+  }, [resultId]);
 
   // Get current variant and determine which gift product to offer
   const variant = getCurrentVariant();
@@ -163,7 +185,7 @@ export default function GiftPurchaseSection({
           giftCode: giftData.giftCode,
           productName: giftData.productName,
           expiresAt: giftData.expiresAt,
-          senderName: 'Ajándékozó', // Could be made dynamic
+          senderName: buyerName, // Dynamic buyer name from quiz results
         }),
       });
 

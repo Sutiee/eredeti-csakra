@@ -32,6 +32,7 @@ export default function GiftRedemptionPage() {
   const [giftData, setGiftData] = useState<GiftValidationData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [hasQuiz, setHasQuiz] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   /**
    * Validate gift code on mount
@@ -78,6 +79,19 @@ export default function GiftRedemptionPage() {
       setHasQuiz(true);
     }
   }, []);
+
+  /**
+   * Copy gift code to clipboard
+   */
+  const handleCopyCode = async () => {
+    try {
+      await navigator.clipboard.writeText(giftCode);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('[GIFT PAGE] Copy failed:', err);
+    }
+  };
 
   /**
    * Handle gift redemption
@@ -239,12 +253,58 @@ export default function GiftRedemptionPage() {
             {/* Gift Code Display */}
             <div className="bg-gradient-to-br from-amber-50 to-yellow-50 border-2 border-dashed border-amber-400 rounded-xl p-6 mb-6 text-center">
               <p className="text-sm text-gray-600 mb-2">Ajándékkód:</p>
-              <p className="text-2xl font-bold text-amber-600 tracking-wider mb-2">
-                {giftCode}
-              </p>
+              <div className="flex items-center justify-center gap-3 mb-2">
+                <p className="text-2xl font-bold text-amber-600 tracking-wider">
+                  {giftCode}
+                </p>
+                <button
+                  onClick={handleCopyCode}
+                  className="p-2 rounded-lg bg-amber-100 hover:bg-amber-200 text-amber-700 transition-colors"
+                  title="Kód másolása"
+                >
+                  {copied ? (
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                  ) : (
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                      />
+                    </svg>
+                  )}
+                </button>
+              </div>
               <p className="text-xs text-gray-500">
                 Érvényes: {expiryDate}-ig
               </p>
+              {copied && (
+                <motion.p
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="text-xs text-green-600 font-semibold mt-2"
+                >
+                  ✓ Másolva!
+                </motion.p>
+              )}
             </div>
 
             {/* Product Info */}
