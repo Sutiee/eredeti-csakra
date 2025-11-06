@@ -19,6 +19,7 @@ const navItems: NavItem[] = [
   { href: '/admin', label: 'Áttekintés', icon: '📊' },
   { href: '/admin/users', label: 'Felhasználók', icon: '👥' },
   { href: '/admin/products', label: 'Termékek', icon: '📈' },
+  { href: '/admin/newsletter', label: 'Hírlevél', icon: '📧' },
   { href: '/admin/settings', label: 'Beállítások', icon: '🔧' },
 ];
 

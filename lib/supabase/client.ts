@@ -44,3 +44,25 @@ export function createSupabaseClient() {
     }
   );
 }
+
+/**
+ * Create a Supabase admin client with service role key
+ * Bypasses Row Level Security (RLS) - use only in secure server-side contexts
+ * Required for admin operations like creating recipient lists
+ */
+export function createServiceRoleClient() {
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    throw new Error('Missing Supabase service role environment variables');
+  }
+  return createClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY,
+    {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+        detectSessionInUrl: false,
+      },
+    }
+  );
+}

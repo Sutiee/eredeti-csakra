@@ -374,6 +374,170 @@ export type Database = {
         }
         Relationships: []
       }
+      newsletter_campaigns: {
+        Row: {
+          id: string
+          name: string
+          subject: string
+          status: string
+          total_recipients: number
+          sent_count: number
+          failed_count: number
+          started_at: string | null
+          completed_at: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          subject: string
+          status?: string
+          total_recipients?: number
+          sent_count?: number
+          failed_count?: number
+          started_at?: string | null
+          completed_at?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          subject?: string
+          status?: string
+          total_recipients?: number
+          sent_count?: number
+          failed_count?: number
+          started_at?: string | null
+          completed_at?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
+      newsletter_sends: {
+        Row: {
+          id: string
+          campaign_id: string
+          email: string
+          name: string
+          variant: string
+          status: string
+          resend_email_id: string | null
+          error_message: string | null
+          sent_at: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          campaign_id: string
+          email: string
+          name: string
+          variant: string
+          status?: string
+          resend_email_id?: string | null
+          error_message?: string | null
+          sent_at?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          campaign_id?: string
+          email?: string
+          name?: string
+          variant?: string
+          status?: string
+          resend_email_id?: string | null
+          error_message?: string | null
+          sent_at?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "newsletter_sends_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "newsletter_campaigns"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      recipient_lists: {
+        Row: {
+          id: string
+          name: string
+          description: string | null
+          total_recipients: number
+          variant_distribution: Json
+          created_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          description?: string | null
+          total_recipients?: number
+          variant_distribution?: Json
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          description?: string | null
+          total_recipients?: number
+          variant_distribution?: Json
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      recipients: {
+        Row: {
+          id: string
+          recipient_list_id: string
+          name: string
+          email: string
+          variant: string
+          result_id: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          recipient_list_id: string
+          name: string
+          email: string
+          variant: string
+          result_id?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          recipient_list_id?: string
+          name?: string
+          email?: string
+          variant?: string
+          result_id?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recipients_recipient_list_id_fkey"
+            columns: ["recipient_list_id"]
+            isOneToOne: false
+            referencedRelation: "recipient_lists"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recipients_result_id_fkey"
+            columns: ["result_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_results"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
     }
     Views: {
       [_ in never]: never

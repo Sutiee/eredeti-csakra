@@ -152,3 +152,42 @@ export type Purchase = {
   created_at: string;
   updated_at: string;
 };
+
+// Newsletter Types
+export type NewsletterVariant = 'a' | 'b' | 'c';
+
+export type NewsletterRecipient = {
+  email: string;
+  name: string;
+  variant: NewsletterVariant;
+};
+
+export type NewsletterCampaignStatus = 'draft' | 'sending' | 'completed' | 'failed';
+
+export type NewsletterCampaign = {
+  id: string;
+  name: string;
+  subject: string;
+  status: NewsletterCampaignStatus;
+  total_recipients: number;
+  sent_count: number;
+  failed_count: number;
+  started_at: string | null;
+  completed_at: string | null;
+  created_at: string;
+};
+
+export type NewsletterSendStatus = 'pending' | 'sent' | 'failed';
+
+export type NewsletterSend = {
+  id: string;
+  campaign_id: string;
+  email: string;
+  name: string;
+  variant: NewsletterVariant;
+  status: NewsletterSendStatus;
+  resend_email_id: string | null;
+  error_message: string | null;
+  sent_at: string;
+  created_at: string;
+};
