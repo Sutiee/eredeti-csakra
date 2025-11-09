@@ -93,7 +93,7 @@ export async function logEvent(
     const event: Omit<AnalyticsEvent, 'id' | 'created_at'> = {
       event_name: eventName,
       event_category: inferCategory(eventName),
-      event_data: eventData,
+      properties: eventData,  // Database column name: 'properties' (not 'event_data')
       session_id: context?.sessionId,
       result_id: context?.resultId,
       ip_address: context?.ipAddress,

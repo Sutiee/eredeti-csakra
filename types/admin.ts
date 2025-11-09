@@ -22,7 +22,7 @@ export type AnalyticsEvent = {
   id?: string;
   event_name: string;
   event_category: EventCategory;
-  event_data?: Record<string, any>;
+  properties?: Record<string, any>;  // Database column name: 'properties' (not 'event_data')
   session_id?: string;
   result_id?: string;
   ip_address?: string;

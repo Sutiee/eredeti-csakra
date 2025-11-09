@@ -101,10 +101,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const userAgent = getUserAgent(request);
 
     // Prepare event object
+    // Note: Client sends 'event_data', but database column is 'properties'
     const event: Omit<AnalyticsEvent, 'id' | 'created_at'> = {
       event_name,
       event_category: inferCategory(event_name),
-      event_data: event_data || {},
+      properties: event_data || {},  // Map event_data → properties (database column name)
       session_id,
       result_id,
       ip_address: ipAddress,
