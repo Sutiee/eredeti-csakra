@@ -13,8 +13,8 @@ import { createServiceRoleClient } from "@/lib/supabase/client";
 import { logger } from "@/lib/utils/logger";
 import { generateNewsletterEmail as generateActualNewsletterEmail } from "@/lib/email/newsletter-templates";
 
-// Next.js route config - Free tier limited to 10 seconds
-// For larger campaigns, use external queue service (e.g., Vercel Cron, BullMQ)
+// Next.js route config - Use Edge Runtime for waitUntil() API support
+export const runtime = 'edge'; // Enable Edge Runtime for background task continuation
 export const maxDuration = 10; // Free tier max (Pro: 60, Enterprise: 300)
 
 // Resend client initialization
@@ -67,7 +67,10 @@ function chunkArray<T>(array: T[], size: number): T[][] {
 /**
  * POST handler for batch newsletter send
  */
-export async function POST(request: NextRequest): Promise<NextResponse> {
+export async function POST(
+  request: NextRequest,
+  context?: { waitUntil?: (promise: Promise<any>) => void }
+): Promise<NextResponse> {
   // Protect route - require admin authentication
   const authError = await protectAdminRoute(request);
   if (authError) return authError;
@@ -218,25 +221,26 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       data: { campaignId, campaignName },
     });
 
-    // Start background processing using waitUntil (ensures completion even after response)
-    // @ts-ignore - waitUntil is available in Vercel Edge/Node runtime
-    if (typeof globalThis.waitUntil === 'function') {
-      // @ts-ignore
-      globalThis.waitUntil(
-        processCampaignInBackground(campaignId, recipients, subject, fromEmail).catch((error) => {
-          logger.error("Background campaign processing failed", error, {
-            context: "POST /api/admin/newsletter/send",
-            data: { campaignId },
-          });
-        })
-      );
+    // Start background processing using waitUntil (Edge Runtime - ensures completion even after response)
+    const backgroundTask = processCampaignInBackground(campaignId, recipients, subject, fromEmail).catch((error) => {
+      logger.error("Background campaign processing failed", error, {
+        context: "POST /api/admin/newsletter/send",
+        data: { campaignId },
+      });
+    });
+
+    // Use waitUntil if available (Edge Runtime on Vercel)
+    if (context?.waitUntil) {
+      context.waitUntil(backgroundTask);
+      logger.info("Background task registered with waitUntil (Edge Runtime)", {
+        context: "POST /api/admin/newsletter/send",
+        data: { campaignId },
+      });
     } else {
-      // Fallback for local development (no waitUntil)
-      processCampaignInBackground(campaignId, recipients, subject, fromEmail).catch((error) => {
-        logger.error("Background campaign processing failed", error, {
-          context: "POST /api/admin/newsletter/send",
-          data: { campaignId },
-        });
+      // Fallback: fire-and-forget (local development or Node runtime)
+      logger.warn("waitUntil not available - using fire-and-forget (may be interrupted)", {
+        context: "POST /api/admin/newsletter/send",
+        data: { campaignId },
       });
     }
 
