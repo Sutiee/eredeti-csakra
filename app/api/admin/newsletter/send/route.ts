@@ -13,8 +13,9 @@ import { createServiceRoleClient } from "@/lib/supabase/client";
 import { logger } from "@/lib/utils/logger";
 import { generateNewsletterEmail as generateActualNewsletterEmail } from "@/lib/email/newsletter-templates";
 
-// Next.js route config - increase timeout to 60 seconds for batch sending
-export const maxDuration = 60; // Vercel Pro required for values > 10
+// Next.js route config - Free tier limited to 10 seconds
+// For larger campaigns, use external queue service (e.g., Vercel Cron, BullMQ)
+export const maxDuration = 10; // Free tier max (Pro: 60, Enterprise: 300)
 
 // Resend client initialization
 if (!process.env.RESEND_API_KEY) {
@@ -24,7 +25,10 @@ if (!process.env.RESEND_API_KEY) {
 const resend = new Resend(process.env.RESEND_API_KEY || "");
 
 // Constants
-const MAX_RECIPIENTS = 1000;
+// VERCEL FREE TIER LIMIT: Max ~200 emails per campaign (2 batches × 100 emails)
+// This ensures completion within 10-second timeout (2 batches × 500ms delay + API time)
+// For larger campaigns, upgrade to Pro ($20/mo) or use external queue service
+const MAX_RECIPIENTS = 200; // Free tier safe limit (Pro: 1000+)
 const BATCH_SIZE = 100; // Resend batch API limit
 const RATE_LIMIT_DELAY_MS = 500; // 2 requests per second
 
@@ -214,13 +218,27 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       data: { campaignId, campaignName },
     });
 
-    // Start background processing (fire and forget)
-    processCampaignInBackground(campaignId, recipients, subject, fromEmail).catch((error) => {
-      logger.error("Background campaign processing failed", error, {
-        context: "POST /api/admin/newsletter/send",
-        data: { campaignId },
+    // Start background processing using waitUntil (ensures completion even after response)
+    // @ts-ignore - waitUntil is available in Vercel Edge/Node runtime
+    if (typeof globalThis.waitUntil === 'function') {
+      // @ts-ignore
+      globalThis.waitUntil(
+        processCampaignInBackground(campaignId, recipients, subject, fromEmail).catch((error) => {
+          logger.error("Background campaign processing failed", error, {
+            context: "POST /api/admin/newsletter/send",
+            data: { campaignId },
+          });
+        })
+      );
+    } else {
+      // Fallback for local development (no waitUntil)
+      processCampaignInBackground(campaignId, recipients, subject, fromEmail).catch((error) => {
+        logger.error("Background campaign processing failed", error, {
+          context: "POST /api/admin/newsletter/send",
+          data: { campaignId },
+        });
       });
-    });
+    }
 
     // Return immediately with campaign ID
     return NextResponse.json({
