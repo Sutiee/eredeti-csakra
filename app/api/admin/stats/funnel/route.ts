@@ -63,10 +63,10 @@ export async function GET(request: NextRequest) {
     ).size;
 
     // Stage 3: Reached Q10 (quiz_question_answered where question >= 10)
-    // FIXED: Use analytics_events
+    // FIXED: Use analytics_events with correct column name 'properties'
     const { data: q10Reached, error: q10Error } = await supabase
       .from('analytics_events')
-      .select('session_id, event_data')
+      .select('session_id, properties')
       .eq('event_name', 'quiz_question_answered')
       .gte('created_at', startDateStr);
 
@@ -76,7 +76,7 @@ export async function GET(request: NextRequest) {
     const q10Sessions = new Set(
       q10Reached
         ?.filter((e: any) => {
-          const questionIndex = e.event_data?.question_index || 0;
+          const questionIndex = e.properties?.question_index || 0;
           return questionIndex >= 10;
         })
         .map((e: any) => e.session_id)
