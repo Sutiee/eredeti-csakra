@@ -20,6 +20,7 @@ const QuizSubmissionSchema = z.object({
   answers: z
     .array(z.number().int().min(1).max(4))
     .length(28, 'Pontosan 28 válasz szükséges (7 csakra × 4 kérdés)'),
+  light_result_id: z.string().uuid('Érvénytelen light_result_id formátum').optional(),
 });
 
 /**
@@ -56,7 +57,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { name, email, age, answers } = validationResult.data;
+    const { name, email, age, answers, light_result_id } = validationResult.data;
 
     // Additional validation for answers array
     try {
@@ -98,15 +99,30 @@ export async function POST(request: NextRequest) {
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     );
 
+    // Prepare insert data
+    const insertData: {
+      name: string;
+      email: string;
+      age: number | null;
+      answers: number[];
+      chakra_scores: ChakraScores;
+      light_result_id?: string;
+    } = {
+      name,
+      email,
+      age: age || null,
+      answers: answers as any, // Type assertion for JSONB
+      chakra_scores: chakraScores as any, // Type assertion for JSONB
+    };
+
+    // Include light_result_id if provided
+    if (light_result_id) {
+      insertData.light_result_id = light_result_id;
+    }
+
     const { data: result, error: dbError } = await supabase
       .from('quiz_results')
-      .insert({
-        name,
-        email,
-        age: age || null,
-        answers: answers as any, // Type assertion for JSONB
-        chakra_scores: chakraScores as any, // Type assertion for JSONB
-      })
+      .insert(insertData)
       .select('id, chakra_scores')
       .single();
 
@@ -125,6 +141,104 @@ export async function POST(request: NextRequest) {
         },
         { status: 500 }
       );
+    }
+
+    // If this is a conversion from light quiz, update related records and trigger PDF generation
+    if (light_result_id) {
+      logger.info('Processing light quiz conversion', {
+        context: 'POST /api/submit-quiz',
+        data: { light_result_id, full_result_id: result.id },
+      });
+
+      // 1. Update light result to mark as converted
+      const { error: updateLightError } = await supabase
+        .from('quiz_results')
+        .update({ converted_to_full: true })
+        .eq('id', light_result_id);
+
+      if (updateLightError) {
+        logger.error('Failed to update light result conversion status', updateLightError, {
+          context: 'POST /api/submit-quiz',
+          data: { light_result_id },
+        });
+        // Don't fail the request, just log the error
+      }
+
+      // 2. Find and update the purchase that references the light result
+      const { data: purchase, error: purchaseError } = await supabase
+        .from('purchases')
+        .select('id, product_id')
+        .eq('result_id', light_result_id)
+        .eq('status', 'completed')
+        .single();
+
+      if (purchaseError || !purchase) {
+        logger.error('Failed to find purchase for light result', purchaseError, {
+          context: 'POST /api/submit-quiz',
+          data: { light_result_id },
+        });
+        // Don't fail the request, the user still gets their result
+      } else {
+        // 3. Update the purchase with the new full result_id
+        const { error: updatePurchaseError } = await supabase
+          .from('purchases')
+          .update({ result_id: result.id })
+          .eq('id', purchase.id);
+
+        if (updatePurchaseError) {
+          logger.error('Failed to update purchase result_id', updatePurchaseError, {
+            context: 'POST /api/submit-quiz',
+            data: { purchase_id: purchase.id, new_result_id: result.id },
+          });
+        } else {
+          logger.info('Updated purchase with new full result_id', {
+            context: 'POST /api/submit-quiz',
+            data: { purchase_id: purchase.id, old_result_id: light_result_id, new_result_id: result.id },
+          });
+
+          // 4. Trigger PDF generation for the purchase
+          // Only trigger for AI Analysis PDF product (personalized report)
+          if (purchase.product_id === 'ai_analysis_pdf') {
+            try {
+              const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+              const pdfResponse = await fetch(`${baseUrl}/api/generate-detailed-report-gpt5`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ result_id: result.id }),
+              });
+
+              if (!pdfResponse.ok) {
+                const errorData = await pdfResponse.json();
+                logger.error('Failed to trigger PDF generation', errorData, {
+                  context: 'POST /api/submit-quiz',
+                  data: { result_id: result.id, purchase_id: purchase.id },
+                });
+              } else {
+                const pdfData = await pdfResponse.json();
+                logger.info('PDF generation triggered successfully', {
+                  context: 'POST /api/submit-quiz',
+                  data: { result_id: result.id, pdf_url: pdfData.pdf_url },
+                });
+
+                // Update purchase with PDF URL if returned
+                if (pdfData.pdf_url) {
+                  await supabase
+                    .from('purchases')
+                    .update({ pdf_url: pdfData.pdf_url })
+                    .eq('id', purchase.id);
+                }
+              }
+            } catch (pdfError) {
+              logger.error('Error triggering PDF generation', pdfError, {
+                context: 'POST /api/submit-quiz',
+                data: { result_id: result.id },
+              });
+            }
+          }
+        }
+      }
     }
 
     // Success response

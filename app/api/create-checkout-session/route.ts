@@ -21,6 +21,8 @@ const CreateCheckoutSchema = z.object({
       quantity: z.number().int().positive(),
     })
   ),
+  // Optional: Light quiz result ID for light quiz funnel purchases
+  light_result_id: z.string().uuid().optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -44,7 +46,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { resultId, email, items } = validation.data;
+    const { resultId, email, items, light_result_id } = validation.data;
 
     // Validate checkout items
     const itemsValidation = validateCheckoutItems(items);
@@ -69,14 +71,27 @@ export async function POST(request: NextRequest) {
     // Get app URL for success/cancel redirects
     const appUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://eredeticsakra.hu';
 
+    // Determine success URL based on whether this is a light quiz purchase
+    const successUrl = light_result_id
+      ? `${appUrl}/kviz?from=purchase&light_id=${light_result_id}`
+      : `${appUrl}/success/${resultId}?session_id={CHECKOUT_SESSION_ID}`;
+
+    // Build additional metadata for light quiz purchases
+    const additionalMetadata: Record<string, string> = {};
+    if (light_result_id) {
+      additionalMetadata.light_result_id = light_result_id;
+      additionalMetadata.is_light_purchase = 'true';
+    }
+
     // Create Stripe checkout session with variant
     const session = await createCheckoutSession({
       resultId,
       email,
       items,
-      successUrl: `${appUrl}/success/${resultId}?session_id={CHECKOUT_SESSION_ID}`,
+      successUrl,
       cancelUrl: `${appUrl}/checkout/${resultId}?canceled=true`,
       variantId, // Pass variant for dynamic pricing
+      metadata: additionalMetadata,
     });
 
     return NextResponse.json({

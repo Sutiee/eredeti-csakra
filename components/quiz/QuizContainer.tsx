@@ -12,6 +12,13 @@ import { useAnalytics } from '@/lib/admin/tracking/client';
 
 interface QuizContainerProps {
   onComplete: (answers: QuizAnswers, userInfo: UserInfo) => void;
+  initialUserInfo?: {
+    full_name?: string;
+    email?: string;
+    age?: number;
+  };
+  welcomeMessage?: string;
+  skipUserInfoForm?: boolean; // Skip the user info form and auto-submit
 }
 
 // Csakra-specifikus háttér gradiens definíciók
@@ -25,7 +32,7 @@ const chakraGradients: Record<number, string> = {
   6: 'from-violet-50 via-purple-50 to-white'    // Korona
 };
 
-export default function QuizContainer({ onComplete }: QuizContainerProps) {
+export default function QuizContainer({ onComplete, initialUserInfo, welcomeMessage, skipUserInfoForm }: QuizContainerProps) {
   // State management
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0); // 0-27
   const [answers, setAnswers] = useState<number[]>(new Array(28).fill(0));
@@ -78,8 +85,17 @@ export default function QuizContainer({ onComplete }: QuizContainerProps) {
       if (currentQuestionIndex < 27) {
         handleNext();
       } else {
-        // Utolsó kérdés után → UserInfo form
+        // Utolsó kérdés után
         setShowUserInfoForm(true);
+        if (skipUserInfoForm && initialUserInfo?.full_name && initialUserInfo?.email) {
+          // Auto-submit if we have user info and should skip the form
+          const userInfo: UserInfo = {
+            full_name: initialUserInfo.full_name,
+            email: initialUserInfo.email,
+            age: initialUserInfo.age,
+          };
+          handleUserInfoSubmit(userInfo);
+        }
       }
     }, 800);
 
@@ -94,8 +110,17 @@ export default function QuizContainer({ onComplete }: QuizContainerProps) {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else if (currentQuestionIndex === 27 && answers[27] > 0) {
-      // Utolsó kérdés után → UserInfo form (csak ha megválaszolva)
+      // Utolsó kérdés után
       setShowUserInfoForm(true);
+      if (skipUserInfoForm && initialUserInfo?.full_name && initialUserInfo?.email) {
+        // Auto-submit if we have user info and should skip the form
+        const userInfo: UserInfo = {
+          full_name: initialUserInfo.full_name,
+          email: initialUserInfo.email,
+          age: initialUserInfo.age,
+        };
+        handleUserInfoSubmit(userInfo);
+      }
     }
   };
 
@@ -136,12 +161,29 @@ export default function QuizContainer({ onComplete }: QuizContainerProps) {
   }, [autoAdvanceTimer]);
 
   // DEBUG: Auto-fill quiz (only in development)
-  const handleDebugAutoFill = () => {
+  const handleDebugAutoFill = async () => {
     // Fill all answers with random values (2-4 for variety)
     const randomAnswers = Array.from({ length: 28 }, () => Math.floor(Math.random() * 3) + 2);
     setAnswers(randomAnswers);
     // Jump to user info form
     setShowUserInfoForm(true);
+
+    // Auto-submit if skipUserInfoForm is true (coming from light quiz purchase flow)
+    if (skipUserInfoForm && initialUserInfo?.full_name && initialUserInfo?.email) {
+      const userInfo: UserInfo = {
+        full_name: initialUserInfo.full_name,
+        email: initialUserInfo.email,
+        age: initialUserInfo.age,
+      };
+      // Directly call onComplete with randomAnswers (not the state, which hasn't updated yet)
+      setIsSubmitting(true);
+      try {
+        await onComplete(randomAnswers as QuizAnswers, userInfo);
+      } catch (error) {
+        console.error('Quiz submission failed:', error);
+        setIsSubmitting(false);
+      }
+    }
   };
 
   return (
@@ -238,6 +280,24 @@ export default function QuizContainer({ onComplete }: QuizContainerProps) {
                 onBack={handleBack}
                 onNext={handleNext}
               />
+            ) : skipUserInfoForm && initialUserInfo?.full_name && initialUserInfo?.email ? (
+              // Auto-submitting - show loading state instead of form
+              <motion.div
+                key="auto-submit"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3 }}
+                className="bg-white rounded-2xl shadow-xl p-8 text-center"
+              >
+                <div className="animate-spin w-12 h-12 border-4 border-spiritual-purple-200 border-t-spiritual-purple-600 rounded-full mx-auto mb-4" />
+                <h2 className="text-2xl font-bold text-gray-800 mb-2">
+                  Eredményed feldolgozása...
+                </h2>
+                <p className="text-gray-600">
+                  Kérlek várj, amíg elkészítjük a személyre szabott elemzésedet.
+                </p>
+              </motion.div>
             ) : (
               <motion.div
                 key="user-info"
@@ -249,6 +309,8 @@ export default function QuizContainer({ onComplete }: QuizContainerProps) {
                 <UserInfoForm
                   onSubmit={handleUserInfoSubmit}
                   disabled={isSubmitting}
+                  initialValues={initialUserInfo}
+                  welcomeMessage={welcomeMessage}
                 />
               </motion.div>
             )}

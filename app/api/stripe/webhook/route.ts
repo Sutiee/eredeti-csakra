@@ -8,6 +8,7 @@ import { headers } from 'next/headers';
 import Stripe from 'stripe';
 import { stripe } from '@/lib/stripe/client';
 import { createClient } from '@supabase/supabase-js';
+import { logEvent } from '@/lib/admin/tracking/server';
 
 /**
  * Disable body parsing for webhook signature verification
@@ -60,10 +61,16 @@ async function handleCheckoutSessionCompleted(
     const email = session.customer_email || session.metadata?.email;
     const isGiftRedemption = session.metadata?.is_gift_redemption === 'true';
     const giftCode = session.metadata?.gift_code;
+    const isLightPurchase = session.metadata?.is_light_purchase === 'true';
 
     if (!resultId || !email) {
       console.error('Missing result_id or email in session metadata');
       return;
+    }
+
+    // Log light purchase detection
+    if (isLightPurchase) {
+      console.log('[WEBHOOK] Processing light quiz purchase for result:', resultId);
     }
 
     // If this is a gift redemption, update gift_purchases status
@@ -201,7 +208,75 @@ async function handleCheckoutSessionCompleted(
         continue;
       }
 
-      // Send immediate purchase confirmation email (non-blocking)
+      // Handle light purchase: update light result and send continuation email
+      if (isLightPurchase) {
+        console.log('[WEBHOOK] Updating light quiz result to converted_to_full for:', resultId);
+
+        // Track light purchase completion
+        await logEvent('light_purchase_completed', {
+          light_result_id: resultId,
+          product_id: productId,
+          amount: amount,
+          currency: currency,
+          email: email,
+        }, {
+          resultId: resultId,
+        });
+
+        // Update the light quiz result to mark it as converted
+        const { error: updateError } = await supabase
+          .from('quiz_results')
+          .update({ converted_to_full: true })
+          .eq('id', resultId)
+          .eq('quiz_type', 'light');
+
+        if (updateError) {
+          console.error('[WEBHOOK] Failed to update light result converted status:', updateError);
+        } else {
+          console.log('[WEBHOOK] Light result marked as converted:', resultId);
+        }
+
+        // Send light purchase continuation email (different from regular confirmation)
+        console.log('[WEBHOOK] Sending light purchase continuation email to:', email);
+        const sendLightPurchaseContinuationEmail = async () => {
+          try {
+            const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://eredeticsakra.hu';
+            const emailResponse = await fetch(`${siteUrl}/api/send-light-purchase-continuation`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                name: session.metadata?.name || 'Vásárló',
+                email,
+                lightResultId: resultId,
+              }),
+            });
+
+            if (!emailResponse.ok) {
+              const errorText = await emailResponse.text();
+              console.error('[WEBHOOK] Light purchase continuation email failed:', errorText);
+            } else {
+              console.log('[WEBHOOK] Light purchase continuation email sent successfully');
+            }
+          } catch (error) {
+            console.error('[WEBHOOK] Exception sending light purchase continuation email:', error);
+          }
+        };
+
+        // Use Vercel waitUntil API to ensure background task completes
+        const waitUntil = (request as any).waitUntil;
+        if (waitUntil && typeof waitUntil === 'function') {
+          waitUntil(sendLightPurchaseContinuationEmail());
+        } else {
+          // Fallback for local development
+          sendLightPurchaseContinuationEmail().catch(console.error);
+        }
+
+        // Skip PDF generation for light purchases - PDF will be generated after full quiz completion
+        console.log('[WEBHOOK] Skipping PDF generation for light purchase - will generate after full quiz');
+        continue; // Skip the rest of the processing for this line item
+      }
+
+      // Send immediate purchase confirmation email (non-blocking) - for normal purchases only
       console.log('[WEBHOOK] Sending immediate purchase confirmation email to:', email);
       const sendPurchaseConfirmationEmail = async () => {
         try {
