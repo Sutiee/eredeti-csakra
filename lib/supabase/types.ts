@@ -655,6 +655,110 @@ export type Database = {
         }
         Relationships: []
       }
+      bulk_sender_jobs: {
+        Row: {
+          id: string
+          subject: string
+          html_content: string
+          total_recipients: number
+          sent_count: number
+          failed_count: number
+          skipped_count: number
+          status: string
+          current_batch: number
+          total_batches: number
+          batch_size: number
+          delay_between_batches_ms: number
+          error_log: Json | null
+          started_at: string | null
+          completed_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          subject: string
+          html_content: string
+          total_recipients?: number
+          sent_count?: number
+          failed_count?: number
+          skipped_count?: number
+          status?: string
+          current_batch?: number
+          total_batches?: number
+          batch_size?: number
+          delay_between_batches_ms?: number
+          error_log?: Json | null
+          started_at?: string | null
+          completed_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          subject?: string
+          html_content?: string
+          total_recipients?: number
+          sent_count?: number
+          failed_count?: number
+          skipped_count?: number
+          status?: string
+          current_batch?: number
+          total_batches?: number
+          batch_size?: number
+          delay_between_batches_ms?: number
+          error_log?: Json | null
+          started_at?: string | null
+          completed_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      bulk_sender_job_recipients: {
+        Row: {
+          id: string
+          job_id: string
+          email: string
+          name: string | null
+          batch_number: number
+          status: string
+          error_message: string | null
+          sent_at: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          job_id: string
+          email: string
+          name?: string | null
+          batch_number: number
+          status?: string
+          error_message?: string | null
+          sent_at?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          job_id?: string
+          email?: string
+          name?: string | null
+          batch_number?: number
+          status?: string
+          error_message?: string | null
+          sent_at?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bulk_sender_job_recipients_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "bulk_sender_jobs"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
     }
     Views: {
       [_ in never]: never

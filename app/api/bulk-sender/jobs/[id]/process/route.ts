@@ -160,8 +160,8 @@ export async function POST(
     const emails = recipientsData.map((recipient) => ({
       from: `${settings.from_name} <${settings.from_email}>`,
       to: recipient.email,
-      subject: replacePlaceholders(jobData.subject, { email: recipient.email, name: recipient.name }),
-      html: replacePlaceholders(jobData.html_content, { email: recipient.email, name: recipient.name }),
+      subject: replacePlaceholders(jobData.subject, { email: recipient.email, name: recipient.name || undefined }),
+      html: replacePlaceholders(jobData.html_content, { email: recipient.email, name: recipient.name || undefined }),
     }));
 
     // Send batch
@@ -214,10 +214,11 @@ export async function POST(
     }
 
     // Update job progress
-    const updatedErrorLog = jobData.error_log
-      ? [...jobData.error_log, ...errorLog]
-      : errorLog.length > 0
-        ? errorLog
+    const existingLog = Array.isArray(jobData.error_log) ? jobData.error_log : [];
+    const updatedErrorLog = errorLog.length > 0
+      ? [...existingLog, ...errorLog]
+      : existingLog.length > 0
+        ? existingLog
         : null;
 
     await supabase
