@@ -26,13 +26,19 @@ const userInfoSchema = z.object({
 interface UserInfoFormProps {
   onSubmit: (userInfo: UserInfo) => void;
   disabled?: boolean;
+  initialValues?: {
+    full_name?: string;
+    email?: string;
+    age?: number;
+  };
+  welcomeMessage?: string;
 }
 
-export default function UserInfoForm({ onSubmit, disabled = false }: UserInfoFormProps) {
+export default function UserInfoForm({ onSubmit, disabled = false, initialValues, welcomeMessage }: UserInfoFormProps) {
   const [formData, setFormData] = useState({
-    full_name: '',
-    email: '',
-    age: '',
+    full_name: initialValues?.full_name || '',
+    email: initialValues?.email || '',
+    age: initialValues?.age?.toString() || '',
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
