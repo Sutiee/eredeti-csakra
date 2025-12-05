@@ -100,7 +100,12 @@ export async function getAdminUserByUsername(username: string): Promise<{
   password_hash: string;
 } | null> {
   try {
-    const supabase = createSupabaseClient();
+    // Use service role client to bypass RLS for admin operations
+    const { createClient } = await import('@supabase/supabase-js');
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
 
     const { data: user, error } = await supabase
       .from('admin_users')
