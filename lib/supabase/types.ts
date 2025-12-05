@@ -538,6 +538,123 @@ export type Database = {
           }
         ]
       }
+      bulk_sender_settings: {
+        Row: {
+          id: string
+          resend_api_key: string | null
+          from_email: string | null
+          from_name: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          resend_api_key?: string | null
+          from_email?: string | null
+          from_name?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          resend_api_key?: string | null
+          from_email?: string | null
+          from_name?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      bulk_sender_unsubscribes: {
+        Row: {
+          id: string
+          email: string
+          reason: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          email: string
+          reason?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          email?: string
+          reason?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
+      bulk_sender_templates: {
+        Row: {
+          id: string
+          name: string
+          subject: string
+          html_content: string
+          is_default: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          subject: string
+          html_content: string
+          is_default?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          subject?: string
+          html_content?: string
+          is_default?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      bulk_sender_history: {
+        Row: {
+          id: string
+          subject: string
+          recipient_count: number
+          sent_count: number
+          failed_count: number
+          skipped_count: number
+          status: string
+          template_id: string | null
+          error_log: Json | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          subject: string
+          recipient_count: number
+          sent_count: number
+          failed_count: number
+          skipped_count: number
+          status: string
+          template_id?: string | null
+          error_log?: Json | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          subject?: string
+          recipient_count?: number
+          sent_count?: number
+          failed_count?: number
+          skipped_count?: number
+          status?: string
+          template_id?: string | null
+          error_log?: Json | null
+          created_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

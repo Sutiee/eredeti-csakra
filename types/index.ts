@@ -191,3 +191,60 @@ export type NewsletterSend = {
   sent_at: string;
   created_at: string;
 };
+
+// ============================================
+// Bulk Email Sender Types
+// ============================================
+
+export type BulkSenderSettings = {
+  id: string;
+  resend_api_key: string | null;
+  from_email: string | null;
+  from_name: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type BulkSenderUnsubscribe = {
+  id: string;
+  email: string;
+  reason: string | null;
+  created_at: string;
+};
+
+export type BulkSenderTemplate = {
+  id: string;
+  name: string;
+  subject: string;
+  html_content: string;
+  is_default: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type BulkSenderHistoryStatus = 'completed' | 'partial' | 'failed' | 'stopped';
+
+export type BulkSenderHistory = {
+  id: string;
+  subject: string;
+  recipient_count: number;
+  sent_count: number;
+  failed_count: number;
+  skipped_count: number;
+  status: BulkSenderHistoryStatus;
+  template_id: string | null;
+  error_log: Record<string, string>[] | null;
+  created_at: string;
+};
+
+export type BulkSenderRecipient = {
+  email: string;
+  name?: string;
+};
+
+export type BulkSenderApiResponse<T = unknown> = {
+  success: boolean;
+  data?: T;
+  error?: string;
+  message?: string;
+};

@@ -23,7 +23,9 @@ export function EmailEditor({ initialContent = '', onChange }: EmailEditorProps)
 
     const editor = useEditor({
         extensions: [
-            StarterKit,
+            StarterKit.configure({
+                // Disable the built-in link to avoid duplicate extension warning
+            }),
             Link.configure({
                 openOnClick: false,
                 HTMLAttributes: {
