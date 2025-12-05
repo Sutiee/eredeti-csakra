@@ -11,6 +11,10 @@ import type {
   BulkSenderHistory,
 } from '@/types';
 
+// Vercel Pro allows up to 300 seconds (5 minutes) for serverless functions
+// This is needed for large email lists (e.g., 30,000 emails = ~300 batches = ~45 seconds minimum)
+export const maxDuration = 300;
+
 type SendEmailRequest = {
   recipients: BulkSenderRecipient[];
   subject: string;
@@ -166,36 +170,83 @@ export async function POST(
     let failedCount = 0;
     const errorLog: Record<string, string>[] = [];
 
-    try {
-      // Resend batch.send() supports up to 100 emails per request
-      const BATCH_SIZE = 100;
-      const batches: typeof emails[] = [];
+    // Resend limits:
+    // - batch.send() supports up to 100 emails per request
+    // - Rate limit: 10 requests/second (free), 100 requests/second (paid)
+    // - Daily limit depends on plan
+    const BATCH_SIZE = 100;
+    const DELAY_BETWEEN_BATCHES_MS = 150; // ~6-7 batches/second, safe for rate limits
+    const MAX_RETRIES = 3;
+    const RETRY_DELAY_MS = 2000;
 
+    // Helper function to delay
+    const delay = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
+
+    // Helper function to send with retry
+    const sendBatchWithRetry = async (
+      batch: typeof emails,
+      retries: number = 0
+    ): Promise<{ sent: number; failed: number; error?: string }> => {
+      try {
+        const result = await resend.batch.send(batch);
+
+        if (result.error) {
+          // Check if rate limited
+          if (result.error.message?.includes('rate') && retries < MAX_RETRIES) {
+            console.log(`[BULK_SENDER_SEND] Rate limited, retrying in ${RETRY_DELAY_MS}ms...`);
+            await delay(RETRY_DELAY_MS * (retries + 1)); // Exponential backoff
+            return sendBatchWithRetry(batch, retries + 1);
+          }
+          return { sent: 0, failed: batch.length, error: result.error.message };
+        }
+
+        return { sent: batch.length, failed: 0 };
+      } catch (error) {
+        if (retries < MAX_RETRIES) {
+          console.log(`[BULK_SENDER_SEND] Error, retrying in ${RETRY_DELAY_MS}ms...`);
+          await delay(RETRY_DELAY_MS * (retries + 1));
+          return sendBatchWithRetry(batch, retries + 1);
+        }
+        return {
+          sent: 0,
+          failed: batch.length,
+          error: error instanceof Error ? error.message : 'Unknown error',
+        };
+      }
+    };
+
+    try {
+      // Split into batches
+      const batches: typeof emails[] = [];
       for (let i = 0; i < emails.length; i += BATCH_SIZE) {
         batches.push(emails.slice(i, i + BATCH_SIZE));
       }
 
-      for (const batch of batches) {
-        try {
-          const result = await resend.batch.send(batch);
+      console.log(`[BULK_SENDER_SEND] Sending ${emails.length} emails in ${batches.length} batches`);
 
-          if (result.error) {
-            console.error('[BULK_SENDER_SEND] Batch send error:', result.error);
-            failedCount += batch.length;
-            errorLog.push({
-              batch: `${batch[0].to} - ${batch[batch.length - 1].to}`,
-              error: result.error.message || 'Unknown batch error',
-            });
-          } else {
-            sentCount += batch.length;
-          }
-        } catch (batchError) {
-          console.error('[BULK_SENDER_SEND] Batch error:', batchError);
-          failedCount += batch.length;
+      // Process batches with rate limiting
+      for (let i = 0; i < batches.length; i++) {
+        const batch = batches[i];
+        const result = await sendBatchWithRetry(batch);
+
+        sentCount += result.sent;
+        failedCount += result.failed;
+
+        if (result.error) {
           errorLog.push({
-            batch: `${batch[0].to} - ${batch[batch.length - 1].to}`,
-            error: batchError instanceof Error ? batchError.message : 'Unknown error',
+            batch: `Batch ${i + 1}: ${batch[0].to} - ${batch[batch.length - 1].to}`,
+            error: result.error,
           });
+        }
+
+        // Log progress every 10 batches
+        if ((i + 1) % 10 === 0 || i === batches.length - 1) {
+          console.log(`[BULK_SENDER_SEND] Progress: ${i + 1}/${batches.length} batches, ${sentCount} sent, ${failedCount} failed`);
+        }
+
+        // Delay between batches (except for the last one)
+        if (i < batches.length - 1) {
+          await delay(DELAY_BETWEEN_BATCHES_MS);
         }
       }
     } catch (error) {
